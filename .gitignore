@@ -1,0 +1,6 @@
+src/voba_module_lex.c
+*.so
+*.o
+flex.c
+parser.c
+a.*
