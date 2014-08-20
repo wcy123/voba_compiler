@@ -1,11 +1,11 @@
 #include <stdlib.h>
-#include "voba_value.h"
+#include <voba/include/value.h>
 #include "voba_str.h"
 #include "parser.syn.h"
 #include "ast.h"
 #include "exec_once.h"
-#include "voba_builtin_module.h"
-#include "voba_compiler_module.h"
+#include <voba/core/builtin.h>
+#include "compiler.h"
 
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args);
 EXEC_ONCE_DO(voba_symbol_set_value(s_compile, voba_make_func(compile));)

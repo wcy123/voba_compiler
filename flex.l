@@ -6,7 +6,7 @@ int yyget_column  (yyscan_t yyscanner);
 #include <math.h>
 #include <string.h>
 #include <assert.h>
-#include "voba_value.h"
+#include <voba/include/value.h>
 #include "parser.syn.h"
 #define MAX_STR_CONST 1024
 static char string_buf[MAX_STR_CONST];

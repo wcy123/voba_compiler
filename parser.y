@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <math.h>
-#include "voba_value.h"
+#include <voba/include/value.h>
 #include "parser.syn.h"
 %}
 

@@ -1,11 +1,11 @@
 #pragma once
 #ifndef MODULE_NAME
-#define MODULE_NAME "voba_compiler_module"
+#define MODULE_NAME "compiler"
 #endif
 #define SYMBOL_TABLE(XX)                        \
     XX(compile)                                 \
 
 #define IMP "./libvoba_compiler.so"
 
-#include "voba_module_end.h"
+#include <voba/include/module_end.h>
 
