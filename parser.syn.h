@@ -8,6 +8,7 @@ typedef struct syntax_s {
     unsigned int last_column;
 } syntax_t;
 #define SYNTAX(s) VOBA_USER_DATA_AS(syntax_t *,s)
+extern voba_value_t voba_cls_syn;
 #include "parser.h"
 inline
 static void syntax_loc(voba_value_t a , YYLTYPE *b)
@@ -20,7 +21,7 @@ static void syntax_loc(voba_value_t a , YYLTYPE *b)
 inline
 static voba_value_t make_syntax(voba_value_t v, YYLTYPE * b)
 {
-    voba_value_t ret = voba_make_user_data(VOBA_NIL, sizeof(syntax_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_syn, sizeof(syntax_t));
     SYNTAX(ret)->v = v;
     SYNTAX(ret)->first_line = b->first_line;
     SYNTAX(ret)->first_column = b->first_column;
