@@ -29,7 +29,7 @@ libvoba_compiler.so: voba_compiler_module.o
 	$(CXX) -shared -Wl,-soname,$@  -o $@ voba_compiler_module.o flex.o parser.o
 
 libvoba_compiler.so:  flex.o parser.o
-voba_compiler_module.o: ../voba_module/voba_module.h ../voba_module/voba_module_end.h ../voba_value/voba_value.h ../voba_value/data_type_imp.h
+
 
 flex.o: parser.o
 
