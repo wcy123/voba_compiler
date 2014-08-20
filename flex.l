@@ -19,6 +19,7 @@ static char *string_buf_ptr;
 %option bison-bridge
 %option bison-locations
 %option reentrant
+
 %x comment str
 DIGIT    [0-9]
 ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*

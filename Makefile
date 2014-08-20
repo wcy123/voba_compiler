@@ -6,8 +6,6 @@ INCLUDE += -I ../../vhash
 INCLUDE += -I ~/d/other-working/GC/bdwgc/include
 INCLUDE += -I $(PREFIX)
 
-
-
 CFLAGS   += $(INCLUDE)
 CXXFLAGS += $(INCLUDE)
 
@@ -18,6 +16,10 @@ CFLAGS += -ggdb -O0
 CFLAGS += -std=c99
 CFLAGS += $(FLAGS)
 CFLAGS += -fPIC
+
+LFLAGS += --noline
+LEX = flex
+YACC = bison
 
 all: install
 
@@ -35,5 +37,9 @@ flex.o: parser.o
 
 clean:
 	rm *.o *.so parser.c flex.c
+flex.c: flex.l
+	flex -P z1 --noline -o $@ flex.l
+parser.c: parser.y
+	bison -p z1 parser.y
 
 .PHONY: all clean

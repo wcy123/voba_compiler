@@ -17,8 +17,8 @@ extern voba_value_t yylval;
 int yydebug = 0;
 EXEC_ONCE_DO(yydebug = getenv("VOBA_YYDEBUG") != NULL;)
 typedef void *yyscan_t ;
-int yylex_init ( yyscan_t * ptr_yy_globals ) ;
-int yylex_destroy ( yyscan_t yyscanner ) ;
+int z1lex_init ( yyscan_t * ptr_yy_globals ) ;
+int z1lex_destroy ( yyscan_t yyscanner ) ;
 static void indent(int level)
 {
     while(level-- > 0) fputs("      ",stdout);
@@ -44,7 +44,7 @@ static void dump_location(voba_value_t syn, int level)
     return;
 }
 
-struct yy_buffer_state*  yy_scan_bytes (char *bytes,int len ,yyscan_t yyscanner );
+struct z1_buffer_state*  z1_scan_bytes (char *bytes,int len ,yyscan_t yyscanner );
 
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 {
@@ -52,9 +52,12 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     voba_value_t yy_program = VOBA_NIL;
     void * scanner;
     voba_str_t * content = voba_value_to_str(content1);
-    yylex_init(&scanner);
-    yy_scan_bytes(content->data,content->len,scanner);
-    int r = yyparse(scanner,&yy_program);
+    fprintf(stderr,__FILE__ ":%d:[%s] content %p %d %d\n", __LINE__, __FUNCTION__,
+            content->data,content->len,content->capacity);
+
+    z1lex_init(&scanner);
+    z1_scan_bytes(content->data,content->len,scanner);
+    int r = z1parse(scanner,&yy_program);
     if(r ==0){
         fprintf(stderr,__FILE__ ":%d:[%s] OK\n", __LINE__, __FUNCTION__);
         dump_location(yy_program,0);
@@ -62,8 +65,8 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
         fprintf(stderr,__FILE__ ":%d:[%s] FAIL.", __LINE__, __FUNCTION__);
     }
     voba_value_t ast = VOBA_NIL;
-    //ast = compile_ast(yy_program);
-    yylex_destroy(scanner);
+    //ast = compile_ast(z1_program);
+    z1lex_destroy(scanner);
     return ast;
 }
 voba_value_t voba_init(voba_value_t this_module)

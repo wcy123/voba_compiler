@@ -8,6 +8,7 @@
 /* handle locations */
 %define api.value.type {voba_value_t}
 %define api.pure full
+%output "parser.c"
 %defines "parser.h"
 %locations
 %lex-param {void* scanner}
