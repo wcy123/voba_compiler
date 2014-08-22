@@ -68,13 +68,14 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     voba_value_t ret =  VOBA_NIL;
     VOBA_DEF_ARG( content1, args, 0, voba_is_string);
     void * scanner;
+    voba_value_t module = voba_make_hash();
     voba_str_t * content = voba_value_to_str(content1);
     fprintf(stderr,__FILE__ ":%d:[%s] content %p %d %d\n", __LINE__, __FUNCTION__,
             content->data,content->len,content->capacity);
 
     z1lex_init(&scanner);
     z1_scan_bytes(content->data,content->len,scanner);
-    z1parse(scanner,&ret);
+    z1parse(scanner,&ret, module);
     //voba_value_t ast = VOBA_NIL;
     //ast = compile_ast(z1_program);
     z1lex_destroy(scanner);

@@ -75,6 +75,6 @@ struct YYLTYPE
 
 
 
-int z1parse (void* scanner, voba_value_t * yy_program);
+int z1parse (void* scanner, voba_value_t * yy_program, voba_value_t module);
 
 #endif /* !YY_Z1_PARSER_H_INCLUDED  */

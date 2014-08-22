@@ -11,16 +11,17 @@
 %output "parser.c"
 %defines "parser.h"
 %locations
-%lex-param {void* scanner}
+%lex-param   {void* scanner}
 %parse-param {void* scanner} {voba_value_t * yy_program }
+%param       {voba_value_t module}
 %defines
 %token   T_INT T_FLOAT T_SYMBOL T_STRING
 %debug
 %code {
-int yylex (YYSTYPE *lvalp, YYLTYPE *llocp, void *);
+    int z1lex (YYSTYPE *lvalp, YYLTYPE *llocp, void *, voba_value_t module);
 typedef void * yyscan_t;
-void yyerror (YYLTYPE * locp, yyscan_t scanner, voba_value_t * p, char const *s);
-void yyerror (YYLTYPE * locp, yyscan_t scanner, voba_value_t * p, char const *s) {
+void z1error (YYLTYPE * locp, yyscan_t scanner, voba_value_t * p, voba_value_t module, char const *s);
+void z1error (YYLTYPE * locp, yyscan_t scanner, voba_value_t * p, voba_value_t module, char const *s) {
    fprintf (stderr, "%s\n", s);
 }
 };

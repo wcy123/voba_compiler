@@ -1,6 +1,7 @@
 %option nodebug
 %option noyywrap
 %{
+
 int fileno(FILE *stream);
 int yyget_column  (yyscan_t yyscanner);
 #include <math.h>
@@ -8,9 +9,14 @@ int yyget_column  (yyscan_t yyscanner);
 #include <assert.h>
 #include <voba/include/value.h>
 #include "parser.syn.h"
+
 #define MAX_STR_CONST 1024
 static char string_buf[MAX_STR_CONST];
 static char *string_buf_ptr;
+
+#define YY_DECL int z1lex \
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner, voba_value_t module)
+
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
     yylloc->first_column = yycolumn>0?yycolumn:1; yylloc->last_column = yycolumn + yyleng + (yycolumn>0?0:1); yycolumn += yyleng;\
@@ -43,7 +49,7 @@ ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*
 
 {ID}   {          /* -----------ID_TOKEN-------------- */
      // TODO: add a global variable for symbol table.
-     *yylval = make_syntax(voba_make_symbol(voba_str_from_data(yytext,yyleng),VOBA_NIL),yylloc);
+     *yylval = make_syntax(voba_make_symbol(voba_str_from_data(yytext,yyleng),module),yylloc);
      return T_SYMBOL;
 }
 
