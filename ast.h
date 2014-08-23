@@ -68,5 +68,5 @@ typedef struct ast_s {
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
 extern voba_value_t voba_cls_ast;
-voba_value_t compile_ast(voba_value_t syn,voba_value_t module);
+voba_value_t compile_ast(voba_value_t syn,voba_value_t module, int * error);
 

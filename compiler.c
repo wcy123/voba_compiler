@@ -13,6 +13,7 @@ EXEC_ONCE_DO(voba_symbol_set_value(s_compile, voba_make_func(compile));)
 //voba_value_t voba_cls_syn;
 DEFINE_CLS(sizeof(syntax_t),syn)
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args);
+
 EXEC_ONCE_DO(voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));)
 
 
@@ -100,10 +101,15 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     z1_scan_bytes(content->data,content->len,scanner);
     z1parse(scanner,&program, module);
     voba_value_t ast = VOBA_NIL;
+    int error = 0;
     attach_source_info(program,voba_make_pair(filename,content1));
-    ast = compile_ast(program,module);
+    ast = compile_ast(program,module,&error);
     z1lex_destroy(scanner);
-    return program;
+    if(error){
+        fprintf(stderr,__FILE__ ":%d:[%s] total %d errors \n", __LINE__, __FUNCTION__,error);
+
+    }
+    return ast;
 }
 voba_value_t voba_init(voba_value_t this_module)
 {
