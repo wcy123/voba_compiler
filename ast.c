@@ -83,8 +83,12 @@ inline static void report_error(voba_str_t * msg,voba_value_t syn)
     for(i = pos1; i != 0; i--){
         if(c->data[i] == '\n') break;
     }
+    for(;pos2 < c->len; pos2++){
+        if(c->data[pos2] == '\n') break;
+    }
     if(i==0) fprintf(stderr,"\n");
     fwrite(c->data + i, pos2 - i, 1, stderr);
+    if(pos2 == c->len) fprintf(stderr,"\n");
     fprintf(stderr,"\n");
     for(uint32_t n = 1; n + i < pos1; ++n){
         fputs(" ",stderr);
@@ -230,7 +234,7 @@ static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,
             report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list"),syn_top_expr);
         }
     }else{
-        report_error(VOBA_CONST_CHAR("bare def"),syn_top_expr);
+        report_error(VOBA_CONST_CHAR("bare def"),voba_array_at(top_expr,0));
     }
     return top_name;
 }
