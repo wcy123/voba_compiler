@@ -27,8 +27,8 @@ install: libvoba_compiler.so
 	install libvoba_compiler.so $(PREFIX)/voba/core
 	install compiler.h $(PREFIX)/voba/core
 
-libvoba_compiler.so: voba_compiler_module.o 
-	$(CXX) -shared -Wl,-soname,$@  -o $@ voba_compiler_module.o flex.o parser.o ast.o
+libvoba_compiler.so: compiler.o 
+	$(CXX) -shared -Wl,-soname,$@  -o $@ compiler.o flex.o parser.o ast.o
 
 libvoba_compiler.so:  flex.o parser.o ast.o
 
