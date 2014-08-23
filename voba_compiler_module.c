@@ -24,7 +24,7 @@ EXEC_ONCE_DO(yydebug = getenv("VOBA_YYDEBUG") != NULL;)
 typedef void *yyscan_t ;
 int z1lex_init ( yyscan_t * ptr_yy_globals ) ;
 int z1lex_destroy ( yyscan_t yyscanner ) ;
-static voba_str_t* indent(voba_str_t * s, int level)
+static inline voba_str_t* indent(voba_str_t * s, int level)
 {
     return voba_strcat(s,voba_str_from_char(' ',level * 4));
 }
@@ -62,34 +62,29 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
 }
 
 struct z1_buffer_state*  z1_scan_bytes (char *bytes,int len ,yyscan_t yyscanner );
-
-VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
+static inline int voba_is_syn(voba_value_t x)
 {
-    voba_value_t ret =  VOBA_NIL;
-    VOBA_DEF_ARG( content1, args, 0, voba_is_string);
-    void * scanner;
-    voba_value_t module = voba_make_hash();
-    voba_str_t * content = voba_value_to_str(content1);
-    fprintf(stderr,__FILE__ ":%d:[%s] content %p %d %d\n", __LINE__, __FUNCTION__,
-            content->data,content->len,content->capacity);
-
-    z1lex_init(&scanner);
-    z1_scan_bytes(content->data,content->len,scanner);
-    z1parse(scanner,&ret, module);
-    //voba_value_t ast = VOBA_NIL;
-    //ast = compile_ast(z1_program);
-    z1lex_destroy(scanner);
-    return ret;
-}
-static int voba_is_syn(voba_value_t x)
-{
-    voba_value_t cls = voba_apply(voba_symbol_value(s_get_class),x);
-    return cls == voba_cls_syn;
+    return voba_get_class(x) == voba_cls_syn;
 }
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_ARG(syn, args, 0, voba_is_syn);
     return voba_make_string(dump_location(syn,0));
+}
+VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
+{
+    voba_value_t program =  VOBA_NIL;
+    VOBA_DEF_ARG( content1, args, 0, voba_is_string);
+    void * scanner;
+    voba_value_t module = voba_make_symbol_table();
+    voba_str_t * content = voba_value_to_str(content1);
+    z1lex_init(&scanner);
+    z1_scan_bytes(content->data,content->len,scanner);
+    z1parse(scanner,&program, module);
+    voba_value_t ast = VOBA_NIL;
+    ast = compile_ast(program,module);
+    z1lex_destroy(scanner);
+    return ast;
 }
 voba_value_t voba_init(voba_value_t this_module)
 {

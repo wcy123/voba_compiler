@@ -43,5 +43,6 @@ T_INT
 |T_STRING  
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
 | '(' ')' { $$ = make_syntax(VOBA_NIL,&@$);}
+| error { printf("TODO ERRORR RECOVERY\n"); }
 ;
 

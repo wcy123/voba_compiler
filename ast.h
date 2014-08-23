@@ -1,13 +1,21 @@
 #pragma once
+#define AST_TYPES(XX)                           \
+XX(SET_TOP)                                     \
+XX(CONSTANT)                                    
 
+/*
+
+XX(ARG)                                         \
+XX(SELF)                                        \
+XX(CLOSURE)                                     \
+XX(FUNCTION)                                    \
+XX(TOP)                                         \
+XX(MODULE)
+*/
+#define DECLARE_AST_TYPE_ENUM(X) X,
 typedef enum ast_type_e {
-    CONSTANT,
-    ARG,
-    SELF,
-    CLOSURE,
-    FUNCTION,
-    TOP,
-    MODULE
+    AST_TYPES(DECLARE_AST_TYPE_ENUM)
+    N_OF_AST_TYPES
 } ast_type_t;
 /*
 
@@ -43,19 +51,22 @@ ast:
 
  */
 
+
+typedef struct ast_set_top_s {
+    voba_value_t name;  // a symbol
+    voba_value_t exprs; // a list of ast
+} ast_set_top_t;
+typedef struct ast_constant_s {
+    voba_value_t value;
+} ast_constant_t;
 typedef struct ast_s {
     ast_type_t  type;
+    union {
+        ast_set_top_t set_top;
+        ast_constant_t constant;
+    } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
+extern voba_value_t voba_cls_ast;
+voba_value_t compile_ast(voba_value_t syn,voba_value_t module);
 
-typedef struct ast_function_s {
-    ast_type_t  type;
-    voba_value_t f_name;
-    voba_value_t f_args;
-    voba_value_t f_body;
-} ast_fun_t;
-#define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
-
-
-voba_value_t compile_module(voba_value_t syn);
-voba_value_t compile_build_top_level_list(voba_value_t syns);
