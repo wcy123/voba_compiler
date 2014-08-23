@@ -1,8 +1,22 @@
 %{
 #include <stdio.h>
+#include <stdint.h>    
 #include <math.h>
 #include <voba/include/value.h>
 #include "parser.syn.h"
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+    do                                                                  \
+      if (N)                                                            \
+      {                                                                 \
+          (Current).start_pos   = YYRHSLOC (Rhs, 1).start_pos;          \
+          (Current).end_pos    = YYRHSLOC (Rhs, N).end_pos;             \
+      }                                                                 \
+      else                                                              \
+      {                                                                 \
+          (Current).start_pos   = (Current).end_pos   =                 \
+              YYRHSLOC (Rhs, 0).end_pos;                                \
+      }                                                                 \
+    while (0)
 %}
 
 /* handle locations */

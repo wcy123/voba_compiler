@@ -35,15 +35,21 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
     }
     voba_str_t * ret = voba_str_empty();
     ret = indent(ret,level);
+    uint32_t start_line;
+    uint32_t end_line;
+    uint32_t start_col;
+    uint32_t end_col;
+    syn_get_line_column(1,syn,&start_line,&start_col);
+    syn_get_line_column(0,syn,&end_line,&end_col);    
     ret = voba_vstrcat(ret,
                        VOBA_CONST_CHAR("(L"),
-                       voba_str_fmt_uint32_t(SYNTAX(syn)->first_line,10),
+                       voba_str_fmt_uint32_t(start_line,10),
                        VOBA_CONST_CHAR(",C"),
-                       voba_str_fmt_uint32_t(SYNTAX(syn)->first_column,10),
+                       voba_str_fmt_uint32_t(start_col,10),
                        VOBA_CONST_CHAR(")-(L"),
-                       voba_str_fmt_uint32_t(SYNTAX(syn)->last_line,10),
+                       voba_str_fmt_uint32_t(end_line,10),
                        VOBA_CONST_CHAR(",C"),
-                       voba_str_fmt_uint32_t(SYNTAX(syn)->last_column,10),
+                       voba_str_fmt_uint32_t(end_col,10),
                        VOBA_CONST_CHAR("):"),NULL);
     if(voba_is_array(SYNTAX(syn)->v)){
         ret = voba_strcat(ret,VOBA_CONST_CHAR("[\n"));
@@ -71,10 +77,22 @@ VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args
     VOBA_DEF_ARG(syn, args, 0, voba_is_syn);
     return voba_make_string(dump_location(syn,0));
 }
+static inline
+void attach_source_info(voba_value_t syn /*syntax object*/
+                        , voba_value_t source_info)
+{
+    SYNTAX(syn)->source_info = source_info;
+    if(voba_is_array(SYNTAX(syn)->v)){
+        for(size_t n = 0 ; n < voba_array_len(SYNTAX(syn)->v); ++n){
+            attach_source_info(voba_array_at(SYNTAX(syn)->v,n),source_info);
+        }
+    }
+}
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 {
     voba_value_t program =  VOBA_NIL;
-    VOBA_DEF_ARG( content1, args, 0, voba_is_string);
+    VOBA_DEF_ARG(content1, args, 0, voba_is_string);
+    VOBA_DEF_ARG(filename, args, 1, voba_is_string);
     void * scanner;
     voba_value_t module = voba_make_symbol_table();
     voba_str_t * content = voba_value_to_str(content1);
@@ -82,9 +100,10 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     z1_scan_bytes(content->data,content->len,scanner);
     z1parse(scanner,&program, module);
     voba_value_t ast = VOBA_NIL;
+    attach_source_info(program,voba_make_pair(filename,content1));
     ast = compile_ast(program,module);
     z1lex_destroy(scanner);
-    return ast;
+    return program;
 }
 voba_value_t voba_init(voba_value_t this_module)
 {

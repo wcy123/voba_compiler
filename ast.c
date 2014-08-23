@@ -50,17 +50,73 @@ voba_value_t make_ast_CONSTANT(voba_value_t value)
     AST(r)->u.constant.value = value;
     return r;
 }   
-inline static void report_error(const char * msg,voba_value_t syn)
+inline static void report_error(voba_str_t * msg,voba_value_t syn)
 {
-    // TODO filename 
-    printf("error: %d:%d - %d: %d:%s\n",SYNTAX(syn)->first_line,SYNTAX(syn)->first_column,
-           SYNTAX(syn)->last_line, SYNTAX(syn)->last_column,msg);
+    uint32_t start_line;
+    uint32_t end_line;
+    uint32_t start_col;
+    uint32_t end_col;
+    syn_get_line_column(1,syn,&start_line,&start_col);
+    syn_get_line_column(0,syn,&end_line,&end_col);
+    voba_str_t* s = voba_str_empty();
+    s = voba_vstrcat
+        (s,
+         voba_value_to_str(syntax_source_filename(syn)),
+         VOBA_CONST_CHAR(":"),
+         voba_str_fmt_uint32_t(start_line,10),
+         VOBA_CONST_CHAR(":"),
+         voba_str_fmt_uint32_t(start_col,10),
+         VOBA_CONST_CHAR(" - "),
+         voba_str_fmt_uint32_t(end_line,10),
+         VOBA_CONST_CHAR(":"),
+         voba_str_fmt_uint32_t(end_col,10),
+         VOBA_CONST_CHAR(" error: "),
+         msg,
+         //VOBA_CONST_CHAR("\n"),
+         NULL);
+    fwrite(s->data,s->len,1,stderr);
+    fprintf(stderr,"    ");
+    voba_str_t* c = voba_value_to_str(syntax_source_content(syn));
+    uint32_t pos1 = SYNTAX(syn)->start_pos;
+    uint32_t pos2 = SYNTAX(syn)->end_pos;
+    uint32_t i = pos1;
+    for(i = pos1; i != 0; i--){
+        if(c->data[i] == '\n') break;
+    }
+    if(i==0) fprintf(stderr,"\n");
+    fwrite(c->data + i, pos2 - i, 1, stderr);
+    fprintf(stderr,"\n");
+    for(uint32_t n = 1; n + i < pos1; ++n){
+        fputs(" ",stderr);
+    }
+    fprintf(stderr,"^\n");
+    return;
 }
-inline static void report_warn(const char * msg,voba_value_t syn)
+inline static void report_warn(voba_str_t * msg,voba_value_t syn)
 {
-    // TODO filename 
-    printf("warnning: %d:%d - %d: %d:%s\n",SYNTAX(syn)->first_line,SYNTAX(syn)->first_column,
-           SYNTAX(syn)->last_line, SYNTAX(syn)->last_column,msg);
+    uint32_t start_line;
+    uint32_t end_line;
+    uint32_t start_col;
+    uint32_t end_col;
+    syn_get_line_column(1,syn,&start_line,&start_col);
+    syn_get_line_column(0,syn,&end_line,&end_col);
+    voba_str_t* s = voba_str_empty();
+    s = voba_vstrcat
+        (s,
+         syntax_source_filename(syn),
+         voba_str_fmt_uint32_t(start_line,10),
+         VOBA_CONST_CHAR(":"),
+         voba_str_fmt_uint32_t(start_col,10),
+         VOBA_CONST_CHAR(" - "),
+         voba_str_fmt_uint32_t(end_line,10),
+         VOBA_CONST_CHAR(":"),
+         voba_str_fmt_uint32_t(end_col,10),
+         VOBA_CONST_CHAR(" warning: "),
+         msg,
+         VOBA_CONST_CHAR("\n"),
+         NULL);
+    fwrite(s->data,s->len,1,stderr);
+    return;
 }
 static inline int is_keyword(voba_value_t * keywords, voba_value_t x)
 {
@@ -88,7 +144,7 @@ static inline voba_value_t compile_expr(voba_value_t syn_expr)
         ret = make_ast_CONSTANT(expr);
     }
     else {
-        report_error("invalid expression",syn_expr);
+        report_error(VOBA_CONST_CHAR("invalid expression"),syn_expr);
     }
     return ret;
 }
@@ -155,6 +211,7 @@ static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,
                                                 voba_value_t * keywords,
                                                 voba_value_t next)
 {
+    // syn_top_expr (def ...)
     voba_value_t top_name = VOBA_NIL;
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
     int64_t len =  voba_array_len(top_expr);    
@@ -165,15 +222,15 @@ static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,
             if(!is_keyword(keywords,var_form)){
                 top_name = compile_top_expr_def_name(syn_top_expr,module,keywords,next);
             }else{
-                report_error("redefine keyword",var_form);
+                report_error(VOBA_CONST_CHAR("redefine keyword"),var_form);
             }
         }else if(voba_is_array(var_form)){
-            report_error("not implemented yet", syn_top_expr);
+            report_error(VOBA_CONST_CHAR("not implemented yet"), syn_top_expr);
         }else{
-            report_error("(def x), x must be a symbol or list",syn_top_expr);
+            report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list"),syn_top_expr);
         }
     }else{
-        report_error("bare def",syn_top_expr);
+        report_error(VOBA_CONST_CHAR("bare def"),syn_top_expr);
     }
     return top_name;
 }
@@ -192,13 +249,13 @@ static inline voba_value_t compile_top_expr(voba_value_t syn_top_expr,
             if(voba_eq(key_word, K(def))){
                 top_name = compile_top_expr_def(syn_top_expr,module,keywords,next);
             }else{
-                report_error("unrecognised keyword",syn_key_word);
+                report_error(VOBA_CONST_CHAR("unrecognised keyword"),syn_key_word);
             }
         }else{
-            report_warn("top expr is an empty list", syn_top_expr);
+            report_warn(VOBA_CONST_CHAR("top expr is an empty list"), syn_top_expr);
         }
     }else{
-        report_error("unrecognised form",syn_top_expr);
+        report_error(VOBA_CONST_CHAR("unrecognised form"),syn_top_expr);
     }
     return top_name;
 }
@@ -209,7 +266,7 @@ static inline voba_value_t compile_top_level_list(voba_value_t syn,
                                                   voba_value_t * pnext)
 {
     if(!voba_is_array(SYNTAX(syn)->v)){
-        report_error("module must be a list.",syn);
+        report_error(VOBA_CONST_CHAR("module must be a list."),syn);
         return VOBA_NIL;
     }
     voba_value_t next = voba_make_array_0();

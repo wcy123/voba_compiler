@@ -18,8 +18,9 @@ static char *string_buf_ptr;
                (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner, voba_value_t module)
 
 
-#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
-    yylloc->first_column = yycolumn>0?yycolumn:1; yylloc->last_column = yycolumn + yyleng + (yycolumn>0?0:1); yycolumn += yyleng;\
+#define YY_USER_ACTION                                      \
+    yylloc->start_pos = yylloc->end_pos;                    \
+    yylloc->end_pos += yyleng;                              \
 %}
 %option yylineno
 %option bison-bridge
