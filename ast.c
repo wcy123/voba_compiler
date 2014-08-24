@@ -2,35 +2,64 @@
 #include <exec_once.h>
 #include <voba/core/builtin.h>
 #include "ast.h"
+
+typedef struct top_level_s {
+    uint32_t n_of_errors;
+    uint32_t n_of_warnings;
+    voba_value_t keywords; // an array of keywords, e.g. `def`
+    voba_value_t module; // 
+    voba_value_t next; // closure to do next after scan the top level names;
+    voba_value_t names; // an array of pairs, car is a symbol, and cdr
+                        // is an indicatorwhether it is public or not
+} top_level_t;
+#define TOP_LEVEL(s) VOBA_USER_DATA_AS(top_level_t *,s)
+
+
+#define VOBA_KEYWORDS(XX)                       \
+    XX(def)
+
+#define VOBA_DECLARE_KEYWORD(key) k_##key,
+enum voba_keyword_e {
+    VOBA_KEYWORDS(VOBA_DECLARE_KEYWORD)
+    K_N_OF_KEYWORDS
+};
+#define K(top_level,key) voba_array_at(TOP_LEVEL(top_level)->keywords,k_##def)
+
+static inline
+voba_value_t create_top_level(voba_value_t module)
+{
+    voba_value_t r = voba_make_user_data(VOBA_NIL, sizeof(top_level_t));
+    TOP_LEVEL(r)->n_of_errors = 0;
+    TOP_LEVEL(r)->n_of_warnings = 0;
+    TOP_LEVEL(r)->module = module;
+    TOP_LEVEL(r)->keywords = voba_make_array_0();
+    TOP_LEVEL(r)->names = voba_make_array_0();
+    TOP_LEVEL(r)->next = voba_make_array_0();
+#   define VOBA_DEFINE_KEYWORD(key) voba_array_push(TOP_LEVEL(r)->keywords, VOBA_SYMBOL(key,module));
+    VOBA_KEYWORDS(VOBA_DEFINE_KEYWORD);
+    return r;
+}
+
+
 #define DECLARE_AST_TYPE_ARRAY(X) #X,
 const char * AST_TYPE_NAMES [] = {
     AST_TYPES(DECLARE_AST_TYPE_ARRAY)
     "# of ast type"
 };
-#define AST_TYPE_PRINT_DISPATCHER(X)            \
-case X:                                         \
-return print_ast_##X(ast,level);
 
 #define AST_DECLARE_TYPE_PRINT_DISPATCHER(X)                            \
-    static inline voba_str_t* print_ast_##X(ast_t * ast, int level);    
-static voba_str_t* print_ast(ast_t * ast, int level);
+    static inline voba_str_t* print_ast_##X(ast_t * ast, int level);    \
+    static voba_str_t* print_ast(ast_t * ast, int level);
 
 AST_TYPES(AST_DECLARE_TYPE_PRINT_DISPATCHER);
     
 #include "parser.syn.h"
-#define VOBA_KEYWORDS(XX)                       \
-    XX(def)
-#define VOBA_DECLARE_KEYWORD(key) k_##key,
-#define VOBA_DEFINE_KEYWORD(key)  VOBA_SYMBOL(key,module),
-#define K(key) keywords[k_##key]
-enum voba_keyword_e {
-    VOBA_KEYWORDS(VOBA_DECLARE_KEYWORD)
-    K_N_OF_KEYWORDS
-};
+
 DEFINE_CLS(sizeof(ast_t),ast);
 VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args);
-EXEC_ONCE_DO(voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_ast,
-                               voba_make_func(to_string_ast));)
+EXEC_ONCE_DO(
+    voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_ast,
+                      voba_make_func(to_string_ast));)
 
 static inline
 voba_value_t make_ast_set_top(voba_value_t name /*symbol*/,
@@ -49,9 +78,20 @@ voba_value_t make_ast_CONSTANT(voba_value_t value)
     AST(r)->type = CONSTANT;
     AST(r)->u.constant.value = value;
     return r;
-}   
-inline static void report_error(voba_str_t * msg,voba_value_t syn)
+}
+#define LEVEL_ERROR 1
+#define LEVEL_WARNING 2
+
+inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_value_t top_level)
 {
+    switch(level){
+    case LEVEL_ERROR:
+        TOP_LEVEL(top_level)->n_of_errors ++ ; break;
+    case LEVEL_WARNING:
+        TOP_LEVEL(top_level)->n_of_warnings ++ ; break;
+    default:
+        assert(0);
+    }
     uint32_t start_line;
     uint32_t end_line;
     uint32_t start_col;
@@ -96,42 +136,24 @@ inline static void report_error(voba_str_t * msg,voba_value_t syn)
     fprintf(stderr,"^\n");
     return;
 }
-inline static void report_warn(voba_str_t * msg,voba_value_t syn)
+inline static void report_error(voba_str_t * msg,voba_value_t syn,voba_value_t top_level)
 {
-    uint32_t start_line;
-    uint32_t end_line;
-    uint32_t start_col;
-    uint32_t end_col;
-    syn_get_line_column(1,syn,&start_line,&start_col);
-    syn_get_line_column(0,syn,&end_line,&end_col);
-    voba_str_t* s = voba_str_empty();
-    s = voba_vstrcat
-        (s,
-         syntax_source_filename(syn),
-         voba_str_fmt_uint32_t(start_line,10),
-         VOBA_CONST_CHAR(":"),
-         voba_str_fmt_uint32_t(start_col,10),
-         VOBA_CONST_CHAR(" - "),
-         voba_str_fmt_uint32_t(end_line,10),
-         VOBA_CONST_CHAR(":"),
-         voba_str_fmt_uint32_t(end_col,10),
-         VOBA_CONST_CHAR(" warning: "),
-         msg,
-         VOBA_CONST_CHAR("\n"),
-         NULL);
-    fwrite(s->data,s->len,1,stderr);
-    return;
+    report(LEVEL_ERROR,msg,syn,top_level);
 }
-static inline int is_keyword(voba_value_t * keywords, voba_value_t x)
+inline static void report_warn(voba_str_t * msg,voba_value_t syn,voba_value_t top_level)
+{
+    report(LEVEL_WARNING,msg,syn,top_level);
+}
+static inline int is_keyword(voba_value_t keywords, voba_value_t x)
 {
     for(int i = 0; i < K_N_OF_KEYWORDS; ++i){
-        if(voba_eq(x,keywords[i])){
+        if(voba_eq(x,voba_array_at(keywords,i))){
             return 1;
         }
     }
     return 0;
 }
-static inline voba_value_t compile_expr(voba_value_t syn_expr)
+static inline voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t top_level)
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t expr = SYNTAX(syn_expr)->v;
@@ -148,11 +170,11 @@ static inline voba_value_t compile_expr(voba_value_t syn_expr)
         ret = make_ast_CONSTANT(expr);
     }
     else {
-        report_error(VOBA_CONST_CHAR("invalid expression"),syn_expr);
+        report_error(VOBA_CONST_CHAR("invalid expression"),syn_expr,top_level);
     }
     return ret;
 }
-static inline voba_value_t compile_exprs(voba_value_t syn_exprs, uint32_t from)
+static inline voba_value_t compile_exprs(voba_value_t syn_exprs, uint32_t from,voba_value_t top_level)
 {
     // exprs: (X X X X ....)
     //        `------'
@@ -163,7 +185,7 @@ static inline voba_value_t compile_exprs(voba_value_t syn_exprs, uint32_t from)
     int error = 0;
     if(from < len){
         for(uint32_t i = from ; i < len ; ++i){
-            voba_value_t ast_expr = compile_expr(voba_array_at(exprs,i));
+            voba_value_t ast_expr = compile_expr(voba_array_at(exprs,i),top_level);
             if(!voba_is_nil(ast_expr)){
                 ret = voba_array_push(ret,ast_expr);
             }else{
@@ -186,14 +208,16 @@ static voba_value_t compile_top_expr_next(voba_value_t self, voba_value_t args)
     VOBA_DEF_CVAR(fbody,self,2);
     return fname = fargs = fbody;
 }
+static int ok(voba_value_t any) {return 1;}
 VOBA_FUNC
 static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_CVAR(syn_name,self,0);
     VOBA_DEF_CVAR(syn_exprs,self,1);
     VOBA_DEF_CVAR(from,self,2);
+    VOBA_DEF_ARG(top_level, args, 0, ok);
     if(0)fprintf(stderr,__FILE__ ":%d:[%s] \n", __LINE__, __FUNCTION__);
-    voba_value_t exprs = compile_exprs(syn_exprs,voba_value_to_u32(from));
+    voba_value_t exprs = compile_exprs(syn_exprs,voba_value_to_u32(from),top_level);
     voba_value_t ret = VOBA_NIL;
     if(!voba_is_nil(exprs)){
         ret = make_ast_set_top(SYNTAX(syn_name)->v, exprs);
@@ -203,11 +227,7 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
     return ret;
 
 }
-static inline voba_value_t compile_top_expr_def_name(voba_value_t syn_top_expr,
-                                                     voba_value_t module,
-                                                     voba_value_t * keywords,
-                                                     voba_value_t next,
-                                                     int * error)
+static inline voba_value_t compile_top_expr_def_name(voba_value_t syn_top_expr,voba_value_t top_level)
 {
     // syn_top_expr: (def name ...)
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
@@ -216,15 +236,11 @@ static inline voba_value_t compile_top_expr_def_name(voba_value_t syn_top_expr,
     voba_value_t from = voba_make_u32(2);
     voba_value_t closure = voba_make_closure_f_a(compile_top_expr_def_name_next,
                                                  voba_make_array_3(syn_name,syn_top_expr,from));
-    voba_array_push(next, closure);
+    voba_array_push(TOP_LEVEL(top_level)->next, closure);
     return name;
 }
 
-static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,
-                                                voba_value_t module,
-                                                voba_value_t * keywords,
-                                                voba_value_t next,
-                                                int * error)
+static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t top_level)
 {
     // syn_top_expr (def ...)
     voba_value_t top_name = VOBA_NIL;
@@ -234,30 +250,30 @@ static inline voba_value_t compile_top_expr_def(voba_value_t syn_top_expr,
         voba_value_t syn_var_form = voba_array_at(top_expr,1);
         voba_value_t var_form = SYNTAX(syn_var_form)->v;
         if(voba_is_symbol(var_form)){
-            if(!is_keyword(keywords,var_form)){
-                top_name = compile_top_expr_def_name(syn_top_expr,module,keywords,next,error);
+            if(!is_keyword(TOP_LEVEL(top_level)->keywords,var_form)){
+                top_name = compile_top_expr_def_name(syn_top_expr,top_level);
             }else{
-                ++ *error;
-                report_error(VOBA_CONST_CHAR("redefine keyword"),var_form);
+                report_error(VOBA_CONST_CHAR("redefine keyword")
+                             ,var_form
+                             ,top_level);
             }
         }else if(voba_is_array(var_form)){
-            ++ *error;
-            report_error(VOBA_CONST_CHAR("not implemented yet"), syn_top_expr);
+            report_error(VOBA_CONST_CHAR("not implemented yet")
+                         ,syn_top_expr
+                         ,top_level);
         }else{
-            ++ *error;
-            report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list"),syn_top_expr);
+            report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list")
+                         ,syn_top_expr
+                         ,top_level);
         }
     }else{
-        ++ *error;
-        report_error(VOBA_CONST_CHAR("bare def"),voba_array_at(top_expr,0));
+        report_error(VOBA_CONST_CHAR("bare def"),voba_array_at(top_expr,0),top_level);
     }
     return top_name;
 }
 static inline voba_value_t compile_top_expr(voba_value_t syn_top_expr,
-                                            voba_value_t module,
-                                            voba_value_t * keywords,
-                                            voba_value_t next,
-                                            int * error)
+                                            voba_value_t top_level)
+
 {
     voba_value_t top_name = VOBA_NIL;
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
@@ -266,57 +282,45 @@ static inline voba_value_t compile_top_expr(voba_value_t syn_top_expr,
         if(len > 0){
             voba_value_t syn_key_word = voba_array_at(top_expr,0);
             voba_value_t key_word = SYNTAX(syn_key_word)->v;
-            if(voba_eq(key_word, K(def))){
-                top_name = compile_top_expr_def(syn_top_expr,module,keywords,next,error);
+            if(voba_eq(key_word, K(top_level,def))){
+                top_name = compile_top_expr_def(syn_top_expr,top_level);
             }else{
-                ++ *error;
-                report_error(VOBA_CONST_CHAR("unrecognised keyword"),syn_key_word);
+                report_error(VOBA_CONST_CHAR("unrecognised keyword"),syn_key_word,top_level);
             }
         }else{
-            //++ *error;
-            report_warn(VOBA_CONST_CHAR("top expr is an empty list"), syn_top_expr);
+            report_warn(VOBA_CONST_CHAR("top expr is an empty list"), syn_top_expr,top_level);
         }
     }else{
-        ++ *error;
-        report_error(VOBA_CONST_CHAR("unrecognised form"),syn_top_expr);
+        report_error(VOBA_CONST_CHAR("unrecognised form"),syn_top_expr,top_level);
     }
     return top_name;
 }
 
 static inline voba_value_t compile_top_level_list(voba_value_t syn,
-                                                  voba_value_t module,
-                                                  voba_value_t * keywords,
-                                                  voba_value_t * pnext,
-                                                  int * error)
+                                                  voba_value_t top_level)
 {
     if(!voba_is_array(SYNTAX(syn)->v)){
-        report_error(VOBA_CONST_CHAR("module must be a list."),syn);
+        report_error(VOBA_CONST_CHAR("module must be a list."),syn,top_level);
         return VOBA_NIL;
     }
-    voba_value_t next = voba_make_array_0();
-    *pnext = next;
     voba_value_t top_exprs = SYNTAX(syn)->v;
-    voba_value_t top_names = voba_make_array_0();
     size_t len = voba_array_len(top_exprs);
     for(size_t i = 0; i < len ; ++i){
         voba_value_t syn_top_expr = voba_array_at(top_exprs,i);
-        voba_value_t top_name     = compile_top_expr(syn_top_expr,module,keywords,next,error);
+        voba_value_t top_name     = compile_top_expr(syn_top_expr,top_level);
         if(!voba_is_nil(top_name)) {
-            voba_array_push(top_names,top_name);
+            voba_array_push(TOP_LEVEL(top_level)->names,top_name);
         }
     }
-    return top_names;
+    return TOP_LEVEL(top_level)->names;
 }
 voba_value_t compile_ast(voba_value_t syn,voba_value_t module, int * error)
 {
-    voba_value_t keywords[] = {
-        VOBA_KEYWORDS(VOBA_DEFINE_KEYWORD)
-        VOBA_NIL
-    };
-    voba_value_t next = VOBA_NIL;
     *error = 0;
     voba_value_t asts = VOBA_NIL;
-    voba_value_t top_list = compile_top_level_list(syn,module,keywords,&next,error);
+    voba_value_t top_level = create_top_level(module);
+    voba_value_t top_list = compile_top_level_list(syn,top_level);
+    voba_value_t next = TOP_LEVEL(top_level)->next;
     int64_t len =  voba_array_len(next);
     asts = voba_make_array_0();
     voba_value_t args [] = {1, top_list};
@@ -330,6 +334,7 @@ voba_value_t compile_ast(voba_value_t syn,voba_value_t module, int * error)
     }
     return asts;
 }
+
 static inline int voba_is_ast(voba_value_t x)
 {
     return voba_get_class(x) == voba_cls_ast;
@@ -380,6 +385,9 @@ static voba_str_t* print_ast_CONSTANT(ast_t * ast, int level)
 }
 static voba_str_t* print_ast(ast_t * ast, int level)
 {
+#define AST_TYPE_PRINT_DISPATCHER(X)            \
+case X:                                         \
+return print_ast_##X(ast,level);
     switch(ast->type){
         AST_TYPES(AST_TYPE_PRINT_DISPATCHER)
             ;
