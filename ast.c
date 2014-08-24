@@ -180,7 +180,7 @@ static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t
     //        ^la_syn_exprs
     voba_value_t cur = voba_la_copy(la_syn_exprs);
     voba_value_t ret = voba_make_array_0();
-    voba_value_t cur_ret = voba_la_from_array(ret,0,0);
+    voba_value_t cur_ret = voba_la_from_array1(ret,0);
     if(!voba_is_nil(cur)){
         voba_value_t syn_exprs = voba_la_car(cur);
         voba_value_t ast_expr = compile_expr(syn_exprs,top_level);
@@ -297,7 +297,7 @@ static inline voba_value_t compile_top_expr(voba_value_t syn_top_expr,
     if(voba_is_array(top_expr)){
         int64_t len =  voba_array_len(top_expr);
         if(len > 0){
-            voba_value_t cur = voba_la_from_array(top_expr,0,0);
+            voba_value_t cur = voba_la_from_array1(top_expr,0);
             voba_value_t syn_key_word = voba_la_car(cur);
             voba_value_t key_word = SYNTAX(syn_key_word)->v;
             if(voba_eq(key_word, K(top_level,def))){
@@ -335,7 +335,7 @@ voba_value_t compile_ast(voba_value_t syn,voba_value_t module, int * error)
         report_error(VOBA_CONST_CHAR("module must be an array."),syn,top_level);
         return VOBA_NIL;
     }
-    compile_top_level_list(voba_la_from_array(SYNTAX(syn)->v,0,0),top_level);
+    compile_top_level_list(voba_la_from_array1(SYNTAX(syn)->v,0),top_level);
     voba_value_t next = TOP_LEVEL(top_level)->next;
     int64_t len =  voba_array_len(next);
     asts = voba_make_array_0();
