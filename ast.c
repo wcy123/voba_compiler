@@ -16,7 +16,8 @@ typedef struct top_level_s {
 
 
 #define VOBA_KEYWORDS(XX)                       \
-    XX(def)
+    XX(def)                                     \
+    XX(fun)
 
 #define VOBA_DECLARE_KEYWORD(key) k_##key,
 enum voba_keyword_e {
@@ -181,7 +182,7 @@ static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t
     voba_value_t cur = voba_la_copy(la_syn_exprs);
     voba_value_t ret = voba_make_array_0();
     voba_value_t cur_ret = voba_la_from_array1(ret,0);
-    if(!voba_is_nil(cur)){
+    if(!voba_la_is_nil(cur)){
         voba_value_t syn_exprs = voba_la_car(cur);
         voba_value_t ast_expr = compile_expr(syn_exprs,top_level);
         if(!voba_is_nil(ast_expr)){
@@ -191,14 +192,6 @@ static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t
         ret = voba_array_push(ret,make_ast_CONSTANT(VOBA_NIL));
     }
     return ret;
-}
-__attribute__((used))
-static voba_value_t compile_top_expr_next(voba_value_t self, voba_value_t args) 
-{
-    VOBA_DEF_CVAR(fname,self,0);
-    VOBA_DEF_CVAR(fargs,self,1);
-    VOBA_DEF_CVAR(fbody,self,2);
-    return fname = fargs = fbody;
 }
 static int ok(voba_value_t any) {return 1;}
 VOBA_FUNC
@@ -224,49 +217,77 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
 static inline voba_value_t compile_top_expr_def_name(voba_value_t syn_name, voba_value_t la_syn_exprs,voba_value_t top_level)
 {
     //  (def name ...)
-    //            ^la_syn_top_expr
+    //       ^^^^^^^^------------------  la_syn_exprs
+    //       ^^^ ----------------------  syn_name
     voba_value_t name = SYNTAX(syn_name)->v;
     voba_value_t closure = voba_make_closure_f_a(compile_top_expr_def_name_next,
                                                  voba_make_array_2(syn_name,la_syn_exprs));
     voba_array_push(TOP_LEVEL(top_level)->next, closure);
     return name;
 }
-/* static inline voba_value_t parser_arguments(voba_value_t syn_f, voba_value_t f) */
-/* { */
-    
-/* } */
-/* static inline voba_value_t compile_top_expr_def_fun(voba_value_t syn_top_expr,voba_value_t top_level) */
-/* { */
-/*     // syn_top_expr: (def (f a) ...) */
-/*     voba_value_t syn_f_form = voba_array_at(top_expr,1); */
-/*     voba_value_t f_form = SYNTAX(syn_f_form)->v; */
-/*     int64_t len = voba_array_len(f_form); */
-/*     if(len > 1){ */
-/*         voba_value_t syn_f = voba_array_at(f_form,0); */
-/*         voba_value_t f = SYNTAX(syn_f)->v; */
-/*         if(voba_is_symbol(f)){ */
-/*             voba_value_t closure = voba_make_closure_f_a(compile_top_expr_def_name_next, */
-/*                                                          voba_make_array_3(syn_name,syn_top_expr,from)); */
-/*             voba_array_push(TOP_LEVEL(top_level)->next, closure); */
-/*         }else{ */
-/*             report_error(VOBA_CONST_CHAR("illegal form. function name must be a symbol."),syn_f,top_level);             */
-/*         } */
-/*     }else{ */
-/*         report_error(VOBA_CONST_CHAR("illegal form. length of forms is zero."),syn_f_form,top_level); */
-/*     } */
-/*     return name; */
-/* } */
+VOBA_FUNC static voba_value_t compile_fun(voba_value_t self, voba_value_t args)
+{
+    /* VOBA_DEF_CVAR(syn_fname,self,0); */
+    /* VOBA_DEF_CVAR(la_syn_args,self,1); */
+    /* VOBA_DEF_CVAR(la_syn_body,self,2); */
+    /* VOBA_DEF_CVAR(parent,self,3); */
+    /* VOBA_DEF_CVAR(capture,self,4); */
+    return voba_make_string(VOBA_CONST_CHAR("not implemented yet."));
+}
+static inline voba_value_t compile_top_expr_def_fun(
+    voba_value_t syn_def,
+    voba_value_t syn_var_form,
+    voba_value_t la_syn_body_form,
+    voba_value_t top_level)
+{
+    //  (def ( ... ) ...)
+    //   ^------------------------  syn_def
+    //       ^^^^^^^--------------- syn_var_form
+    //               ^^^^---------  la_body_form
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t var_form = SYNTAX(syn_var_form)->v;
+    voba_value_t la_syn_var_form = voba_la_from_array0(var_form);
+    uint32_t len = voba_la_len(la_syn_var_form);
+    if(len >= 1){
+        voba_value_t syn_f = voba_la_car(la_syn_var_form);
+        voba_value_t f = SYNTAX(syn_f)->v;
+        if(voba_is_symbol(f)){
+            //  (def (f ...) ...)
+            //   ^------------------------  syn_def
+            //       ^^^^^^^--------------- syn_var_form
+            //               ^^^^---------  la_body_form
+            ret = f;
+            voba_value_t parent = VOBA_NIL;
+            voba_value_t capture = voba_make_array_0();
+            voba_value_t closure = voba_make_closure_f_a
+                (compile_fun,
+                 voba_make_array_5
+                 (syn_f, voba_la_cdr(la_syn_var_form), la_syn_body_form, parent, capture));
+            voba_array_push(TOP_LEVEL(top_level)->next,closure);
+        }else{
+            report_error(VOBA_CONST_CHAR("illegal form. function name must be a symbol."),
+                         syn_f,top_level);
+        }
+    }else{
+        report_error(VOBA_CONST_CHAR("illegal form. no function name"),
+                     syn_var_form,top_level);
+    }
+    return ret;
+}
 
 static inline voba_value_t compile_top_expr_def(voba_value_t syn_def, voba_value_t la_syn_top_expr,voba_value_t top_level)
 {
     //  (def ...)
     //       ^la_syn_top_expr
     voba_value_t ret = VOBA_NIL;
-    if(!voba_is_nil(la_syn_top_expr)){
-        voba_value_t syn_top_expr = voba_la_car(la_syn_top_expr);
+    if(!voba_la_is_nil(la_syn_top_expr)){
         voba_value_t syn_var_form = voba_la_car(la_syn_top_expr);
         voba_value_t var_form = SYNTAX(syn_var_form)->v;
         if(voba_is_symbol(var_form)){
+            //  (def var ...)
+            //   ^^^---------------------------  syn_def
+            //       ^^^^^^^-------------------  la_syn_top_expr
+            //       ^^^ ----------------------  syn_var_form
             if(!is_keyword(TOP_LEVEL(top_level)->keywords,var_form)){
                 ret = compile_top_expr_def_name(syn_var_form, voba_la_cdr(la_syn_top_expr),top_level);
             }else{
@@ -275,12 +296,17 @@ static inline voba_value_t compile_top_expr_def(voba_value_t syn_def, voba_value
                              ,top_level);
             }
         }else if(voba_is_array(var_form)){
-            // syn_top_expr (def (f a) ...)
-            // var_form: (f a ...)
-            //ret = compile_top_expr_def_fun(syn_top_expr,top_level);
+            //  (def ( ... ) ...)
+            //   ^------------------------------  syn_def
+            //       ^^^^^^^^^^^----------------- la_syn_top_expr
+            //       ^^^^^^ --------------------  syn_var_form
+            ret = compile_top_expr_def_fun(syn_def,
+                                           syn_var_form,
+                                           voba_la_cdr(la_syn_top_expr),
+                                           top_level);
         }else{
             report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list")
-                         ,syn_top_expr
+                         ,syn_var_form
                          ,top_level);
         }
     }else{
@@ -317,7 +343,7 @@ static inline voba_value_t compile_top_level_list(voba_value_t la_syn_top_exprs,
                                                   voba_value_t top_level)
 {
     voba_value_t cur = la_syn_top_exprs;
-    while(!voba_is_nil(cur)){
+    while(!voba_la_is_nil(cur)){
         voba_value_t syn_top_expr = voba_la_car(cur);
         voba_value_t top_name     = compile_top_expr(syn_top_expr,top_level);
         if(!voba_is_nil(top_name)) {
