@@ -56,7 +56,7 @@ T_INT
 |T_SYMBOL 
 |T_STRING  
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
-| '(' ')' { $$ = make_syntax(VOBA_NIL,&@$);}
+| '(' ')' { $$ = make_syntax(voba_make_array_0(),&@$);}
 | error { printf("TODO ERRORR RECOVERY\n"); }
 ;
 
