@@ -1,7 +1,8 @@
 #pragma once
 #define AST_TYPES(XX)                           \
 XX(SET_TOP)                                     \
-XX(CONSTANT)                                    
+XX(CONSTANT)                                    \
+XX(FUN)                                    
 
 /*
 
@@ -59,11 +60,17 @@ typedef struct ast_set_top_s {
 typedef struct ast_constant_s {
     voba_value_t value;
 } ast_constant_t;
+typedef struct ast_fun_s {
+    voba_value_t name; // NIL for annonymous fun.
+    voba_value_t body; // an array of ast
+} ast_fun_t;
 typedef struct ast_s {
+    //DEFINE_SOURCE_LOCATION
     ast_type_t  type;
     union {
         ast_set_top_t set_top;
         ast_constant_t constant;
+        ast_fun_t fun;
     } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)

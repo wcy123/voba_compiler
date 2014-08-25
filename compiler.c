@@ -78,17 +78,6 @@ VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args
     VOBA_DEF_ARG(syn, args, 0, voba_is_syn);
     return voba_make_string(dump_location(syn,0));
 }
-static inline
-void attach_source_info(voba_value_t syn /*syntax object*/
-                        , voba_value_t source_info)
-{
-    SYNTAX(syn)->source_info = source_info;
-    if(voba_is_array(SYNTAX(syn)->v)){
-        for(size_t n = 0 ; n < voba_array_len(SYNTAX(syn)->v); ++n){
-            attach_source_info(voba_array_at(SYNTAX(syn)->v,n),source_info);
-        }
-    }
-}
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 {
     voba_value_t program =  VOBA_NIL;
@@ -102,7 +91,8 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     z1parse(scanner,&program, module);
     voba_value_t ast = VOBA_NIL;
     int error = 0;
-    attach_source_info(program,voba_make_pair(filename,content1));
+    voba_value_t si = make_source_info(filename,content1);
+    attach_source_info(program,si);
     ast = compile_ast(program,module,&error);
     z1lex_destroy(scanner);
     if(error){

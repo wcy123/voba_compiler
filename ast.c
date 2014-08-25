@@ -1,8 +1,9 @@
 #include <voba/include/value.h>
 #include <exec_once.h>
 #include <voba/core/builtin.h>
+#include "parser.syn.h"
 #include "ast.h"
-
+static int ok(voba_value_t any) {return 1;}
 typedef struct top_level_s {
     uint32_t n_of_errors;
     uint32_t n_of_warnings;
@@ -54,7 +55,7 @@ const char * AST_TYPE_NAMES [] = {
 
 AST_TYPES(AST_DECLARE_TYPE_PRINT_DISPATCHER);
     
-#include "parser.syn.h"
+
 
 DEFINE_CLS(sizeof(ast_t),ast);
 VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args);
@@ -63,13 +64,23 @@ EXEC_ONCE_DO(
                       voba_make_func(to_string_ast));)
 
 static inline
-voba_value_t make_ast_set_top(voba_value_t name /*symbol*/,
+voba_value_t make_ast_set_top(voba_value_t syn_name /*symbol*/,
                               voba_value_t exprs /* array of ast */)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
     AST(r)->type = SET_TOP;
-    AST(r)->u.set_top.name = name;
+    AST(r)->u.set_top.name = syn_name;
     AST(r)->u.set_top.exprs = exprs;
+    return r;
+}   
+static inline
+voba_value_t make_ast_fun(voba_value_t name /*symbol*/,
+                          voba_value_t body /* array of ast */)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    AST(r)->type = FUN;
+    AST(r)->u.fun.name = name;
+    AST(r)->u.fun.body = body;
     return r;
 }   
 static inline
@@ -154,27 +165,42 @@ static inline int is_keyword(voba_value_t keywords, voba_value_t x)
     }
     return 0;
 }
+static voba_value_t make_syn_nil()
+{
+    static YYLTYPE s = { 0,0};
+    static voba_value_t si = VOBA_NIL;
+    static voba_value_t ret = VOBA_NIL;
+    if(voba_is_nil(si)){
+        si = make_source_info(
+            voba_make_string(VOBA_CONST_CHAR(__FILE__)),
+            voba_make_string(VOBA_CONST_CHAR("nil")));
+        ret = make_syntax(VOBA_NIL,&s);
+        attach_source_info(ret,si);
+    }
+    return ret;
+}
 static inline voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t top_level)
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t expr = SYNTAX(syn_expr)->v;
     voba_value_t cls = voba_get_class(expr);
     if(cls == voba_cls_nil){
-        ret = make_ast_CONSTANT(VOBA_NIL);
+        ret = make_ast_CONSTANT(make_syn_nil());
     }
 #define COMPILE_EXPR_SMALL_TYPES(tag,name,type)                         \
     else if(cls == voba_cls_##name){                                    \
-        ret = make_ast_CONSTANT(expr);                                  \
+        ret = make_ast_CONSTANT(syn_expr);                              \
     }
     VOBA_SMALL_TYPES(COMPILE_EXPR_SMALL_TYPES)
     else if(cls == voba_cls_str){
-        ret = make_ast_CONSTANT(expr);
+        ret = make_ast_CONSTANT(syn_expr);
     }
     else {
         report_error(VOBA_CONST_CHAR("invalid expression"),syn_expr,top_level);
     }
     return ret;
 }
+// return an array of ast
 static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t top_level)
 {
     // exprs: (....)
@@ -189,11 +215,11 @@ static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t
             cur_ret = voba_la_cons(cur_ret,ast_expr);
         }
     }else {
-        ret = voba_array_push(ret,make_ast_CONSTANT(VOBA_NIL));
+        ret = voba_array_push(ret,make_ast_CONSTANT(make_syn_nil()));
     }
     return ret;
 }
-static int ok(voba_value_t any) {return 1;}
+
 VOBA_FUNC
 static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
 {
@@ -207,7 +233,7 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
     voba_value_t exprs = compile_exprs(la_syn_exprs,top_level);
     voba_value_t ret = VOBA_NIL;
     if(!voba_is_nil(exprs)){
-        ret = make_ast_set_top(SYNTAX(syn_name)->v, exprs);
+        ret = make_ast_set_top(syn_name, exprs);
     }
     if(0) fprintf(stderr,__FILE__ ":%d:[%s] v = 0x%lx type = 0x%lx\n", __LINE__, __FUNCTION__,
             ret, voba_get_class(ret));
@@ -227,12 +253,13 @@ static inline voba_value_t compile_top_expr_def_name(voba_value_t syn_name, voba
 }
 VOBA_FUNC static voba_value_t compile_fun(voba_value_t self, voba_value_t args)
 {
-    /* VOBA_DEF_CVAR(syn_fname,self,0); */
+    VOBA_DEF_CVAR(syn_fname,self,0);
     /* VOBA_DEF_CVAR(la_syn_args,self,1); */
-    /* VOBA_DEF_CVAR(la_syn_body,self,2); */
+    VOBA_DEF_CVAR(la_syn_body,self,2);
     /* VOBA_DEF_CVAR(parent,self,3); */
     /* VOBA_DEF_CVAR(capture,self,4); */
-    return voba_make_string(VOBA_CONST_CHAR("not implemented yet."));
+    VOBA_DEF_ARG(top_level, args, 0, ok);
+    return make_ast_fun(SYNTAX(syn_fname)->v,compile_exprs(la_syn_body,top_level));
 }
 static inline voba_value_t compile_top_expr_def_fun(
     voba_value_t syn_def,
@@ -386,8 +413,22 @@ static inline voba_str_t* indent(int level)
 {
     return voba_str_from_char(' ',level * 4);
 }
+static voba_str_t* print_ast_array(voba_value_t asts,int level)
+{
+    int64_t len = voba_array_len(asts);
+    voba_str_t * ret = voba_str_empty();
+    for(int64_t i = 0 ; i < len ; ++i){
+        ret = voba_strcat(ret, indent(level));
+        ret = voba_strcat(ret, print_ast(AST(voba_array_at(asts,i)),level));
+        ret = voba_strcat(ret, VOBA_CONST_CHAR("\n"));
+    }
+    return ret;
+}
 static voba_str_t* print_ast_SET_TOP(ast_t * ast, int level)
 {
+    voba_value_t args[] = {1 , (SYNTAX(ast->u.set_top.name)->v)};
+    voba_value_t ss = voba_apply(voba_symbol_value(s_to_string),
+                                 voba_make_array(args));
     voba_str_t* ret = voba_str_empty();
     ret = voba_vstrcat
         (ret,
@@ -395,19 +436,11 @@ static voba_str_t* print_ast_SET_TOP(ast_t * ast, int level)
          VOBA_CONST_CHAR("ast "),
          voba_str_from_cstr(AST_TYPE_NAMES[ast->type]),
          VOBA_CONST_CHAR(" : name = "),
-         voba_value_to_str(voba_symbol_name(ast->u.set_top.name)),
+         voba_value_to_str(ss),
          VOBA_CONST_CHAR("\n"),
          NULL);
     voba_value_t exprs = ast->u.set_top.exprs;
-    int64_t len = voba_array_len(exprs);
-    for(int64_t i = 0 ; i < len ;++i){
-        ret = voba_vstrcat
-            (ret,
-             indent(level+1),
-             print_ast(AST(voba_array_at(exprs,i)),level + 1),
-             VOBA_CONST_CHAR("\n"),
-             NULL);
-    }
+    ret = voba_strcat(ret, print_ast_array(exprs,level+1));
     return ret;
 }
 static voba_str_t* print_ast_CONSTANT(ast_t * ast, int level)
@@ -423,6 +456,23 @@ static voba_str_t* print_ast_CONSTANT(ast_t * ast, int level)
          voba_str_from_cstr(AST_TYPE_NAMES[ast->type]),
          VOBA_CONST_CHAR(" : value = "),
          voba_value_to_str(ss),
+         NULL);
+    return ret;
+}
+static voba_str_t* print_ast_FUN(ast_t * ast, int level)
+{
+    voba_str_t* ret = voba_str_empty();
+    voba_value_t args[] = {1 , ast->u.fun.name};
+    voba_value_t name = voba_apply(voba_symbol_value(s_to_string),
+                                   voba_make_array(args));
+    ret = voba_vstrcat
+        (ret,
+         indent(level),
+         VOBA_CONST_CHAR("ast "),
+         voba_str_from_cstr(AST_TYPE_NAMES[ast->type]),
+         VOBA_CONST_CHAR(" : name = "),
+         voba_value_to_str(name), VOBA_CONST_CHAR("\n"),
+         print_ast_array(ast->u.fun.body,level+1),
          NULL);
     return ret;
 }
