@@ -6,6 +6,7 @@ XX(FUN)                                         \
 XX(ARG)                                         \
 XX(CLOSURE_VAR)                                 \
 XX(TOP_VAR)                                     \
+XX(APPLY)                                       \
 
 #define DECLARE_AST_TYPE_ENUM(X) X,
 typedef enum ast_type_e {
@@ -22,6 +23,7 @@ typedef struct ast_constant_s {
 typedef struct ast_fun_s {
     voba_value_t syn_s_name; // NIL for annonymous fun.
     voba_value_t a_ast_exprs; // an array of ast
+    voba_value_t a_ast_closure; // an array of ast
 } ast_fun_t;
 typedef struct ast_arg_s {
     voba_value_t syn_s_name;
@@ -34,6 +36,9 @@ typedef struct ast_closure_var_s {
 typedef struct ast_top_var_s {
     voba_value_t syn_s_name;
 } ast_top_var_t;
+typedef struct ast_apply_s {
+    voba_value_t a_ast_exprs; // a list of ast
+} ast_apply_t;
 typedef struct ast_s {
     //DEFINE_SOURCE_LOCATION
     ast_type_t  type;
@@ -44,6 +49,7 @@ typedef struct ast_s {
         ast_arg_t arg;
         ast_closure_var_t closure_var;
         ast_top_var_t top_var;
+        ast_apply_t apply;
     } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
