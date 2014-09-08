@@ -81,9 +81,10 @@ AST_TYPES(AST_DECLARE_TYPE_PRINT_DISPATCHER);
 
 DEFINE_CLS(sizeof(ast_t),ast);
 VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args);
-EXEC_ONCE_DO(
+EXEC_ONCE_PROGN{
     voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_ast,
-                      voba_make_func(to_string_ast));)
+                      voba_make_func(to_string_ast));
+}
 
 static inline voba_value_t make_ast_set_top(voba_value_t syn_name /*symbol*/,
                                             voba_value_t exprs /* array of ast */)

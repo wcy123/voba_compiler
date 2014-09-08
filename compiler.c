@@ -8,20 +8,20 @@
 #include "compiler.h"
 
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args);
-EXEC_ONCE_DO(voba_symbol_set_value(s_compile, voba_make_func(compile));)
+EXEC_ONCE_PROGN{voba_symbol_set_value(s_compile, voba_make_func(compile));}
 
 //voba_value_t voba_cls_syn;
 DEFINE_CLS(sizeof(syntax_t),syn)
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args);
 
-EXEC_ONCE_DO(voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));)
+EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));}
 
 
 
 extern int yyparse();
 extern voba_value_t yylval;
 int yydebug = 0;
-EXEC_ONCE_DO(yydebug = getenv("VOBA_YYDEBUG") != NULL;)
+EXEC_ONCE_PROGN{yydebug = getenv("VOBA_YYDEBUG") != NULL;}
 typedef void *yyscan_t ;
 int z1lex_init ( yyscan_t * ptr_yy_globals ) ;
 int z1lex_destroy ( yyscan_t yyscanner ) ;
