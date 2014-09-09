@@ -12,7 +12,7 @@ static inline int voba_is_module_info(voba_value_t v)
 EXEC_ONCE_PROGN {
     voba_symbol_set_value(s_read_module_info, voba_make_func(read_module_info));
 }
-voba_value_t read_module_info(voba_value_t self, voba_value_t args)
+VOBA_FUNC voba_value_t read_module_info(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_ARG(content1, args, 0, voba_is_string);
     voba_str_t * content = voba_value_to_str(content1);
@@ -42,7 +42,7 @@ voba_value_t read_module_info(voba_value_t self, voba_value_t args)
 EXEC_ONCE_PROGN {
     voba_symbol_set_value(s_module_info_id, voba_make_func(module_info_id));
 }
-voba_value_t module_info_id(voba_value_t self, voba_value_t args)
+VOBA_FUNC voba_value_t module_info_id(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_ARG(info, args, 0, voba_is_module_info);
     return voba_make_string(MODULE_INFO(info)->id);
@@ -50,7 +50,7 @@ voba_value_t module_info_id(voba_value_t self, voba_value_t args)
 EXEC_ONCE_PROGN {
     voba_symbol_set_value(s_module_info_name, voba_make_func(module_info_name));
 }
-voba_value_t module_info_name(voba_value_t self, voba_value_t args)
+VOBA_FUNC voba_value_t module_info_name(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_ARG(info, args, 0, voba_is_module_info);
     return voba_make_string(MODULE_INFO(info)->name);
@@ -58,7 +58,7 @@ voba_value_t module_info_name(voba_value_t self, voba_value_t args)
 EXEC_ONCE_PROGN {
     voba_symbol_set_value(s_module_info_symbols, voba_make_func(module_info_symbols));
 }
-voba_value_t module_info_symbols(voba_value_t self, voba_value_t args)
+VOBA_FUNC voba_value_t module_info_symbols(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_ARG(info, args, 0, voba_is_module_info);
     return MODULE_INFO(info)->symbols;
