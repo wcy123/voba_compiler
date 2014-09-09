@@ -163,7 +163,7 @@ ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*
 }
 %%
 
-void foo()
+void flex_foo()
 {
    // avoid warning, unused function yyuninput
    if(0){

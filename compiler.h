@@ -3,6 +3,10 @@
 
 #define VOBA_SYMBOL_TABLE(XX)                   \
     XX(compile)                                 \
+    XX(read_module_info)                        \
+    XX(module_info_id)                          \
+    XX(module_info_name)                        \
+    XX(module_info_symbols)
     
 #define VOBA_MODULE_NAME "voba_compiler"
 
