@@ -12,7 +12,7 @@
              }
 int fileno(FILE *stream);
 %}
-%option outfile="read_module_header_lex.inc"
+%option outfile="read_module_info_lex.inc"
 %option reentrant
 %x comment str
 DIGIT    [0-9]
@@ -29,13 +29,13 @@ ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*
      int i = 0; while(yytext[i++] != '"');
      int j = i; while(yytext[++j] != '"');
      voba_str_t* name = voba_strdup(voba_str_from_data(yytext + i, j - i));
-     MODULE_INFO(module_info)->name = voba_make_string(name);
+     MODULE_INFO(module_info)->name = name;
 }
 ^#define[[:space:]]+VOBA_MODULE_ID[[:space:]]*\".*\".*$  {
      int i = 0; while(yytext[i++] != '"');
      int j = i; while(yytext[++j] != '"');
      voba_str_t* name = voba_strdup(voba_str_from_data(yytext + i, j - i));
-     MODULE_INFO(module_info)->id = voba_make_string(name);
+     MODULE_INFO(module_info)->id = name;
 }
 \n   {
 }
