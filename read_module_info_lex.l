@@ -23,7 +23,7 @@ ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*
      int i = 0; while(yytext[i++] != '(');
      int j = i; while(yytext[++j] != ')');
      voba_str_t* symbol_name = (voba_str_from_data(yytext + i, j - i));
-     voba_array_push(MODULE_INFO(module_info)->symbols, voba_make_string(voba_strdup(symbol_name)));
+     voba_array_push(MODULE_INFO(module_info)->symbols, voba_make_string(voba_c_id_decode(voba_strdup(symbol_name))));
 }
 ^#define[[:space:]]+VOBA_MODULE_NAME[[:space:]]*\".*\".*$  {
      int i = 0; while(yytext[i++] != '"');
