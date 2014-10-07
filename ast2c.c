@@ -87,9 +87,9 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
             START(VOBA_CONST_CHAR(" \" is not imported."));
             START(VOBA_CONST_CHAR("\"));\n"));
             START(VOBA_CONST_CHAR("    }\n"));
-            START(VOBA_CONST_CHAR("    s = voba_lookup_symbol(voba_make_string(voba_str_from_cstr("));
+            START(VOBA_CONST_CHAR("    s = voba_lookup_symbol(voba_make_string(voba_c_id_decode(voba_str_from_cstr("));
             START(quote_string(ast_top_var_symbol_name(ast)));
-            START(VOBA_CONST_CHAR("))"));
+            START(VOBA_CONST_CHAR(")))"));
             START(VOBA_CONST_CHAR(",voba_tail(m));\n"));
             START(VOBA_CONST_CHAR("    if(voba_is_nil(s)){\n"));
             START(VOBA_CONST_CHAR("        VOBA_THROW("));
@@ -144,24 +144,24 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
     START(VOBA_CONST_CHAR("    };\n"));
     START(VOBA_CONST_CHAR("    fprintf(stderr,\"loading %s(%s)\\n\",name,id);\n"));
     START(VOBA_CONST_CHAR("    voba_import_module(name,id,symbols);\n"));
-    START(VOBA_CONST_CHAR("    voba_value_t vid = voba_make_string(voba_str_from_cstr(id));\n"));
-    START(VOBA_CONST_CHAR("    //voba_value_t vname = voba_make_string(voba_str_from_cstr(name));\n"));
-    START(VOBA_CONST_CHAR("    voba_value_t m = voba_hash_find(voba_modules,vid);\n"));
-    START(VOBA_CONST_CHAR("    voba_value_t s = VOBA_NIL;\n"));
-    START(VOBA_CONST_CHAR("    assert(!voba_is_nil(m) && \"module "));START(mi->name);
-    START(VOBA_CONST_CHAR(" should already be there.\");\n"));
-    for(int64_t i = 0; i < len; ++i){
-        START(VOBA_CONST_CHAR("    s = voba_lookup_symbol(voba_make_string(voba_str_from_cstr("));
-        START(quote_string(voba_value_to_str(voba_array_at(mi->symbols,i))));
-        START(VOBA_CONST_CHAR(")), voba_tail(m));\n"));
-        START(VOBA_CONST_CHAR("    if(voba_is_nil(s)){\n"));
-        START(VOBA_CONST_CHAR("       VOBA_THROW(VOBA_CONST_CHAR(\"module \" "));
-        START(quote_string(mi->name));
-        START(VOBA_CONST_CHAR(" \" should contain symbol \" "));
-        START(quote_string(voba_value_to_str(voba_array_at(mi->symbols,i))));
-        START(VOBA_CONST_CHAR(" \".\"));\n"));
-        START(VOBA_CONST_CHAR("    }\n"));
-    }
+    /* START(VOBA_CONST_CHAR("    voba_value_t vid = voba_make_string(voba_str_from_cstr(id));\n")); */
+    /* START(VOBA_CONST_CHAR("    //voba_value_t vname = voba_make_string(voba_str_from_cstr(name));\n")); */
+    /* START(VOBA_CONST_CHAR("    voba_value_t m = voba_hash_find(voba_modules,vid);\n")); */
+    /* START(VOBA_CONST_CHAR("    voba_value_t s = VOBA_NIL;\n")); */
+    /* START(VOBA_CONST_CHAR("    assert(!voba_is_nil(m) && \"module "));START(mi->name); */
+    /* START(VOBA_CONST_CHAR(" should already be there.\");\n")); */
+    /* for(int64_t i = 0; i < len; ++i){ */
+    /*     START(VOBA_CONST_CHAR("    s = voba_lookup_symbol(voba_make_string(voba_str_from_cstr(")); */
+    /*     START(quote_string(voba_value_to_str(voba_array_at(mi->symbols,i)))); */
+    /*     START(VOBA_CONST_CHAR(")), voba_tail(m));\n")); */
+    /*     START(VOBA_CONST_CHAR("    if(voba_is_nil(s)){\n")); */
+    /*     START(VOBA_CONST_CHAR("       VOBA_THROW(VOBA_CONST_CHAR(\"module \" ")); */
+    /*     START(quote_string(mi->name)); */
+    /*     START(VOBA_CONST_CHAR(" \" should contain symbol \" ")); */
+    /*     START(quote_string(voba_value_to_str(voba_array_at(mi->symbols,i)))); */
+    /*     START(VOBA_CONST_CHAR(" \".\"));\n")); */
+    /*     START(VOBA_CONST_CHAR("    }\n")); */
+    /* } */
     START(VOBA_CONST_CHAR("}\n"));
 }
 static void ast2c_decl_prelude(c_backend_t* bk)
@@ -170,8 +170,7 @@ static void ast2c_decl_prelude(c_backend_t* bk)
     DECL(VOBA_CONST_CHAR("#include <assert.h>\n"));
     DECL(VOBA_CONST_CHAR("#include <voba/include/value.h>\n"));
     DECL(VOBA_CONST_CHAR("#include <exec_once.h>\n"));
-    DECL(VOBA_CONST_CHAR("extern voba_value_t voba_import_module(const char * module_name, const char * module_id, const char * symbols[]);\n"));
-    DECL(VOBA_CONST_CHAR("extern voba_value_t voba_modules;\n"));
+    DECL(VOBA_CONST_CHAR("#include <voba/include/module.h>\n"));
 }
 EXEC_ONCE_START;
 static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
