@@ -387,13 +387,12 @@ static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs,
     //        ^la_syn_exprs
     voba_value_t cur = voba_la_copy(la_syn_exprs);
     voba_value_t ret = voba_make_array_0();
-    voba_value_t cur_ret = voba_la_from_array1(ret,0);
     if(!voba_la_is_nil(cur)){
         while(!voba_la_is_nil(cur)){
             voba_value_t syn_exprs = voba_la_car(cur);
             voba_value_t ast_expr = compile_expr(syn_exprs,fun,toplevel_env);
             if(!voba_is_nil(ast_expr)){
-                cur_ret = voba_la_cons(cur_ret,ast_expr);
+                ret = voba_array_push(ret,ast_expr);
             }
             cur = voba_la_cdr(cur);
         }
@@ -506,7 +505,8 @@ static inline void compile_top_expr_def_fun(
     //  (def ( ... ) ...)
     //   ^------------------------  syn_def
     //       ^^^^^^^--------------- syn_var_form
-    //               ^^^^---------  la_body_form
+    //               ^^^^---------  la_ast_exprs_form
+
     voba_value_t var_form = SYNTAX(syn_var_form)->v;
     voba_value_t la_syn_var_form = voba_la_from_array0(var_form);
     uint32_t len = voba_la_len(la_syn_var_form);
