@@ -19,12 +19,40 @@ static voba_str_t* ast2c_ast_arg(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_top(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+#define DECL(s)  OUT(bk->decl,s);
+#define START(s) OUT(bk->start,s);
+#define IMPL(s)  OUT(bk->impl,s);
 
-#define DECL(s)  bk->decl = voba_strcat(bk->decl,(s));
-#define START(s)  bk->start = voba_strcat(bk->start,(s));
-#define IMPL(s)  bk->impl = voba_strcat(bk->impl,(s));
-#define OUT(stream,s)  (stream) = voba_strcat(stream,s);
-
+static inline voba_str_t * output(voba_str_t * stream, voba_str_t * s, const char * file, int line, const char * fn)
+{
+    if(file){
+        uint32_t i = 0 ; 
+        for(i = 0; i < s->len; ++i){
+            if(s->data[i] == '\n'){
+                stream = voba_strcat(stream,voba_str_from_cstr("/*"));
+                stream = voba_strcat(stream,voba_str_from_cstr(file));
+                stream = voba_strcat(stream,voba_str_from_cstr(":"));
+                stream = voba_strcat(stream,voba_str_fmt_int32_t(line,10));
+                stream = voba_strcat(stream,voba_str_from_cstr(":["));
+                stream = voba_strcat(stream,voba_str_from_cstr(fn));
+                stream = voba_strcat(stream,voba_str_from_cstr("]"));
+                stream = voba_strcat(stream,voba_str_from_cstr("*/"));
+                stream = voba_strcat(stream,voba_str_from_cstr("\n"));
+            }else{
+                stream = voba_strcat_char(stream,s->data[i]);
+            }
+        }
+    }else{
+        stream = voba_strcat(stream,s);
+    }
+    return stream;
+}
+#define DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT
+#define OUT(stream,s)  (stream) = output(stream,s,__FILE__,__LINE__, __func__);
+#else
+#define OUT(stream,s)  (stream) = output(stream,s,NULL,0,NULL);
+#endif
 static voba_str_t * symbol_id(voba_value_t s)
 {
     return voba_strcat(voba_str_from_char('x',1), voba_str_fmt_int64_t(s,16));
@@ -68,7 +96,7 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
             // local variables are defined by SET_TOP
             START(VOBA_CONST_CHAR("    "));
             START(ast_top_var_symbol_id(ast));
-            START(VOBA_CONST_CHAR(" = s;\n"));
+            START(VOBA_CONST_CHAR(" = VOBA_UNDEF;\n")); // TODO check all local variables are defined.
         }else{
             assert(!voba_is_nil(ast->u.top_var.module_id));
             START(VOBA_CONST_CHAR("    id = voba_make_string(voba_str_from_cstr("));
@@ -177,7 +205,9 @@ static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
 {
     int64_t len = voba_array_len(a_asts);
     for(int64_t i = 0; i < len; ++i){
-        ast2c_ast(AST(voba_array_at(a_asts,i)),bk,&bk->start);
+        voba_str_t * s = voba_str_empty();
+        ast2c_ast(AST(voba_array_at(a_asts,i)),bk,&s);
+        START(s);
     }
 }
 static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
@@ -210,15 +240,20 @@ static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
     }
     return ret;
 }
+static voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
+{
+    voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
+    int64_t len = voba_array_len(exprs);
+    for(int64_t i = 0; i < len; ++i){
+        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s);
+    }
+    return ret;
+}
 static voba_str_t* ast2c_ast_set_top(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     OUT(*s, VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
-    voba_str_t* expr = voba_str_empty();
     voba_value_t exprs = ast->u.set_top.a_ast_exprs;
-    int64_t len = voba_array_len(exprs);
-    for(int64_t i = 0; i < len; ++i){
-        expr = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s);
-    }
+    voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s);
     voba_str_t * ret = ast_set_top_symbol_id(ast);
     OUT(*s, ret);
     OUT(*s, VOBA_CONST_CHAR(" = "));
@@ -239,6 +274,8 @@ static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** 
         ret = voba_strcat(ret,VOBA_CONST_CHAR("voba_make_string(voba_str_from_cstr("));
         ret = voba_strcat(ret,quote_string(voba_value_to_str(value)));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("))"));
+    }else if(cls == voba_cls_nil){
+        ret = voba_strcat(ret,VOBA_CONST_CHAR("VOBA_NIL"));
     }else{
         fprintf(stderr,__FILE__ ":%d:[%s] type %s is not supported yet\n", __LINE__, __FUNCTION__,
             voba_get_class_name(value));
@@ -246,9 +283,46 @@ static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** 
     }
     return ret;
 }
+static voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t * ret = VOBA_CONST_CHAR("ast2c_ast_fun_with_closure is not implemented");
+    return ret;
+}
+static voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    ast_fun_t* ast_fn = &(ast->u.fun);
+    voba_str_t * uuid = new_uniq_id();
+    DECL(VOBA_CONST_CHAR("VOBA_FUNC voba_value_t "));
+    DECL(uuid);
+    DECL(VOBA_CONST_CHAR("(voba_value_t self, voba_value_t args);\n"));
+    voba_str_t * s1 = voba_str_empty();
+    
+    OUT(s1,VOBA_CONST_CHAR("VOBA_FUNC voba_value_t "));
+    OUT(s1,uuid);
+    OUT(s1,VOBA_CONST_CHAR("(voba_value_t self, voba_value_t args){\n"));
+    voba_value_t exprs = ast_fn->a_ast_exprs;
+    voba_str_t* expr = ast2c_ast_exprs(exprs,bk,&s1);
+    OUT(s1, VOBA_CONST_CHAR("     return "));
+    OUT(s1, expr);
+    OUT(s1, VOBA_CONST_CHAR("; //hi\n"));
+    OUT(s1,VOBA_CONST_CHAR("}\n"));
+    IMPL(s1);
+    voba_str_t * ret = voba_str_empty();
+    OUT(ret, VOBA_CONST_CHAR("voba_make_func("));
+    OUT(ret, uuid);
+    OUT(ret, VOBA_CONST_CHAR(")"));
+    return ret;
+}
 static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
-    voba_str_t * ret = VOBA_CONST_CHAR("fun is not implemented");
+    voba_str_t* ret = voba_str_empty();
+    ast_fun_t* ast_fn = &ast->u.fun;
+    int64_t len = voba_array_len(ast_fn->a_ast_closure);
+    if(len == 0){
+        ret = ast2c_ast_fun_without_closure(ast,bk,s);
+    }else{
+        ret = ast2c_ast_fun_with_closure(ast,bk,s);
+    }
     return ret;
 }
 static voba_str_t* ast2c_ast_arg(ast_t* ast, c_backend_t* bk, voba_str_t** s)
