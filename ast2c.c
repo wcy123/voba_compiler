@@ -60,7 +60,7 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
     START(VOBA_CONST_CHAR("    voba_value_t m = VOBA_NIL;\n"));
     START(VOBA_CONST_CHAR("    voba_value_t s = VOBA_NIL;\n"));
     START(VOBA_CONST_CHAR("    voba_value_t id = VOBA_NIL;\n"));
-    START(VOBA_CONST_CHAR("    voba_value_t name = VOBA_NIL;\n"));
+    //START(VOBA_CONST_CHAR("    voba_value_t name = VOBA_NIL;\n"));
     for(int64_t i = 0 ; i < len ; ++i){
         ast_t * ast = AST(voba_array_at(a_top_vars,i));
         assert(ast->type == TOP_VAR);
@@ -74,9 +74,9 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
             START(VOBA_CONST_CHAR("    id = voba_make_string(voba_str_from_cstr("));
             START(quote_string(voba_value_to_str(ast->u.top_var.module_id)));
             START(VOBA_CONST_CHAR("    ));\n"));
-            START(VOBA_CONST_CHAR("    name = voba_make_string(voba_str_from_cstr("));
-            START(quote_string(ast_top_var_symbol_name(ast)));
-            START(VOBA_CONST_CHAR("    ));\n"));
+            /* START(VOBA_CONST_CHAR("    name = voba_make_string(voba_str_from_cstr(")); */
+            /* START(quote_string(ast_top_var_symbol_name(ast))); */
+            /* START(VOBA_CONST_CHAR("    ));\n")); */
             //START(VOBA_CONST_CHAR("    fprintf(stderr,__FILE__ \":%d:[%s] voba_modules =  0x%lx\\n\", __LINE__, __FUNCTION__,voba_modules);\n"));
             START(VOBA_CONST_CHAR("    m = voba_hash_find(voba_modules,id);\n"));
             START(VOBA_CONST_CHAR("    if(voba_is_nil(m)){\n"));
