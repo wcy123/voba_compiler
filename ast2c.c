@@ -84,7 +84,6 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
         DECL(ast_top_var_symbol_name(ast));
         DECL(VOBA_CONST_CHAR(";*/\n"));
     }
-    START(VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
     START(VOBA_CONST_CHAR("    voba_value_t m = VOBA_NIL;\n"));
     START(VOBA_CONST_CHAR("    voba_value_t s = VOBA_NIL;\n"));
     START(VOBA_CONST_CHAR("    voba_value_t id = VOBA_NIL;\n"));
@@ -133,7 +132,6 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
             START(VOBA_CONST_CHAR(" = s;\n"));
         }
     }
-    START(VOBA_CONST_CHAR("}\n"));
 }
 static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)
 {
@@ -154,7 +152,7 @@ static voba_str_t * quote_string(voba_str_t * s)
 static void import_module(voba_value_t module_info, c_backend_t * bk)
 {
     module_info_t * mi  = MODULE_INFO(module_info);
-    START(VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
+    START(VOBA_CONST_CHAR("{\n"));
     START(VOBA_CONST_CHAR("    const char * name = "));
     START(quote_string(mi->name));
     START(VOBA_CONST_CHAR(";\n"));
@@ -251,7 +249,6 @@ static voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_st
 }
 static voba_str_t* ast2c_ast_set_top(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
-    OUT(*s, VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
     voba_value_t exprs = ast->u.set_top.a_ast_exprs;
     voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s);
     voba_str_t * ret = ast_set_top_symbol_id(ast);
@@ -261,7 +258,6 @@ static voba_str_t* ast2c_ast_set_top(ast_t* ast, c_backend_t * bk, voba_str_t **
     OUT(*s, VOBA_CONST_CHAR("; /* set top  "));
     OUT(*s, ast_set_top_symbol_name(ast));
     OUT(*s, VOBA_CONST_CHAR(";*/\n"));
-    OUT(*s, VOBA_CONST_CHAR("}"));
     return ret;
 }
 static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s)
@@ -294,12 +290,12 @@ static voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, vo
     voba_str_t * uuid = new_uniq_id();
     DECL(VOBA_CONST_CHAR("VOBA_FUNC voba_value_t "));
     DECL(uuid);
-    DECL(VOBA_CONST_CHAR("(voba_value_t self, voba_value_t args);\n"));
+    DECL(VOBA_CONST_CHAR("(voba_value_t self, voba_value_t fun_args);\n"));
     voba_str_t * s1 = voba_str_empty();
     
     OUT(s1,VOBA_CONST_CHAR("VOBA_FUNC voba_value_t "));
     OUT(s1,uuid);
-    OUT(s1,VOBA_CONST_CHAR("(voba_value_t self, voba_value_t args){\n"));
+    OUT(s1,VOBA_CONST_CHAR("(voba_value_t self, voba_value_t fun_args){\n"));
     voba_value_t exprs = ast_fn->a_ast_exprs;
     voba_str_t* expr = ast2c_ast_exprs(exprs,bk,&s1);
     OUT(s1, VOBA_CONST_CHAR("     return "));
@@ -327,7 +323,10 @@ static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 }
 static voba_str_t* ast2c_ast_arg(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
-    voba_str_t * ret = VOBA_CONST_CHAR("arg is not implemented");
+    voba_str_t * ret = voba_str_empty();
+    OUT(ret, VOBA_CONST_CHAR("voba_array_at(fun_args,"));
+    OUT(ret, voba_str_fmt_uint32_t(ast->u.arg.index,10));
+    OUT(ret, VOBA_CONST_CHAR(")"));
     return ret;
 }
 static voba_str_t* ast2c_ast_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
@@ -365,7 +364,7 @@ static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     voba_str_t * ret = new_uniq_id();
     OUT(*s, VOBA_CONST_CHAR("voba_value_t "));
     OUT(*s, ret);
-    OUT(*s, VOBA_CONST_CHAR(" = VOBA_NIL;{\n"));
+    OUT(*s, VOBA_CONST_CHAR(" __attribute__ ((unused))  = VOBA_NIL;{\n"));
     voba_str_t * s2 = voba_str_empty(); // stream for sub-expression
     voba_value_t exprs = ast->u.apply.a_ast_exprs;
     voba_str_t * s_my = voba_str_empty(); 

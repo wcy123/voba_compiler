@@ -33,7 +33,9 @@ VOBA_FUNC static voba_value_t to_string_c_backend(voba_value_t self, voba_value_
     VOBA_DEF_ARG(bk,args,0,is_c_backend);
     ret = voba_strcat(ret, C_BACKEND(bk)->decl);
     ret = voba_strcat(ret, C_BACKEND(bk)->impl);
+    ret = voba_strcat(ret, VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
     ret = voba_strcat(ret, C_BACKEND(bk)->start);
+    ret = voba_strcat(ret, VOBA_CONST_CHAR("}\n"));
     ret = voba_strcat(ret,VOBA_CONST_CHAR("EXEC_ONCE_START;\n"));
     return voba_make_string(ret); 
 }

@@ -18,6 +18,17 @@ static inline voba_value_t search_fun_closure(voba_value_t syn_symbol, voba_valu
 static inline voba_value_t search_fun_in_parent(voba_value_t syn_symbol, voba_value_t fun);
 static inline voba_value_t search_fun(voba_value_t syn_symbol, voba_value_t fun);
 VOBA_FUNC static voba_value_t compile_fun(voba_value_t self, voba_value_t args);
+// syn_expr is a syntax object for an s-expr
+// fun is a function object, which could be NIL, means, top level environment.
+// fun is an array of : syn_f, la_syn_args, la_ast_exprs, fun_parent, a_ast_capture
+// fun_args, fun_body, fun_parent, and fun_capture return individual objects.
+//  syn_f:  the name of the function,
+//  la_syn_args:  the argument list of the function
+//  la_ast_exprs: the body of the function
+//  fun_parent:  another fun object, the parent of the current function, could be NIL.
+//  a_ast_capture: closure enviroment of the current function, ast object in the parent object.
+//  
+static inline voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t fun,voba_value_t toplevel_env);
 static inline voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t fun, voba_value_t toplevel_env);
 static int ok(voba_value_t any) {return 1;}
     
@@ -679,6 +690,19 @@ static inline void compile_top_expr_import(voba_value_t syn_import, voba_value_t
     }
     return;
 }
+VOBA_FUNC static voba_value_t compile_top_expr_any_next(voba_value_t self, voba_value_t args)
+{
+    VOBA_DEF_CVAR(syn_top_expr,self,0);
+    VOBA_DEF_ARG(toplevel_env, args, 0, ok);
+    voba_value_t fun = VOBA_NIL;
+    return compile_expr(syn_top_expr, fun, toplevel_env);
+}
+static inline void compile_top_expr_any(voba_value_t syn_top_expr, voba_value_t toplevel_env)
+{
+    voba_value_t closure = voba_make_closure_2
+        (compile_top_expr_any_next, syn_top_expr, toplevel_env);
+    voba_array_push(TOPLEVEL_ENV(toplevel_env)->next, closure);
+}
 static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t toplevel_env)
 
 {
@@ -694,7 +718,7 @@ static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t topl
             }else if(voba_eq(key_word, K(toplevel_env,import))){
                 compile_top_expr_import(syn_key_word,voba_la_cdr(cur),toplevel_env);
             }else {
-                report_error(VOBA_CONST_CHAR("unrecognised keyword"),syn_key_word,toplevel_env);
+                compile_top_expr_any(syn_top_expr, toplevel_env);
             }
         }else{
             report_warn(VOBA_CONST_CHAR("top expr is an empty list"), syn_top_expr,toplevel_env);
