@@ -504,7 +504,8 @@ static voba_value_t compile_top_expr_def_fun_next(voba_value_t self, voba_value_
     VOBA_DEF_CVAR(fun,self,0);
     VOBA_DEF_ARG(toplevel_env, args, 0, ok);
     voba_value_t syn_f = fun_name(voba_closure_array(fun));
-    voba_value_t ast_expr = voba_closure_func(fun)(voba_closure_array(fun), args);
+    voba_func_t f = voba_closure_func(fun); // ``compile_fun''
+    voba_value_t ast_expr = f(voba_closure_array(fun), args);
     return make_ast_set_top(syn_f, voba_make_array_1(ast_expr));
 }
 static inline void compile_top_expr_def_fun(
