@@ -318,6 +318,9 @@ static inline voba_value_t compile_array(voba_value_t syn_form,voba_value_t fun,
             }else if(voba_eq(f, K(toplevel_env,import))){
                 report_error(VOBA_CONST_CHAR("illegal form. import is the keyword"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,fun))){
+                // here we don't know the ``fun'' capture any variable
+                // or not, ``compile_fun'' try to compile the body of
+                // the ``fun'', and create a capture if necessary.
                 switch(len){
                 case 1:
                     report_error(VOBA_CONST_CHAR("illegal form. bare fun is not fun"),syn_f,toplevel_env);
@@ -346,6 +349,7 @@ static inline voba_value_t compile_array(voba_value_t syn_form,voba_value_t fun,
                 }
                 }
             }else{
+                // if the first s-exp is a symbol but not a keyword, compile it as same as default behaviour, i.e. return an ``apply'' form.
                 goto label_default;
             }
         }else{
@@ -548,18 +552,16 @@ static inline void compile_top_expr_def_fun(
     return;
 }
 
-static inline void compile_top_expr_def(voba_value_t syn_def, voba_value_t la_syn_top_expr,voba_value_t toplevel_env)
+static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t toplevel_env)
 {
-    //  (def ...)
-    //       ^la_syn_top_expr
+    voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
+    voba_value_t cur = voba_la_from_array1(top_expr,0);
+    voba_value_t syn_def = voba_la_car(cur);
+    voba_value_t la_syn_top_expr = voba_la_cdr(cur);
     if(!voba_la_is_nil(la_syn_top_expr)){
         voba_value_t syn_var_form = voba_la_car(la_syn_top_expr);
         voba_value_t var_form = SYNTAX(syn_var_form)->v;
         if(voba_is_symbol(var_form)){
-            //  (def var ...)
-            //   ^^^---------------------------  syn_def
-            //       ^^^^^^^-------------------  la_syn_top_expr
-            //       ^^^ ----------------------  syn_var_form
             if(!is_keyword(toplevel_env,var_form)){
                 compile_top_expr_def_name(syn_var_form, voba_la_cdr(la_syn_top_expr),toplevel_env);
             }else{
@@ -568,10 +570,6 @@ static inline void compile_top_expr_def(voba_value_t syn_def, voba_value_t la_sy
                              ,toplevel_env);
             }
         }else if(voba_is_array(var_form)){
-            //  (def ( ... ) ...)
-            //   ^------------------------------  syn_def
-            //       ^^^^^^^^^^^----------------- la_syn_top_expr
-            //       ^^^^^^ --------------------  syn_var_form
             compile_top_expr_def_fun(syn_def,
                                      syn_var_form,
                                      voba_la_cdr(la_syn_top_expr),
@@ -668,18 +666,16 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
                      syn_module_name,toplevel_env);
     }
 }
-static inline void compile_top_expr_import(voba_value_t syn_import, voba_value_t la_syn_top_expr,voba_value_t toplevel_env)
+static inline void compile_top_expr_import(voba_value_t syn_top_expr,voba_value_t toplevel_env)
 {
-    //  (import ...)
-    //          ^la_syn_top_expr
+    voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
+    voba_value_t cur = voba_la_from_array1(top_expr,0);
+    voba_value_t syn_import = voba_la_car(cur);
+    voba_value_t la_syn_top_expr = voba_la_cdr(cur);
     if(!voba_la_is_nil(la_syn_top_expr)){
         voba_value_t syn_module_name = voba_la_car(la_syn_top_expr);
         voba_value_t module_name = SYNTAX(syn_module_name)->v;
         if(voba_is_symbol(module_name)){
-            //  (import name ...)
-            //   ^^^---------------------------  syn_import
-            //          ^^^^-------------------  la_syn_top_expr
-            //          ^^^ ----------------------  syn_module_name
             compile_top_expr_import_name(syn_import,syn_module_name,la_syn_top_expr,toplevel_env);
         }else{
             report_error(VOBA_CONST_CHAR("(import x), x must be a symbol")
@@ -715,9 +711,9 @@ static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t topl
             voba_value_t syn_key_word = voba_la_car(cur);
             voba_value_t key_word = SYNTAX(syn_key_word)->v;
             if(voba_eq(key_word, K(toplevel_env,def))){
-                compile_top_expr_def(syn_key_word,voba_la_cdr(cur),toplevel_env);
+                compile_top_expr_def(syn_top_expr,toplevel_env);
             }else if(voba_eq(key_word, K(toplevel_env,import))){
-                compile_top_expr_import(syn_key_word,voba_la_cdr(cur),toplevel_env);
+                compile_top_expr_import(syn_top_expr,toplevel_env);
             }else {
                 compile_top_expr_any(syn_top_expr, toplevel_env);
             }
