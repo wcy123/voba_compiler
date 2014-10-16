@@ -27,7 +27,7 @@ install: libvoba_compiler.so
 	install libvoba_compiler.so $(PREFIX)/voba/core
 	install compiler.h $(PREFIX)/voba/core/
 
-libvoba_compiler.so: syn.o ast.o c_backend.o module_info.o src2syn.o syn2ast.o ast2c.o flex.o parser.o read_module_info.o compiler.o
+libvoba_compiler.so:  var.o env.o syn.o ast.o c_backend.o module_info.o src2syn.o syn2ast.o ast2c.o flex.o parser.o read_module_info.o compiler.o 
 	$(CXX) -shared -Wl,-soname,$@  -o $@ $+
 
 flex.o: parser.o
@@ -49,4 +49,5 @@ read_module_info.o: read_module_info.c read_module_info_lex.inc
 
 read_module_info_lex.inc: read_module_info_lex.l
 	flex --noline  read_module_info_lex.l
+syn2ast.o: syn2ast_scan1.c syn2ast_scan1.h syn2ast_scan2.c syn2ast_scan2.h
 

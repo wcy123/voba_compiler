@@ -4,6 +4,8 @@
 #include <exec_once.h>
 #include "syn.h"
 #include "ast.h"
+#include "var.h"
+#include "env.h"
 #include "c_backend.h"
 #include "module_info.h"
 #include "ast2c.h"
@@ -12,12 +14,12 @@ static void import_module(voba_value_t a_modules, c_backend_t * bk);
 static voba_str_t * quote_string(voba_str_t * s);
 static voba_str_t* new_uniq_id();
 static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s);
-static voba_str_t* ast2c_ast_set_top(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_arg(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_top(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 #define DECL(s)  OUT(bk->decl,s);
 #define START(s) OUT(bk->start,s);
@@ -53,35 +55,27 @@ static inline voba_str_t * output(voba_str_t * stream, voba_str_t * s, const cha
 #else
 #define OUT(stream,s)  (stream) = output(stream,s,NULL,0,NULL);
 #endif
-static voba_str_t * symbol_id(voba_value_t s)
+static voba_str_t * var_c_id(var_t* var)
 {
-    return voba_strcat(voba_str_from_char('x',1), voba_str_fmt_int64_t(s,16));
+    voba_value_t syn_s_name = var->syn_s_name;
+    return voba_strcat(voba_str_from_char('x',1), voba_str_fmt_int64_t(syn_s_name,16));
 }
-static voba_str_t * ast_top_var_symbol_id(ast_t* ast)
+static voba_str_t * var_c_symbol_name(var_t* var)
 {
-    return symbol_id(SYNTAX(ast->u.top_var.syn_s_name)->v);
+    voba_value_t syn_s_name = var->syn_s_name;
+    return voba_value_to_str(voba_symbol_name(SYNTAX(syn_s_name)->v));
 }
-static voba_str_t * ast_set_top_symbol_id(ast_t* ast)
+static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
 {
-    return symbol_id(SYNTAX(ast->u.set_top.syn_s_name)->v);
-}
-static voba_str_t * ast_top_var_symbol_name(ast_t* ast)
-{
-    return voba_value_to_str(voba_symbol_name(SYNTAX(ast->u.top_var.syn_s_name)->v));
-}
-static voba_str_t * ast_set_top_symbol_name(ast_t* ast)
-{
-    return voba_value_to_str(voba_symbol_name(SYNTAX(ast->u.set_top.syn_s_name)->v));
-}
-static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
-{
+    voba_value_t a_top_vars = env->a_var;
     int64_t len = voba_array_len(a_top_vars);
     for(int64_t i = 0 ; i < len ; ++i){
         DECL(VOBA_CONST_CHAR("static voba_value_t "));
-        ast_t * ast = AST(voba_array_at(a_top_vars,i));
-        DECL(ast_top_var_symbol_id(ast));
+        var_t * var = VAR(voba_array_at(a_top_vars,i));
+        assert(var_is_top(var));
+        DECL(var_c_id(var));
         DECL(VOBA_CONST_CHAR("= VOBA_NIL;/*"));
-        DECL(ast_top_var_symbol_name(ast));
+        DECL(var_c_symbol_name(var));
         DECL(VOBA_CONST_CHAR(";*/\n"));
     }
     START(VOBA_CONST_CHAR("    voba_value_t m = VOBA_NIL;\n"));
@@ -89,17 +83,20 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
     START(VOBA_CONST_CHAR("    voba_value_t id = VOBA_NIL;\n"));
     //START(VOBA_CONST_CHAR("    voba_value_t name = VOBA_NIL;\n"));
     for(int64_t i = 0 ; i < len ; ++i){
-        ast_t * ast = AST(voba_array_at(a_top_vars,i));
-        assert(ast->type == TOP_VAR);
-        if(ast->u.top_var.flag == LOCAL_VAR){
+        var_t * var = VAR(voba_array_at(a_top_vars,i));
+        assert(var_is_top(var));
+        switch(var->flag){
+        case VAR_PRIVATE_TOP:
             // local variables are defined by SET_TOP
             START(VOBA_CONST_CHAR("    "));
-            START(ast_top_var_symbol_id(ast));
+            START(var_c_id(var));
             START(VOBA_CONST_CHAR(" = VOBA_UNDEF;\n")); // TODO check all local variables are defined.
-        }else{
-            assert(!voba_is_nil(ast->u.top_var.module_id));
+            break;
+        case VAR_PUBLIC_TOP:
+        case VAR_FOREIGN_TOP:
+            assert(!voba_is_nil(var->u.module_id));
             START(VOBA_CONST_CHAR("    id = voba_make_string(voba_str_from_cstr("));
-            START(quote_string(voba_value_to_str(ast->u.top_var.module_id)));
+            START(quote_string(voba_value_to_str(var->u.module_id)));
             START(VOBA_CONST_CHAR("    ));\n"));
             /* START(VOBA_CONST_CHAR("    name = voba_make_string(voba_str_from_cstr(")); */
             /* START(quote_string(ast_top_var_symbol_name(ast))); */
@@ -110,26 +107,29 @@ static void ast2c_decl_top_var(voba_value_t a_top_vars, c_backend_t * bk)
             START(VOBA_CONST_CHAR("        VOBA_THROW("));
             START(VOBA_CONST_CHAR("VOBA_CONST_CHAR(\""));
             START(VOBA_CONST_CHAR("module \" "));
-            START(quote_string(voba_value_to_str(ast->u.top_var.module_id)));
+            START(quote_string(voba_value_to_str(var->u.module_id)));
             START(VOBA_CONST_CHAR(" \" is not imported."));
             START(VOBA_CONST_CHAR("\"));\n"));
             START(VOBA_CONST_CHAR("    }\n"));
             START(VOBA_CONST_CHAR("    s = voba_lookup_symbol(voba_make_string(voba_c_id_decode(voba_str_from_cstr("));
-            START(quote_string(ast_top_var_symbol_name(ast)));
+            START(quote_string(var_c_symbol_name(var)));
             START(VOBA_CONST_CHAR(")))"));
             START(VOBA_CONST_CHAR(",voba_tail(m));\n"));
             START(VOBA_CONST_CHAR("    if(voba_is_nil(s)){\n"));
             START(VOBA_CONST_CHAR("        VOBA_THROW("));
             START(VOBA_CONST_CHAR("VOBA_CONST_CHAR(\""));
             START(VOBA_CONST_CHAR("module \" "));
-            START(quote_string(voba_value_to_str(ast->u.top_var.module_id)));
+            START(quote_string(voba_value_to_str(var->u.module_id)));
             START(VOBA_CONST_CHAR(" \" should contains \" "));
-            START(quote_string(ast_top_var_symbol_name(ast)));
+            START(quote_string(var_c_symbol_name(var)));
             START(VOBA_CONST_CHAR("));\n"));
             START(VOBA_CONST_CHAR("    }\n"));
             START(VOBA_CONST_CHAR("    "));
-            START(ast_top_var_symbol_id(ast));
+            START(var_c_id(var));
             START(VOBA_CONST_CHAR(" = s;\n"));
+            break;
+        default:
+            assert(0 && "never goes heree");
         }
     }
 }
@@ -212,8 +212,8 @@ static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
     switch(ast->type){
-    case SET_TOP:
-        ret = ast2c_ast_set_top(ast,bk,s);
+    case SET_VAR:
+        ret = ast2c_ast_set_var(ast,bk,s);
         break;
     case CONSTANT:
         ret = ast2c_ast_constant(ast,bk,s);
@@ -221,14 +221,8 @@ static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
     case FUN:
         ret = ast2c_ast_fun(ast,bk,s);
         break;
-    case ARG:
-        ret = ast2c_ast_arg(ast,bk,s);
-        break;
-    case CLOSURE_VAR:
-        ret = ast2c_ast_closure(ast,bk,s);
-        break;
-    case TOP_VAR:
-        ret = ast2c_ast_top(ast,bk,s);
+    case VAR:
+        ret = ast2c_ast_var(ast,bk,s);
         break;
     case APPLY:
         ret = ast2c_ast_apply(ast,bk,s);
@@ -247,16 +241,17 @@ static voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_st
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_set_top(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
+static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
-    voba_value_t exprs = ast->u.set_top.a_ast_exprs;
+    voba_value_t exprs = ast->u.set_var.a_ast_exprs;
+    var_t * var = ast->u.set_var.var;
     voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s);
-    voba_str_t * ret = ast_set_top_symbol_id(ast);
+    voba_str_t * ret = var_c_id(var);
     OUT(*s, ret);
     OUT(*s, VOBA_CONST_CHAR(" = "));
     OUT(*s, expr);
     OUT(*s, VOBA_CONST_CHAR("; /* set top  "));
-    OUT(*s, ast_set_top_symbol_name(ast));
+    OUT(*s, var_c_symbol_name(var));
     OUT(*s, VOBA_CONST_CHAR(";*/\n"));
     return ret;
 }
@@ -313,7 +308,7 @@ static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t* ret = voba_str_empty();
     ast_fun_t* ast_fn = &ast->u.fun;
-    int64_t len = voba_array_len(ast_fn->a_ast_closure);
+    int64_t len = voba_array_len(ast_fn->f->a_var_C);
     if(len == 0){
         ret = ast2c_ast_fun_without_closure(ast,bk,s);
     }else{
@@ -321,38 +316,48 @@ static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_arg(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = voba_str_empty();
     OUT(ret, VOBA_CONST_CHAR("voba_array_at(fun_args,"));
-    OUT(ret, voba_str_fmt_uint32_t(ast->u.arg.index,10));
+    OUT(ret, voba_str_fmt_int32_t(index,10));
     OUT(ret, VOBA_CONST_CHAR(")"));
     return ret;
 }
-static voba_str_t* ast2c_ast_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = VOBA_CONST_CHAR("closure is not implemented");
     return ret;
 }
-static voba_str_t* ast2c_ast_top(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t* ret = voba_str_empty();
-    ast_top_var_t* tv = &ast->u.top_var;
-    switch(tv->flag){
-    case FOREIGN_VAR:
-    case MODULE_VAR:
+    ast_var_t* tv = &ast->u.var;
+    var_t * var = tv->var;
+    switch(var->flag){
+    case VAR_FOREIGN_TOP:
+    case VAR_PUBLIC_TOP:
         ret = voba_strcat(ret,VOBA_CONST_CHAR("voba_symbol_value("));
-        ret = voba_strcat(ret,ast_top_var_symbol_id(ast));
+        ret = voba_strcat(ret,var_c_id(var));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("/*"));
-        ret = voba_strcat(ret,ast_top_var_symbol_name(ast));
+        ret = voba_strcat(ret,var_c_symbol_name(var));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("*/"));
         ret = voba_strcat(ret,VOBA_CONST_CHAR(")"));        
         break;
-    case LOCAL_VAR:
-        ret = voba_strcat(ret,ast_top_var_symbol_id(ast));
+    case VAR_PRIVATE_TOP:
+        ret = voba_strcat(ret,var_c_id(var));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("/*"));
-        ret = voba_strcat(ret,ast_top_var_symbol_name(ast));
+        ret = voba_strcat(ret,var_c_symbol_name(var));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("*/"));
+        break;
+    case VAR_ARGUMENT:
+        ret = ast2c_ast_arg(var->u.index,bk,s);
+        break;
+    case VAR_CLOSURE:
+        ret = ast2c_ast_closure(var->u.index,bk,s);
+        break;
+    case VAR_LOCAL:
+        assert(0&&"not implemented yet");
         break;
     default:
         assert(0&&"never goes here");
@@ -408,7 +413,7 @@ voba_value_t ast2c(toplevel_env_t* toplevel)
     import_modules(toplevel,bk);
     // declare static voba_value_t top_var = VOBA_NIL
     // top_var = m["var_top"]
-    ast2c_decl_top_var(toplevel->a_ast_toplevel_vars,bk);
+    ast2c_decl_top_var(ENV(toplevel->env),bk);
     // output all asts
     ast2c_all_asts(toplevel->a_asts,bk);
     return ret;
