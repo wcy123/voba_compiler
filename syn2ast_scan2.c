@@ -58,19 +58,7 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
             }else if(voba_eq(f, K(toplevel_env,import))){
                 report_error(VOBA_CONST_CHAR("illegal form. import is the keyword"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,fun))){
-                // here we don't know the ``fun'' capture any variable
-                // or not, ``compile_fun'' try to compile the body of
-                // the ``fun'', and create a capture if necessary.
-                switch(len){
-                case 1:
-                    report_error(VOBA_CONST_CHAR("illegal form. bare fun is not fun"),syn_f,toplevel_env);
-                    break;
-                case 2:
-                    report_error(VOBA_CONST_CHAR("illegal form. empty body is not fun"),syn_f,toplevel_env);
-                    break;
-                default: 
-                    ret = compile_fun(syn_form,env,toplevel_env);
-                }
+                ret = compile_fun(syn_form, env, toplevel_env);
             }else{
                 // if the first s-exp is a symbol but not a keyword, compile it as same as default behaviour, i.e. return an ``apply'' form.
                 goto label_default;
@@ -93,21 +81,35 @@ static inline voba_value_t compile_fun(voba_value_t syn_form, voba_value_t env, 
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t form = SYNTAX(syn_form)->v;
-    voba_value_t syn_fun_args = voba_array_at(form,1);
-    voba_value_t fun_args = SYNTAX(syn_fun_args)->v;
-    if(voba_is_array(fun_args)){
-        voba_value_t a_var_A = compile_arg_list(voba_la_from_array0(fun_args),toplevel_env);
-        uint32_t offset = 2;// skip (fun (...) ...)
-        voba_value_t la_syn_body = voba_la_from_array1(form,offset);
-        voba_value_t fun = make_compiler_fun();
-        COMPILER_FUN(fun)->a_var_A = a_var_A;
-        COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
-        COMPILER_FUN(fun)->parent = env;
-        voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
-        voba_value_t syn_s_name = voba_array_at(form,0); // function name is `fun`, the keyword
-        ret = make_ast_fun(syn_s_name,COMPILER_FUN(fun),a_ast_exprs);
-    }else{
-        report_error(VOBA_CONST_CHAR("illegal form. argument list is not a list"),syn_fun_args,toplevel_env);
+    int64_t len = voba_array_len(form);
+    // here we don't know the ``fun'' capture any variable
+    // or not, ``compile_fun'' try to compile the body of
+    // the ``fun'', and create a capture if necessary.
+    switch(len){
+    case 1:
+        report_error(VOBA_CONST_CHAR("illegal form. bare fun is not fun"),syn_form,toplevel_env);
+        break;
+    case 2:
+        report_error(VOBA_CONST_CHAR("illegal form. empty body is not fun"),syn_form,toplevel_env);
+        break;
+    default: {
+        voba_value_t syn_fun_args = voba_array_at(form,1);
+        voba_value_t fun_args = SYNTAX(syn_fun_args)->v;
+        if(voba_is_array(fun_args)){
+            voba_value_t a_var_A = compile_arg_list(voba_la_from_array0(fun_args),toplevel_env);
+            uint32_t offset = 2;// skip (fun (...) ...)
+            voba_value_t la_syn_body = voba_la_from_array1(form,offset);
+            voba_value_t fun = make_compiler_fun();
+            COMPILER_FUN(fun)->a_var_A = a_var_A;
+            COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
+            COMPILER_FUN(fun)->parent = env;
+            voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
+            voba_value_t syn_s_name = voba_array_at(form,0); // function name is `fun`, the keyword
+            ret = make_ast_fun(syn_s_name,COMPILER_FUN(fun),a_ast_exprs);
+        }else{
+            report_error(VOBA_CONST_CHAR("illegal form. argument list is not a list"),syn_fun_args,toplevel_env);
+        }
+    }
     }
     return ret;
 }
@@ -151,8 +153,11 @@ static inline voba_value_t compile_symbol(voba_value_t syn_symbol, voba_value_t 
     }
     return ret;
 }
-
-
+static inline voba_value_t compile_let(voba_value_t syn_symbol, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    return ret;
+}
 /* Local Variables: */
 /* mode:c */
 /* coding: utf-8-unix */

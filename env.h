@@ -24,8 +24,6 @@ extern voba_value_t voba_cls_compiler_fun;
 
 voba_value_t make_env();
 voba_value_t make_compiler_fun();
-// return a var;
 voba_value_t search_symbol(voba_value_t syn_symbol, voba_value_t env_or_fun);
-//int32_t search_symbol_in_array(voba_value_t syn_symbol, voba_value_t a);
 void env_push_var(voba_value_t env, voba_value_t var);
 
