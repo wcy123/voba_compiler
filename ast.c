@@ -263,12 +263,12 @@ voba_value_t make_ast_var(voba_value_t var)
     }
     return r;
 }
-voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs)
+voba_value_t make_ast_set_var(voba_value_t var, voba_value_t a_ast_exprs)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
     AST(r)->type = SET_VAR;
     AST(r)->u.set_var.var = VAR(var);
-    AST(r)->u.set_var.a_ast_exprs = exprs;
+    AST(r)->u.set_var.a_ast_exprs = a_ast_exprs;
     return r;
 }   
 voba_value_t make_ast_apply(voba_value_t value)
@@ -276,6 +276,14 @@ voba_value_t make_ast_apply(voba_value_t value)
     voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
     AST(r)->type = APPLY;
     AST(r)->u.apply.a_ast_exprs = value;
+    return r;
+}
+voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    AST(r)->type = LET;
+    AST(r)->u.let.env = p_env;    
+    AST(r)->u.let.a_ast_exprs = a_ast_exprs;
     return r;
 }
 EXEC_ONCE_START;

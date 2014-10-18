@@ -28,7 +28,7 @@ inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_valu
          voba_str_fmt_uint32_t(end_line,10),
          VOBA_CONST_CHAR(":"),
          voba_str_fmt_uint32_t(end_col,10),
-         VOBA_CONST_CHAR(" error: "),
+         voba_str_from_cstr(level == LEVEL_ERROR?" error: ":" warning: "),
          msg,
          //VOBA_CONST_CHAR("\n"),
          NULL);

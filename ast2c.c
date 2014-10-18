@@ -21,6 +21,7 @@ static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
 static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 #define DECL(s)  OUT(bk->decl,s);
 #define START(s) OUT(bk->start,s);
 #define IMPL(s)  OUT(bk->impl,s);
@@ -74,7 +75,7 @@ static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
         var_t * var = VAR(voba_array_at(a_top_vars,i));
         assert(var_is_top(var));
         DECL(var_c_id(var));
-        DECL(VOBA_CONST_CHAR("= VOBA_NIL;/*"));
+        DECL(VOBA_CONST_CHAR("= VOBA_UNDEF;/*"));
         DECL(var_c_symbol_name(var));
         DECL(VOBA_CONST_CHAR(";*/\n"));
     }
@@ -227,6 +228,9 @@ static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
     case APPLY:
         ret = ast2c_ast_apply(ast,bk,s);
         break;
+    case LET:
+        ret = ast2c_ast_let(ast,bk,s);
+        break;
     default:
         assert(0 && "never goes here");
     }
@@ -250,7 +254,7 @@ static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t **
     OUT(*s, ret);
     OUT(*s, VOBA_CONST_CHAR(" = "));
     OUT(*s, expr);
-    OUT(*s, VOBA_CONST_CHAR("; /* set top  "));
+    OUT(*s, VOBA_CONST_CHAR("; /* set var  "));
     OUT(*s, var_c_symbol_name(var));
     OUT(*s, VOBA_CONST_CHAR(";*/\n"));
     return ret;
@@ -344,6 +348,7 @@ static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
         ret = voba_strcat(ret,VOBA_CONST_CHAR("*/"));
         ret = voba_strcat(ret,VOBA_CONST_CHAR(")"));        
         break;
+    case VAR_LOCAL:
     case VAR_PRIVATE_TOP:
         ret = voba_strcat(ret,var_c_id(var));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("/*"));
@@ -355,9 +360,6 @@ static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
         break;
     case VAR_CLOSURE:
         ret = ast2c_ast_closure(var->u.index,bk,s);
-        break;
-    case VAR_LOCAL:
-        assert(0&&"not implemented yet");
         break;
     default:
         assert(0&&"never goes here");
@@ -397,6 +399,33 @@ static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     OUT(*s, s_my);
     OUT(*s, VOBA_CONST_CHAR("}\n"));
     return ret;
+}
+static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    ast_let_t * ast_let  = &ast->u.let;
+    env_t * p_env = ast_let->env;
+    voba_value_t a_var = p_env->a_var;
+    voba_str_t * id = new_uniq_id();
+    OUT(*s, VOBA_CONST_CHAR("voba_value_t "));
+    OUT(*s, id);
+    OUT(*s,VOBA_CONST_CHAR(" __attribute__ ((unused)) = VOBA_UNDEF;{\n"));
+    int64_t len = voba_array_len(a_var);
+    for(int64_t i = 0 ; i < len ; ++i){
+        var_t * var  = VAR(voba_array_at(a_var,i));
+        assert(var->flag == VAR_LOCAL);
+        OUT(*s,VOBA_CONST_CHAR("voba_value_t "));
+        OUT(*s,var_c_id(var));
+        OUT(*s,VOBA_CONST_CHAR(" __attribute__ ((unused)) = VOBA_UNDEF;/*"));
+        OUT(*s,var_c_symbol_name(var));
+        OUT(*s,VOBA_CONST_CHAR(";*/\n"));
+    }
+    voba_value_t a_ast_exprs = ast_let->a_ast_exprs;
+    voba_str_t * body = ast2c_ast_exprs(a_ast_exprs,bk,s);
+    OUT(*s, id);    
+    OUT(*s, VOBA_CONST_CHAR("="));
+    OUT(*s, body);
+    OUT(*s, VOBA_CONST_CHAR(";\n}\n"));
+    return id;
 }
 static voba_str_t* new_uniq_id()
 {

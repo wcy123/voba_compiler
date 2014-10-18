@@ -49,5 +49,5 @@ read_module_info.o: read_module_info.c read_module_info_lex.inc
 
 read_module_info_lex.inc: read_module_info_lex.l
 	flex --noline  read_module_info_lex.l
-syn2ast.o: syn2ast_scan1.c syn2ast_scan1.h syn2ast_scan2.c syn2ast_scan2.h
+syn2ast.o: syn2ast_scan1.c syn2ast_scan1.h syn2ast_scan2.c syn2ast_scan2.h syn2ast_report.c
 

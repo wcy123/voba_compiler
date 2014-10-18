@@ -8,6 +8,7 @@
     XX(import)                                  \
     XX(if)                                      \
     XX(cond)                                    \
+    XX(let)                                     \
 
 typedef struct toplevel_env_s {
     uint32_t n_of_errors;
@@ -27,6 +28,7 @@ typedef struct toplevel_env_s {
     XX(CONSTANT)                                \
     XX(FUN)                                     \
     XX(APPLY)                                   \
+    XX(LET)                                     \
 
 typedef enum ast_type_e {
 #define DECLARE_AST_TYPE_ENUM(X) X,
@@ -51,6 +53,10 @@ typedef struct ast_var_s {
 typedef struct ast_apply_s {
     voba_value_t a_ast_exprs; // a list of ast
 } ast_apply_t;
+typedef struct ast_let_s {
+    env_t* env;
+    voba_value_t a_ast_exprs; // a list of ast
+} ast_let_t;
 typedef struct ast_s {
     //DEFINE_SOURCE_LOCATION
     ast_type_t  type;
@@ -60,6 +66,7 @@ typedef struct ast_s {
         ast_fun_t fun;
         ast_var_t var;
         ast_apply_t apply;
+        ast_let_t let;
     } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
@@ -70,6 +77,7 @@ voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value
 voba_value_t make_ast_constant(voba_value_t value);
 voba_value_t make_ast_var(voba_value_t var);
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs);
+voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs);
 voba_value_t create_toplevel_env(voba_value_t module);
 
 
