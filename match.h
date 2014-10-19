@@ -5,16 +5,17 @@ typedef struct match_s {
 }match_t;
 #define MATCH(s)  VOBA_USER_DATA_AS(match_t *,s)
 extern voba_value_t voba_cls_match;
-voba_value_t make_match();
+voba_value_t make_match(voba_value_t a_rules);
 
 typedef struct rule_s rule_t;
 struct rule_s {
-    voba_value_t pattern; 
+    voba_value_t pattern;
     voba_value_t a_ast_action; // an list of ast
+    voba_value_t env; // pattern creates a lexical scope
 };
 #define RULE(s)  VOBA_USER_DATA_AS(rule_t *,s)
 extern voba_value_t voba_cls_rule;
-voba_value_t make_rule();
+voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e);
 
 enum pattern_type_e {
     PATTERN_CONSTANT,
@@ -47,7 +48,7 @@ struct pattern_s {
 extern voba_value_t voba_cls_pattern;
 voba_value_t make_pattern();
 
-
+voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env);
 /* Local Variables: */
 /* mode:c */
 /* coding: undecided-unix */

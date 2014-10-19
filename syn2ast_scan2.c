@@ -348,7 +348,56 @@ static inline voba_value_t compile_match_value(voba_value_t syn_form, voba_value
     }
     return ret;
 }
+static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env);
 static inline voba_value_t compile_match_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t form = SYNTAX(syn_form)->v;
+    int64_t len = voba_array_len(form);
+    voba_value_t a_rule = voba_make_array_0();
+    for(int64_t i = 2; i < len; ++i){
+        voba_value_t syn_rule = voba_array_at(form,i);
+        voba_value_t rule = compile_match_rule(syn_rule, env, toplevel_env);
+        if(!voba_is_nil(rule)){
+            voba_array_push(a_rule,rule);
+        }
+    }
+    return ret;
+}
+static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env);
+static inline voba_value_t compile_match_pattern(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env);
+static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t rule = SYNTAX(syn_rule)->v;
+    int64_t len = voba_array_len(rule);
+    if(len >= 1){
+        voba_value_t syn_pattern = voba_array_at(rule,0);
+        voba_value_t pattern = compile_match_pattern(syn_pattern,env,toplevel_env);
+        if(!voba_is_nil(pattern)){
+            voba_value_t new_env = calculate_pattern_env(pattern,env);
+            voba_value_t a_ast_action = compile_match_action(syn_rule,new_env,toplevel_env);
+            if(!voba_is_nil(a_ast_action)){
+                ret = make_rule(pattern,a_ast_action,new_env);
+            }
+        }
+    }else{
+        report_error(VOBA_CONST_CHAR("empty list is not a valid rule"), syn_rule,toplevel_env);
+    }
+    return ret;
+}
+static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t rule = SYNTAX(syn_rule)->v;
+    int64_t len = voba_array_len(rule);
+    assert(len >= 1);
+    uint32_t offset = 1; // (pattern action ...) skip pattern
+    voba_value_t la_syn_exprs = voba_la_from_array1(rule,offset);
+    ret = compile_exprs(la_syn_exprs, env, toplevel_env);
+    return ret;
+}
+static inline voba_value_t compile_match_pattern(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
     return ret;
