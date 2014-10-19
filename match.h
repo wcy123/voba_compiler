@@ -27,7 +27,7 @@ typedef struct pattern_constant_s pattern_constant_t;
 typedef struct pattern_var_s pattern_var_t;
 typedef struct pattern_apply_s pattern_apply_t;
 struct pattern_constant_s {
-    voba_value_t value;
+    voba_value_t syn_value;
 };
 struct pattern_var_s {
     voba_value_t var;
@@ -46,8 +46,9 @@ struct pattern_s {
 };
 #define PATTERN(s)  VOBA_USER_DATA_AS(pattern_t *,s)
 extern voba_value_t voba_cls_pattern;
-voba_value_t make_pattern();
-
+voba_value_t make_pattern_constant(voba_value_t value);
+voba_value_t make_pattern_var(voba_value_t value);
+voba_value_t make_pattern_apply(voba_value_t cls, voba_value_t a_patterns);
 voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env);
 /* Local Variables: */
 /* mode:c */
