@@ -286,12 +286,12 @@ voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs)
     AST(r)->u.let.a_ast_exprs = a_ast_exprs;
     return r;
 }
-voba_value_t make_ast_match()
+voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
-    AST(r)->type = LET;
-    AST(r)->u.match.ast_value = VOBA_NIL;
-    AST(r)->u.match.match = VOBA_NIL; // TODO
+    AST(r)->type = MATCH;
+    AST(r)->u.match.ast_value = ast_value;
+    AST(r)->u.match.match = match;
     return r;
 }
 EXEC_ONCE_START;

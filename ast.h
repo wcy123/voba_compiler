@@ -9,7 +9,8 @@
     XX(if)                                      \
     XX(cond)                                    \
     XX(let)                                     \
-
+    XX(match)                                   \
+    
 typedef struct toplevel_env_s {
     uint32_t n_of_errors;
     uint32_t n_of_warnings;
@@ -85,7 +86,7 @@ voba_value_t make_ast_constant(voba_value_t value);
 voba_value_t make_ast_var(voba_value_t var);
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs);
 voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs);
-voba_value_t make_ast_match();
+voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match);
 voba_value_t create_toplevel_env(voba_value_t module);
 
 

@@ -62,6 +62,8 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
                 ret = compile_fun(syn_form, env, toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,let))){
                 ret = compile_let(syn_form, env, toplevel_env);
+            }else if(voba_eq(f, K(toplevel_env,match))){
+                ret = compile_match(syn_form, env, toplevel_env);
             }else{
                 // if the first s-exp is a symbol but not a keyword,
                 // compile it as same as default behaviour,
@@ -314,6 +316,41 @@ static inline voba_value_t compile_let_body_init_var(voba_value_t var, voba_valu
     if(!voba_is_nil(a_ast_exprs)){
         ret = make_ast_set_var(var,a_ast_exprs);
     }
+    return ret;
+}
+static inline voba_value_t compile_match_value(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env);
+static inline voba_value_t compile_match_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env);
+static inline voba_value_t compile_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t ast_value = compile_match_value(syn_form,env,toplevel_env);
+    if(!voba_is_nil(ast_value)){
+        voba_value_t match = compile_match_match(syn_form,env,toplevel_env);
+        if(!voba_is_nil(match)){
+            ret = make_ast_match(ast_value,match);
+        }
+    }
+    assert(0 && "todo");
+    return ret;
+}
+static inline voba_value_t compile_match_value(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t form = SYNTAX(syn_form)->v;
+    int64_t len = voba_array_len(form);
+    assert(len >= 1);
+    voba_value_t syn_match = voba_array_at(form,0);
+    if(len >= 2){
+        voba_value_t syn_expr = voba_array_at(form,1);
+        ret = compile_expr(syn_expr,env,toplevel_env);
+    }else{
+        report_error(VOBA_CONST_CHAR("bare match"),syn_match,toplevel_env);
+    }
+    return ret;
+}
+static inline voba_value_t compile_match_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
     return ret;
 }
 /* Local Variables: */
