@@ -386,6 +386,7 @@ static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_
     }
     return ret;
 }
+static inline voba_value_t compile_match_pattern_var(voba_value_t syn_pattern, voba_value_t env,voba_value_t toplevel_env);
 static inline voba_value_t compile_match_pattern(voba_value_t syn_pattern, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
@@ -403,14 +404,22 @@ static inline voba_value_t compile_match_pattern(voba_value_t syn_pattern, voba_
         ret = make_pattern_constant(syn_pattern);
     }
     else if(cls == voba_cls_symbol){
-        //ret = compile_symbol(syn_pattern,env,toplevel_env);
-        assert(0&&"todo");
+        ret = compile_match_pattern_var(syn_pattern, env,toplevel_env);
     }
     else if(cls == voba_cls_array){
         assert(0&&"todo");
     }else{
         report_error(VOBA_CONST_CHAR("invalid pattern"),syn_pattern,toplevel_env);
     }
+    return ret;
+}
+static inline voba_value_t compile_match_pattern_var(voba_value_t syn_s_name, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t s_name = SYNTAX(syn_s_name)->v;
+    assert(voba_is_a(s_name,voba_cls_symbol));
+    voba_value_t var = make_var(syn_s_name,VAR_LOCAL);
+    ret = make_pattern_var(var);
     return ret;
 }
 static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env)

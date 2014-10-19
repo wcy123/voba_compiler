@@ -49,12 +49,38 @@ voba_value_t make_pattern_apply(voba_value_t cls, voba_value_t a_patterns)
     return ret;
 
 }
+void walk_pattern_env(voba_value_t pattern, voba_value_t env);
 voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env)
 {
     voba_value_t ret = VOBA_NIL;
     ret = make_env();
-    ENV(ret)->parent = env;
+    env_t * p_env = ENV(ret);
+    p_env->parent = env;
+    walk_pattern_env(pattern,ret);
     return ret;
+}
+void walk_pattern_env(voba_value_t pattern, voba_value_t env)
+{
+    pattern_t * p = PATTERN(pattern);
+    switch(p->type){
+    case PATTERN_CONSTANT:
+        break;
+    case PATTERN_VAR:
+        env_push_var(env,p->u.var.var);
+        break;
+    case PATTERN_APPLY:{
+        voba_value_t a_patterns = p->u.apply.a_patterns;
+        int64_t len = voba_array_len(a_patterns);
+        for(int64_t i = 0; i < len; ++i){
+            voba_value_t pattern = voba_array_at(a_patterns,i);
+            walk_pattern_env(pattern,env);
+        }
+        break;
+    }
+    default:
+        assert(0&&"never goes here");
+    }
+    return;
 }
 EXEC_ONCE_START;
 

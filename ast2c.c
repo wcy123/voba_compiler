@@ -14,6 +14,8 @@ static void import_modules(toplevel_env_t* toplevel, c_backend_t* out);
 static void import_module(voba_value_t a_modules, c_backend_t * bk);
 static voba_str_t * quote_string(voba_str_t * s);
 static voba_str_t* new_uniq_id();
+inline static void ast2c_begin_scope(c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_end_scope(c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s);
 static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
@@ -173,6 +175,7 @@ static void ast2c_decl_prelude(c_backend_t* bk)
     DECL(VOBA_CONST_CHAR("#include <voba/include/value.h>\n"));
     DECL(VOBA_CONST_CHAR("#include <exec_once.h>\n"));
     DECL(VOBA_CONST_CHAR("#include <voba/include/module.h>\n"));
+    DECL(VOBA_CONST_CHAR("#define voba_match_eq voba_eq\n"));
 }
 EXEC_ONCE_START;
 static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
@@ -267,10 +270,15 @@ static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t **
     }
     return ret;
 }
+static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_value_t syn_value = ast->u.constant.value;
     voba_value_t value = SYNTAX(syn_value)->v;    
+    return ast2c_constant(value,bk,s);
+}
+static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, voba_str_t** s)
+{
     voba_str_t * ret = voba_str_empty();
     voba_value_t cls = voba_get_class(value);
     if(cls == voba_cls_str){
@@ -278,7 +286,12 @@ static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** 
         ret = voba_strcat(ret,quote_string(voba_value_to_str(value)));
         ret = voba_strcat(ret,VOBA_CONST_CHAR("))"));
     }else if(cls == voba_cls_nil){
-        ret = voba_strcat(ret,VOBA_CONST_CHAR("VOBA_NIL"));
+        ret = VOBA_CONST_CHAR("VOBA_NIL");
+    }else if(cls == voba_cls_i32){
+        ret = VOBA_STRCAT(
+            VOBA_CONST_CHAR("voba_make_i32("),
+            voba_str_fmt_int32_t(voba_value_to_i32(value),10),
+            VOBA_CONST_CHAR(")"));
     }else{
         fprintf(stderr,__FILE__ ":%d:[%s] type %s is not supported yet\n", __LINE__, __FUNCTION__,
             voba_get_class_name(value));
@@ -449,7 +462,9 @@ static inline void ast2c_comment(voba_str_t * c, c_backend_t* bk, voba_str_t**s)
     OUT(*s, c);
     OUT(*s, VOBA_CONST_CHAR("*/"));
 }
-inline static voba_str_t* ast2c_ast_match_rule(voba_str_t* v, voba_str_t* ret_id, voba_value_t rule, c_backend_t* bk, voba_str_t** s);
+inline static voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_goto(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_match_t* ast_match  = &ast->u.match;
@@ -457,26 +472,137 @@ static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     ast_t * p_ast_value = AST(ast_value);
     voba_str_t* s_ast_value = ast2c_ast(p_ast_value,bk,s);
     voba_str_t * id = ast2c_new_var(VOBA_CONST_CHAR("match"),bk,s);
+    voba_str_t * label_success = new_uniq_id();
     match_t * p_match = MATCH(ast_match->match);
     voba_value_t a_rules = p_match->a_rules;
     int64_t len = voba_array_len(a_rules);
     for(int64_t i = 0; i < len; ++i){
         voba_value_t rule = voba_array_at(a_rules,i);
-        ast2c_ast_match_rule(s_ast_value, id, rule, bk,s);
+        voba_str_t * label_fail = new_uniq_id();
+        ast2c_begin_scope(bk,s);
+        ast2c_match_rule(s_ast_value, id, rule,label_success,label_fail,bk,s);
+        ast2c_end_scope(bk,s);
+        ast2c_label(label_fail,bk,s);        
     }
+    ast2c_label(label_success,bk,s);
     return id;
 }
-inline static voba_str_t* ast2c_ast_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, c_backend_t* bk, voba_str_t** s)
+inline static void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s);
+inline static voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = voba_str_empty();
     rule_t* p_rule = RULE(rule);
     ast2c_decl_env(ENV(p_rule->env),bk,s);
+    ast2c_match_pattern(v,label_fail,p_rule->pattern,bk,s);
+    ast2c_match_action(ret_id,p_rule->a_ast_action,bk,s);
+    ast2c_goto(label_success,bk,s);
     return ret;
+}
+inline static void ast2c_goto(voba_str_t * label, c_backend_t* bk, voba_str_t** s)
+{
+    OUT(*s,VOBA_CONST_CHAR("\ngoto "));
+    OUT(*s,label);
+    OUT(*s,VOBA_CONST_CHAR(";\n"));
+    return;
+}
+inline static void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t** s)
+{
+    OUT(*s,VOBA_CONST_CHAR("\n"));
+    OUT(*s,label);
+    OUT(*s,VOBA_CONST_CHAR(":\n"));
+    return;
+}
+inline static void ast2c_match_pattern_constant(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+inline static void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s)
+{
+    pattern_t * p_pattern = PATTERN(pattern);
+    switch(p_pattern->type){
+    case PATTERN_CONSTANT:
+        ast2c_match_pattern_constant(v,label_fail,p_pattern,bk,s);
+        break;
+    case PATTERN_VAR:
+        ast2c_match_pattern_var(v,label_fail,p_pattern,bk,s);
+        break;
+    case PATTERN_APPLY:
+        ast2c_match_pattern_apply(v,label_fail,p_pattern,bk,s);
+        break;
+    default:
+        assert(0&&"never goes here");
+    }
+    return;
+}
+inline static void ast2c_match_pattern_constant(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+{
+    voba_value_t syn_const_value = p_pattern->u.constant.syn_value;
+    voba_value_t const_value = SYNTAX(syn_const_value)->v;
+    voba_str_t * src_const_value = ast2c_constant(const_value,bk,s);
+    OUT(*s,VOBA_CONST_CHAR("if(!voba_match_eq("));
+    OUT(*s,v);
+    OUT(*s,VOBA_CONST_CHAR(","));
+    OUT(*s,src_const_value);
+    OUT(*s,VOBA_CONST_CHAR(")){\n"));
+    OUT(*s,VOBA_CONST_CHAR("    goto "));
+    OUT(*s,label_fail);
+    OUT(*s,VOBA_CONST_CHAR(";\n"));
+    OUT(*s,VOBA_CONST_CHAR("}\n"));
+    return;
+}
+inline static void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+{
+    var_t* var = VAR(p_pattern->u.var.var);
+    voba_str_t * c_id = var_c_id(var);
+    OUT(*s,VOBA_CONST_CHAR("if(voba_eq("));
+    OUT(*s,c_id);
+    OUT(*s,VOBA_CONST_CHAR(", VOBA_UNDEF"));
+    OUT(*s,VOBA_CONST_CHAR("))"));
+    ast2c_begin_scope(bk,s);{
+        ast2c_assign(c_id, v, bk,s);
+        ast2c_end_scope(bk,s);
+    }
+    OUT(*s,VOBA_CONST_CHAR("else"));
+    ast2c_begin_scope(bk,s);
+    {
+        OUT(*s,VOBA_CONST_CHAR("    if(!voba_match_eq("));
+        OUT(*s,v);
+        OUT(*s,VOBA_CONST_CHAR(","));
+        OUT(*s,c_id);
+        OUT(*s,VOBA_CONST_CHAR("))\n"));
+        ast2c_begin_scope(bk,s);
+        OUT(*s,VOBA_CONST_CHAR("        goto "));
+        OUT(*s,label_fail);
+        OUT(*s,VOBA_CONST_CHAR(";\n"));
+        ast2c_end_scope(bk,s);
+    }
+    ast2c_end_scope(bk,s);
+    return;
+}
+inline static void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+{
+    assert(0&&"not implemented");
+    return;
+}
+inline static void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t * expr = ast2c_ast_exprs(a_ast_action,bk,s);
+    ast2c_assign(ret_id,expr,bk,s);
+    return;
 }
 static voba_str_t* new_uniq_id()
 {
     static int c = 0;
     return voba_strcat(VOBA_CONST_CHAR("s"),voba_str_fmt_int32_t(c++,10));
+}
+
+inline static void ast2c_begin_scope(c_backend_t* bk, voba_str_t** s)
+{
+    OUT(*s,VOBA_CONST_CHAR("{\n"));
+}
+inline static void ast2c_end_scope(c_backend_t* bk, voba_str_t** s)
+{
+    OUT(*s,VOBA_CONST_CHAR("}\n"));
 }
 voba_value_t ast2c(toplevel_env_t* toplevel)
 {
