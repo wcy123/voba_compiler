@@ -379,7 +379,9 @@ static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_
             voba_value_t a_ast_action = compile_match_action(syn_rule,new_env,toplevel_env);
             if(!voba_is_nil(a_ast_action)){
                 ret = make_rule(pattern,a_ast_action,new_env);
-            }
+            }    voba_value_t ret = VOBA_NIL;
+    return ret;
+
         }
     }else{
         report_error(VOBA_CONST_CHAR("empty list is not a valid rule"), syn_rule,toplevel_env);
