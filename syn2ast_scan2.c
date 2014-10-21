@@ -1,4 +1,5 @@
 // return an array of ast
+#include "match.h"
 static voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t env, voba_value_t toplevel_env)
 {
     voba_value_t cur = voba_la_copy(la_syn_exprs);
@@ -387,6 +388,7 @@ static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_
     return ret;
 }
 static inline voba_value_t compile_match_pattern_var(voba_value_t syn_pattern, voba_value_t env,voba_value_t toplevel_env);
+static inline voba_value_t compile_match_pattern_apply(voba_value_t syn_pattern, voba_value_t env,voba_value_t toplevel_env);
 static inline voba_value_t compile_match_pattern(voba_value_t syn_pattern, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
@@ -407,7 +409,7 @@ static inline voba_value_t compile_match_pattern(voba_value_t syn_pattern, voba_
         ret = compile_match_pattern_var(syn_pattern, env,toplevel_env);
     }
     else if(cls == voba_cls_array){
-        assert(0&&"todo");
+        ret = compile_match_pattern_apply(syn_pattern, env,toplevel_env);
     }else{
         report_error(VOBA_CONST_CHAR("invalid pattern"),syn_pattern,toplevel_env);
     }
@@ -420,6 +422,35 @@ static inline voba_value_t compile_match_pattern_var(voba_value_t syn_s_name, vo
     assert(voba_is_a(s_name,voba_cls_symbol));
     voba_value_t var = make_var(syn_s_name,VAR_LOCAL);
     ret = make_pattern_var(var);
+    return ret;
+}
+static inline voba_value_t compile_match_pattern_apply(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t form = SYNTAX(syn_form)->v;
+    assert(voba_is_a(form,voba_cls_array));
+    int64_t len = voba_array_len(form);
+    if(len > 0 ){
+        voba_value_t syn_cls = voba_array_at(form,0);
+        voba_value_t ast_cls = compile_expr(syn_cls,env,toplevel_env);
+        if(!voba_is_nil(ast_cls)){
+            voba_value_t subpatterns = voba_make_array_0();
+            for(int64_t i = 1; i < len; ++i){
+                voba_value_t syn_subpattern = voba_array_at(form,i);
+                voba_value_t subpattern = compile_match_pattern(syn_subpattern,env,toplevel_env);
+                if(!voba_is_nil(subpattern)){
+                    voba_array_push(subpatterns,subpattern);
+                }
+            }
+            int64_t len_sub_patterns = voba_array_len(subpatterns);
+            int subpattern_ok = (len_sub_patterns == (len -1));
+            if(subpattern_ok){
+                ret = make_pattern_apply(ast_cls,subpatterns);
+            }
+        }
+    }else{
+        report_error(VOBA_CONST_CHAR("bare pattern"),syn_form,toplevel_env);
+    }
     return ret;
 }
 static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env)

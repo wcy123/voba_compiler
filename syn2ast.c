@@ -13,7 +13,7 @@
 #include "syn2ast_scan2.h"
 #include "env.h"
 #include "var.h"
-
+#include "keywords.h"
 #include "syn2ast_report.c"
 #include "syn2ast_other.c"
 #include "syn2ast_scan1.c"

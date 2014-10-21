@@ -1,16 +1,6 @@
 #pragma once
 #include "var.h"
-#include "env.h"
-#define VOBA_KEYWORDS(XX)                       \
-    XX(def)                                     \
-    XX(fun)                                     \
-    XX(quote)                                   \
-    XX(import)                                  \
-    XX(if)                                      \
-    XX(cond)                                    \
-    XX(let)                                     \
-    XX(match)                                   \
-    
+#include "env.h"    
 typedef struct toplevel_env_s {
     uint32_t n_of_errors;
     uint32_t n_of_warnings;

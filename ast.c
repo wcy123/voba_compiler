@@ -6,7 +6,7 @@
 #include "parser.syn.h"
 #include "ast.h"
 #include "read_module_info.h"
-
+#include "keywords.h"
 /* #define DECLARE_AST_TYPE_ARRAY(X) #X, */
 /* const char * AST_TYPE_NAMES [] = { */
 /*     AST_TYPES(DECLARE_AST_TYPE_ARRAY) */

@@ -39,12 +39,12 @@ voba_value_t make_pattern_var(voba_value_t var)
     return ret;
 
 }
-voba_value_t make_pattern_apply(voba_value_t cls, voba_value_t a_patterns)
+voba_value_t make_pattern_apply(voba_value_t ast_cls, voba_value_t a_patterns)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_pattern,sizeof(pattern_t));
     pattern_t * p_pattern = PATTERN(ret);
     p_pattern->type = PATTERN_APPLY;
-    p_pattern->u.apply.cls = cls;
+    p_pattern->u.apply.ast_cls = ast_cls;
     p_pattern->u.apply.a_patterns = a_patterns;
     return ret;
 

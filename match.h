@@ -33,7 +33,7 @@ struct pattern_var_s {
     voba_value_t var;
 };
 struct pattern_apply_s {
-    voba_value_t cls;
+    voba_value_t ast_cls;
     voba_value_t a_patterns; // an array of pattern
 };
 struct pattern_s {
