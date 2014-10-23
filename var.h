@@ -11,7 +11,10 @@ typedef struct var_s {
     voba_value_t syn_s_name; // unique id
     enum var_flag flag;
     union {
-        voba_value_t module_id; // module id for top var
+        struct {
+            voba_value_t module_id; // module id for top var
+            voba_value_t module_name;
+        }m;
         int32_t index; // for closure and argument 
     }u;
 }var_t;

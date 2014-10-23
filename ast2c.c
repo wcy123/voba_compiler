@@ -84,35 +84,26 @@ static voba_str_t * var_c_symbol_name(var_t* var)
     voba_value_t syn_s_name = var->syn_s_name;
     return voba_value_to_str(voba_symbol_name(SYNTAX(syn_s_name)->v));
 }
-static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * id, voba_str_t * name, voba_str_t * var_name)
+static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, voba_str_t* module_id, voba_str_t * syn_name, voba_str_t * var_name)
 {
     TEMPLATE(&bk->start,
              VOBA_CONST_CHAR(
                  "{\n"
-                 "    voba_value_t m = VOBA_NIL;\n"
-                 "    voba_value_t s = VOBA_NIL;\n"
-                 "    voba_value_t id = VOBA_NIL;\n"
-                 "    id = voba_make_string(voba_str_from_cstr(#0));\n"
-                 "    m = voba_hash_find(voba_modules,id);\n"
-                 "    if(voba_is_nil(m)){\n"
-                 "        VOBA_THROW(VOBA_CONST_CHAR(\"module \" #0 \" is not imported.\"));\n"
-                 "    }\n"
-                 "    s = voba_lookup_symbol(voba_make_string(voba_c_id_decode(voba_str_from_cstr(#1))),voba_tail(m));\n"
-                 "    if(voba_is_nil(s)){\n"
-                 "        VOBA_THROW(VOBA_CONST_CHAR(\"module \" #0 \" should contains \" #1));\n"
-                 "    }\n"
-                 "    #2 = s;\n"
+                 "    #2 = voba_module_var(#3,#0,#1);\n"
                  "}\n")
-             ,quote_string(id)
-             ,quote_string(name)
+             ,quote_string(module_id)
+             ,quote_string(syn_name)
              ,var_name
+             ,quote_string(module_name)
         );
     return;
 }
 static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
 {
     ast2c_decl_env(env,bk,&bk->decl);
-    ast2c_import_var(bk,voba_str_from_cstr(VOBA_MODULE_LANG_ID),
+    ast2c_import_var(bk,
+                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
+                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
                      voba_str_from_cstr(VOBA_MODULE_LANG_MATCH),
                      VOBA_CONST_CHAR("gf_match"));
     voba_value_t a_top_vars = env->a_var;
@@ -125,8 +116,10 @@ static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
             break;
         case VAR_PUBLIC_TOP:
         case VAR_FOREIGN_TOP:
-            assert(!voba_is_nil(var->u.module_id));
-            ast2c_import_var(bk,voba_value_to_str(var->u.module_id),
+            assert(!voba_is_nil(var->u.m.module_id));
+            ast2c_import_var(bk,
+                             voba_value_to_str(var->u.m.module_name),
+                             voba_value_to_str(var->u.m.module_id),
                              var_c_symbol_name(var),
                              var_c_id(var));
             break;

@@ -17,14 +17,15 @@ static voba_value_t make_syn_nil()
 //     if a local var, var becomes a module var
 //     if a module var, throw an error, name conflicts
 //     if a foreign var, throw an error, name conficts again.
-static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_value_t module_id, voba_value_t toplevel_env)
+static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_value_t module_id, voba_value_t module_name, voba_value_t toplevel_env)
 {
     voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
     voba_value_t symbol = SYNTAX(syn_symbol)->v;
     voba_value_t var = search_symbol(syn_symbol,env);
     if(voba_is_nil(var)){
         voba_value_t top_var = make_var(syn_symbol,VAR_FOREIGN_TOP);
-        VAR(top_var)->u.module_id = module_id;
+        VAR(top_var)->u.m.module_id = module_id;
+        VAR(top_var)->u.m.module_name = module_name;
         env_push_var(env,top_var);
         fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx\n", __LINE__, __FUNCTION__
                 ,top_var);
@@ -252,6 +253,7 @@ static inline void compile_top_expr_import_module_info(voba_value_t info,
     struct YYLTYPE yyloc = {1,1};
     voba_value_t symbol_names = module_info_symbols(info);
     voba_value_t module_id = module_info_id(info);
+    voba_value_t module_name = module_info_name(info);
     int64_t len = voba_array_len(symbol_names);
     voba_array_push(TOPLEVEL_ENV(toplevel_env)->a_modules,info);
     for(int64_t i = 0; i < len ; i ++){
@@ -260,7 +262,7 @@ static inline void compile_top_expr_import_module_info(voba_value_t info,
                                                TOPLEVEL_ENV(toplevel_env)->module);
         voba_value_t syn_module_var_name = make_syntax(symbol,&yyloc);
         attach_source_info(syn_module_var_name,make_source_info(filename,content));
-        create_topleve_var_for_import(syn_module_var_name,module_id,toplevel_env);
+        create_topleve_var_for_import(syn_module_var_name,module_id,module_name,toplevel_env);
     }
 }
 static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_value_t syn_module_name, voba_value_t la_syn_top_expr,voba_value_t toplevel_env)
