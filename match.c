@@ -1,6 +1,7 @@
+#define EXEC_ONCE_TU_NAME "match"
+#include <exec_once.h>
 #include <voba/include/value.h>
 #include <voba/core/builtin.h>
-#include <exec_once.h>
 #include "match.h"
 #include "env.h"
 DEFINE_CLS(sizeof(match_t),match);
@@ -82,6 +83,6 @@ void walk_pattern_env(voba_value_t pattern, voba_value_t env)
     }
     return;
 }
-EXEC_ONCE_START;
+
 
 

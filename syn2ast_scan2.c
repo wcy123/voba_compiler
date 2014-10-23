@@ -418,7 +418,9 @@ static inline voba_value_t compile_match_pattern(voba_value_t syn_pattern, voba_
 static inline voba_value_t compile_match_pattern_var(voba_value_t syn_s_name, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
+#ifndef NDEBUG    
     voba_value_t s_name = SYNTAX(syn_s_name)->v;
+#endif
     assert(voba_is_a(s_name,voba_cls_symbol));
     voba_value_t var = make_var(syn_s_name,VAR_LOCAL);
     ret = make_pattern_var(var);
@@ -457,7 +459,9 @@ static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_valu
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t rule = SYNTAX(syn_rule)->v;
+#ifndef NDEBUG
     int64_t len = voba_array_len(rule);
+#endif
     assert(len >= 1);
     uint32_t offset = 1; // (pattern action ...) skip pattern
     voba_value_t la_syn_exprs = voba_la_from_array1(rule,offset);

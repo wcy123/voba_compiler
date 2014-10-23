@@ -1,5 +1,6 @@
 #include <string.h>
 #include <errno.h>
+#define EXEC_ONCE_TU_NAME "ast"
 #include <voba/include/value.h>
 #include <exec_once.h>
 #include <voba/core/builtin.h>
@@ -294,4 +295,4 @@ voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match)
     AST(r)->u.match.match = match;
     return r;
 }
-EXEC_ONCE_START;
+

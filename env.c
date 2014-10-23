@@ -1,5 +1,5 @@
+#define EXEC_ONCE_TU_NAME "env"
 #include <voba/include/value.h>
-#include <exec_once.h>
 #include <voba/core/builtin.h>
 #include "env.h"
 #include "syn.h"
@@ -200,4 +200,4 @@ VOBA_FUNC static voba_value_t to_string_compiler_fun(voba_value_t self,voba_valu
     return voba_make_string(ret);
     
 }
-EXEC_ONCE_START;
+

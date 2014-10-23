@@ -1,5 +1,6 @@
-#include <voba/include/value.h>
+#define EXEC_ONCE_TU_NAME "module_info"
 #include <exec_once.h>
+#include <voba/include/value.h>
 #include "module_info.h"
 static DEFINE_CLS(sizeof(module_info_t),module_info);
 voba_value_t module_info_id(voba_value_t info)    
@@ -26,4 +27,4 @@ voba_value_t make_module_info()
     MODULE_INFO(ret)->symbols = voba_make_array_0();
     return ret;
 }
-EXEC_ONCE_START;
+

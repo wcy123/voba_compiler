@@ -1,6 +1,7 @@
 #include <string.h>
 #include <errno.h>
 #include <voba/include/value.h>
+#define EXEC_ONCE_TU_NAME "syn2ast"
 #include <exec_once.h>
 #include <voba/core/builtin.h>
 #include "parser.syn.h"
@@ -46,4 +47,4 @@ voba_value_t syn2ast(voba_value_t syn,voba_value_t module, int * error)
     TOPLEVEL_ENV(toplevel_env)->a_asts = asts;
     return toplevel_env;
 }
-EXEC_ONCE_START;
+

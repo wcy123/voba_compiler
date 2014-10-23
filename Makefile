@@ -12,7 +12,14 @@ CXXFLAGS += $(INCLUDE)
 FLAGS += -Wall -Werror
 FLAGS += -fPIC
 
-CFLAGS += -ggdb -O0
+ifneq ($(CONFIG),release)
+	CFLAGS += -ggdb -O0
+	CXXFLAGS += -ggdb -O0
+else
+	CFLAGS += -O3 -DNDEBUG
+	CXXFLAGS += -O3 -DNDEBUG
+endif
+
 CFLAGS += -std=c99
 CFLAGS += $(FLAGS)
 CFLAGS += -fPIC
@@ -21,6 +28,8 @@ LFLAGS += --noline
 LEX = flex
 YACC = bison
 
+LDFLAGS += -L $(PREFIX) -lexec_once
+
 all: install
 
 install: libvoba_compiler.so
@@ -28,7 +37,7 @@ install: libvoba_compiler.so
 	install compiler.h $(PREFIX)/voba/core/
 
 libvoba_compiler.so:  var.o env.o syn.o ast.o c_backend.o module_info.o match.o src2syn.o syn2ast.o ast2c.o flex.o parser.o read_module_info.o compiler.o 
-	$(CXX) -shared -Wl,-soname,$@  -o $@ $+
+	$(CXX) -shared -Wl,-soname,$@  -o $@ $+ $(LDFLAGS) -lexec_once
 
 flex.o: parser.o
 

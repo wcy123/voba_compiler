@@ -149,7 +149,9 @@ static voba_value_t compile_top_expr_def_fun_next(voba_value_t self, voba_value_
 static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_value_t toplevel_env)
 {
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
+#ifndef NDEBUG    
     int64_t len = voba_array_len(top_expr);
+#endif
     assert(len > 0);
     //voba_value_t syn_def = voba_array_at(top_expr,0);
     voba_value_t syn_x_form = voba_array_at(top_expr,1);

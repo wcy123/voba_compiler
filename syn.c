@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#define EXEC_ONCE_TU_NAME "syn"
 #include <voba/include/value.h>
 #include "voba_str.h"
 #include "parser.syn.h"
@@ -66,4 +67,4 @@ VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args
     return voba_make_string(dump_location(syn,0));
 }
 
-EXEC_ONCE_START;
+

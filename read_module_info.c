@@ -1,4 +1,5 @@
 #include <voba/include/value.h>
+#define EXEC_ONCE_TU_NAME "read_module_info"
 #include <exec_once.h>
 #include "compiler.h"
 #include "module_info.h"
@@ -60,4 +61,4 @@ static VOBA_FUNC voba_value_t v_module_info_symbols(voba_value_t self, voba_valu
     VOBA_DEF_ARG(info, args, 0, is_module_info);
     return module_info_symbols(info);
 }
-EXEC_ONCE_START
+

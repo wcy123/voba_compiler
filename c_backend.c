@@ -1,4 +1,5 @@
 #include <voba_str.h>
+#define EXEC_ONCE_TU_NAME "c_backend"
 #include <exec_once.h>
 #include <voba/include/value.h>
 #include <voba/core/builtin.h>
@@ -36,9 +37,8 @@ VOBA_FUNC static voba_value_t to_string_c_backend(voba_value_t self, voba_value_
     ret = voba_strcat(ret, VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));
     ret = voba_strcat(ret, C_BACKEND(bk)->start);
     ret = voba_strcat(ret, VOBA_CONST_CHAR("}\n"));
-    ret = voba_strcat(ret,VOBA_CONST_CHAR("EXEC_ONCE_START;\n"));
     return voba_make_string(ret); 
 }
 
 
-EXEC_ONCE_START;
+

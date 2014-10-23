@@ -1,6 +1,7 @@
+#define EXEC_ONCE_TU_NAME "var"
+#include <exec_once.h>
 #include <voba/include/value.h>
 #include <voba/core/builtin.h>
-#include <exec_once.h>
 #include "var.h"
 #include "syn.h"
 DEFINE_CLS(sizeof(var_t),var);
@@ -60,4 +61,4 @@ VOBA_FUNC static voba_value_t to_string_var(voba_value_t self,voba_value_t vs)
     return voba_make_string(ret);
     
 }
-EXEC_ONCE_START;
+
