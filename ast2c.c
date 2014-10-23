@@ -588,13 +588,16 @@ static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail
     var_t* var = VAR(p_pattern->u.var.var);
     voba_str_t * c_id = var_c_id(var);
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    if(voba_eq(#0,VOBA_UNDEF)){\n"
-                             "        #0 = #1;\n"
+             VOBA_CONST_CHAR("    /* start to match the single variable #0 */\n"
+                             "    if(voba_eq(#0,VOBA_UNDEF)){\n"
+                             "        #0 = #1; /* when #0 is unbound, bound it*/\n"
                              "    }else{\n"
+                             "         /* when #0 is already bound, try to test whether equal*/\n"
                              "         if(!voba_match_eq(#0,#1)){\n"
-                             "              goto #2;\n"
+                             "              goto #2;/*if not equal goto the fail lable */\n"
                              "         }\n"
                              "    }\n"
+                             "    /* end to match the single variable #0*/\n"
                  )
              ,c_id, v, label_fail);
     return;
@@ -604,13 +607,14 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
     pattern_apply_t* p_pat = &p_pattern->u.apply;
     voba_value_t ast_cls = p_pat->ast_cls;
     voba_value_t a_patterns = p_pat->a_patterns;
-    voba_str_t * id = new_uniq_id();
+    voba_str_t * s_cls_id = new_uniq_id();
     voba_str_t * tmpf = new_uniq_id();
     voba_str_t * tmpv1 = new_uniq_id();
     voba_str_t * tmpv2 = new_uniq_id();
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * s_cls = ast2c_ast(AST(ast_cls),bk,&s1);
     int64_t len = voba_array_len(a_patterns);
+    voba_str_t * s_len = voba_str_fmt_int64_t(len,10);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    /* evaluate cls */\n"
                              "    #0\n"
@@ -622,25 +626,41 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
                              "    if(voba_is_nil(#5)){\n"
                              "        goto #3; /* no function registered*/\n"                             
                              "    }\n"
-                             "    voba_value_t #7 [] = {2, #4, voba_make_i32(-1), voba_make_i32(#8)};\n"
+                             "    voba_value_t #7 [] = {4, #1, #4, voba_make_i32(-1), voba_make_i32(#8)};\n"
                              "    voba_value_t #6 = voba_apply(#5, voba_make_array(#7));\n"
                              "    if(!voba_eq(VOBA_TRUE,#6)){\n"
                              "        goto #3; /* number of var does not match*/\n"
                              "    }\n"
                  )
              ,indent(s1) // 0
-             ,id   //1
+             ,s_cls_id   //1
              ,s_cls //2
              ,label_fail //3
-             ,v //41
+             ,v //4
              ,tmpf //5
              ,tmpv1 // 6
              ,tmpv2 // 7
-             ,voba_str_fmt_int64_t(len,10) // 8
+             ,s_len // 8
         );
     for(int64_t i = 0; i < len; ++i){
         voba_value_t sp = voba_array_at(a_patterns,i);
-        ast2c_match_pattern(v,label_fail,sp,bk,s);
+        voba_str_t * tmp_args = new_uniq_id();
+        voba_str_t * tmp_apply_ret =  new_uniq_id();
+        TEMPLATE(s,
+                 VOBA_CONST_CHAR(
+                     "    /* extract #3 sub-value from the main value*/\n"
+                     "    voba_value_t #0 [] = {4, #1, #2, voba_make_i32(#3), voba_make_i32(#4)};\n"
+                     "    voba_value_t #5 = voba_apply(#6, voba_make_array(#0));/* the sub-value #3*/\n"
+                     )
+                 ,tmp_args //0
+                 ,s_cls_id //1
+                 ,v        //2
+                 ,voba_str_fmt_int64_t(i,10) // 3
+                 ,s_len // 4
+                 ,tmp_apply_ret // 5
+                 ,tmpf //6
+            );
+        ast2c_match_pattern(tmp_apply_ret,label_fail,sp,bk,s);
     }
     return;
 }

@@ -1,4 +1,4 @@
-static int ok(voba_value_t any) {return 1;}
+
 #define VOBA_DECLARE_KEYWORD(key) k_##key,
 enum voba_keyword_e {
     VOBA_KEYWORDS(VOBA_DECLARE_KEYWORD)

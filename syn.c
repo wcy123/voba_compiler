@@ -63,7 +63,7 @@ static inline int voba_is_syn(voba_value_t x)
 }
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args)
 {
-    VOBA_DEF_ARG(syn, args, 0, voba_is_syn);
+    VOBA_DEF_ARG4(syn, args, 0, voba_is_syn);
     return voba_make_string(dump_location(syn,0));
 }
 
