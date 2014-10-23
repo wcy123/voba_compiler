@@ -7,7 +7,7 @@
 DEFINE_CLS(sizeof(var_t),var);
 voba_value_t make_var(voba_value_t syn_name, enum var_flag flag)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_var,sizeof(var_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_var);
     VAR(ret)->syn_s_name = syn_name;
     VAR(ret)->flag = flag;
     VAR(ret)->u.module_id = VOBA_NIL;

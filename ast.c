@@ -221,7 +221,7 @@ static
 DEFINE_CLS(sizeof(toplevel_env_t),toplevel_env);
 voba_value_t create_toplevel_env(voba_value_t module)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_toplevel_env, sizeof(toplevel_env_t));
+    voba_value_t r = voba_make_user_data(voba_cls_toplevel_env);
     TOPLEVEL_ENV(r)->n_of_errors = 0;
     TOPLEVEL_ENV(r)->n_of_warnings = 0;
     TOPLEVEL_ENV(r)->module = module;
@@ -236,7 +236,7 @@ voba_value_t create_toplevel_env(voba_value_t module)
 }
 voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value_t a_ast_exprs)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = FUN;
     AST(r)->u.fun.syn_s_name = syn_s_name;
     AST(r)->u.fun.f = f;
@@ -245,14 +245,14 @@ voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value
 }   
 voba_value_t make_ast_constant(voba_value_t value)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = CONSTANT;
     AST(r)->u.constant.value = value;
     return r;
 }
 voba_value_t make_ast_var(voba_value_t var)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = VAR;
     AST(r)->u.var.var = VAR(var);
     if(1){
@@ -266,7 +266,7 @@ voba_value_t make_ast_var(voba_value_t var)
 }
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t a_ast_exprs)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = SET_VAR;
     AST(r)->u.set_var.var = VAR(var);
     AST(r)->u.set_var.a_ast_exprs = a_ast_exprs;
@@ -274,14 +274,14 @@ voba_value_t make_ast_set_var(voba_value_t var, voba_value_t a_ast_exprs)
 }   
 voba_value_t make_ast_apply(voba_value_t value)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = APPLY;
     AST(r)->u.apply.a_ast_exprs = value;
     return r;
 }
 voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = LET;
     AST(r)->u.let.env = p_env;    
     AST(r)->u.let.a_ast_exprs = a_ast_exprs;
@@ -289,7 +289,7 @@ voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs)
 }
 voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match)
 {
-    voba_value_t r = voba_make_user_data(voba_cls_ast,sizeof(ast_t));
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = MATCH;
     AST(r)->u.match.ast_value = ast_value;
     AST(r)->u.match.match = match;

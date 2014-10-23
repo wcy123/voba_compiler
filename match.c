@@ -9,14 +9,14 @@ DEFINE_CLS(sizeof(rule_t),rule);
 DEFINE_CLS(sizeof(pattern_t),pattern);
 voba_value_t make_match(voba_value_t a_rules)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_match,sizeof(match_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_match);
     match_t * p_match = MATCH(ret);
     p_match->a_rules = a_rules;
     return ret;
 }
 voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_rule,sizeof(rule_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_rule);
     rule_t * p_rule = RULE(ret);
     p_rule->pattern = p;
     p_rule->a_ast_action = a;
@@ -25,7 +25,7 @@ voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e)
 }
 voba_value_t make_pattern_constant(voba_value_t syn_value)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_pattern,sizeof(pattern_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_pattern);
     pattern_t * p_pattern = PATTERN(ret);
     p_pattern->type = PATTERN_CONSTANT;
     p_pattern->u.constant.syn_value = syn_value;
@@ -33,7 +33,7 @@ voba_value_t make_pattern_constant(voba_value_t syn_value)
 }
 voba_value_t make_pattern_var(voba_value_t var)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_pattern,sizeof(pattern_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_pattern);
     pattern_t * p_pattern = PATTERN(ret);
     p_pattern->type = PATTERN_VAR;
     p_pattern->u.var.var = var;
@@ -42,7 +42,7 @@ voba_value_t make_pattern_var(voba_value_t var)
 }
 voba_value_t make_pattern_apply(voba_value_t ast_cls, voba_value_t a_patterns)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_pattern,sizeof(pattern_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_pattern);
     pattern_t * p_pattern = PATTERN(ret);
     p_pattern->type = PATTERN_APPLY;
     p_pattern->u.apply.ast_cls = ast_cls;

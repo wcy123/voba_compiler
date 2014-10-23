@@ -41,7 +41,7 @@ static void syntax_loc(voba_value_t a , YYLTYPE* b)
 inline
 static voba_value_t make_syntax(voba_value_t v, YYLTYPE* b)
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_syn, sizeof(syntax_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_syn);
     SYNTAX(ret)->v = v;
     SYNTAX(ret)->start_pos = b == NULL? 0:b->start_pos;
     SYNTAX(ret)->end_pos = b == NULL ? 0: b->end_pos;

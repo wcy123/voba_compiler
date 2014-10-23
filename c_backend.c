@@ -15,7 +15,7 @@ static int is_c_backend(voba_value_t x)
 
 voba_value_t make_c_backend()
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_c_backend, sizeof(c_backend_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_c_backend);
     c_backend_t * r = C_BACKEND(ret);
     r->decl = voba_str_empty();
     r->start = voba_str_empty();

@@ -21,7 +21,7 @@ voba_value_t is_module_info(voba_value_t v)
 }
 voba_value_t make_module_info()
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_module_info, sizeof(module_info_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_module_info);
     MODULE_INFO(ret)->name = NULL;
     MODULE_INFO(ret)->id = NULL;
     MODULE_INFO(ret)->symbols = voba_make_array_0();

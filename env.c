@@ -11,14 +11,14 @@ DEFINE_CLS(sizeof(compiler_fun_t),compiler_fun);
 
 voba_value_t make_env()
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_env,sizeof(env_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_env);
     ENV(ret)->a_var = voba_make_array_0();
     ENV(ret)->parent = VOBA_NIL;
     return ret;
 }
 voba_value_t make_compiler_fun()
 {
-    voba_value_t ret = voba_make_user_data(voba_cls_compiler_fun,sizeof(compiler_fun_t));
+    voba_value_t ret = voba_make_user_data(voba_cls_compiler_fun);
     COMPILER_FUN(ret)->a_var_A = voba_make_array_0();
     COMPILER_FUN(ret)->a_var_C = voba_make_array_0();
     COMPILER_FUN(ret)->parent = VOBA_NIL;
