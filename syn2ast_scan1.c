@@ -191,7 +191,7 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
     if(!voba_la_is_nil(la_syn_top_expr)){
         voba_value_t syn_var_form = voba_la_car(la_syn_top_expr);
         voba_value_t var_form = SYNTAX(syn_var_form)->v;
-        if(voba_is_symbol(var_form)){
+        if(voba_is_a(var_form,voba_cls_symbol)){
             if(!is_keyword(toplevel_env,var_form)){
                 compile_top_expr_def_name(syn_var_form, voba_la_cdr(la_syn_top_expr),toplevel_env);
             }else{
@@ -199,7 +199,7 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
                              ,var_form
                              ,toplevel_env);
             }
-        }else if(voba_is_array(var_form)){
+        }else if(voba_is_a(var_form,voba_cls_array)){
             compile_top_expr_def_fun(syn_top_expr,toplevel_env);
         }else{
             report_error(VOBA_CONST_CHAR("(def x), x must be a symbol or list")
@@ -303,7 +303,7 @@ static inline void compile_top_expr_import(voba_value_t syn_top_expr,voba_value_
     if(!voba_la_is_nil(la_syn_top_expr)){
         voba_value_t syn_module_name = voba_la_car(la_syn_top_expr);
         voba_value_t module_name = SYNTAX(syn_module_name)->v;
-        if(voba_is_symbol(module_name)){
+        if(voba_is_a(module_name,voba_cls_symbol)){
             compile_top_expr_import_name(syn_import,syn_module_name,la_syn_top_expr,toplevel_env);
         }else{
             report_error(VOBA_CONST_CHAR("(import x), x must be a symbol")
@@ -331,7 +331,7 @@ static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t topl
 
 {
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
-    if(voba_is_array(top_expr)){
+    if(voba_is_a(top_expr,voba_cls_array)){
         int64_t len =  voba_array_len(top_expr);
         if(len > 0){
             voba_value_t cur = voba_la_from_array1(top_expr,0);

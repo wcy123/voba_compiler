@@ -52,7 +52,7 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
     if(len != 0){
         voba_value_t syn_f = voba_array_at(form,0);
         voba_value_t f = SYNTAX(syn_f)->v;
-        if(voba_is_symbol(f)){
+        if(voba_is_a(f,voba_cls_symbol)){
             if(voba_eq(f, K(toplevel_env,quote))){
                 report_error(VOBA_CONST_CHAR("not implemented for quote"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,if))){
@@ -76,7 +76,7 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
             ;
             voba_value_t ast_form = compile_exprs(voba_la_from_array0(form),env,toplevel_env);
             if(!voba_is_nil(ast_form)){
-                assert(voba_is_array(ast_form));
+                assert(voba_is_a(ast_form,voba_cls_array));
                 ret = make_ast_apply(ast_form);
             }
         }
@@ -103,7 +103,7 @@ static inline voba_value_t compile_fun(voba_value_t syn_form, voba_value_t env, 
     default: {
         voba_value_t syn_fun_args = voba_array_at(form,1);
         voba_value_t fun_args = SYNTAX(syn_fun_args)->v;
-        if(voba_is_array(fun_args)){
+        if(voba_is_a(fun_args,voba_cls_array)){
             voba_value_t a_var_A = compile_arg_list(voba_la_from_array0(fun_args),toplevel_env);
             uint32_t offset = 2;// skip (fun (...) ...)
             voba_value_t la_syn_body = voba_la_from_array1(form,offset);
@@ -142,7 +142,7 @@ static inline voba_value_t compile_arg(voba_value_t a, int32_t index, voba_value
     voba_value_t ret = VOBA_NIL;
     assert(voba_is_a(a,voba_cls_syn));
     voba_value_t v = SYNTAX(a)->v;
-    if(voba_is_symbol(v)){
+    if(voba_is_a(v,voba_cls_symbol)){
         ret = make_var(a,VAR_ARGUMENT);
         VAR(ret)->u.index = index;
     }else{

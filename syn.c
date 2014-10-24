@@ -42,7 +42,7 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
                        VOBA_CONST_CHAR(",C"),
                        voba_str_fmt_uint32_t(end_col,10),
                        VOBA_CONST_CHAR("):"),NULL);
-    if(voba_is_array(SYNTAX(syn)->v)){
+    if(voba_is_a(SYNTAX(syn)->v,voba_cls_array)){
         ret = voba_strcat(ret,VOBA_CONST_CHAR("[\n"));
         for(size_t n = 0 ; n < voba_array_len(SYNTAX(syn)->v); ++n){
             ret = voba_strcat(ret,dump_location(voba_array_at(SYNTAX(syn)->v,n), level+1));

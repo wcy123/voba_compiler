@@ -28,7 +28,7 @@ void attach_source_info(voba_value_t syn /*syntax object*/
                         , voba_value_t source_info)
 {
     SYNTAX(syn)->source_info = source_info;
-    if(voba_is_array(SYNTAX(syn)->v)){
+    if(voba_is_a(SYNTAX(syn)->v,voba_cls_array)){
         for(size_t n = 0 ; n < voba_array_len(SYNTAX(syn)->v); ++n){
             attach_source_info(voba_array_at(SYNTAX(syn)->v,n),source_info);
         }
