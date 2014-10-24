@@ -273,7 +273,7 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
         voba_value_t module_header_content = read_module_header_file(module_header_file,syn_module_name,toplevel_env);
         if(!voba_is_nil(module_header_content)) {
             voba_value_t module_info = read_module_info(module_header_content);
-            if(is_module_info(module_info)){
+            if(voba_is_a(module_info,voba_cls_module_info)){
                 compile_top_expr_import_module_info(module_info,module_header_file, module_header_content, syn_module_name,toplevel_env);
             }else{
                 report_error(VOBA_STRCAT(

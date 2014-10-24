@@ -13,8 +13,8 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args);
 EXEC_ONCE_PROGN{voba_symbol_set_value(s_compile, voba_make_func(compile));}
 VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 {
-    VOBA_DEF_ARG4(content, args, 0, voba_is_string);
-    VOBA_DEF_ARG4(filename, args, 1, voba_is_string);
+    VOBA_DEF_ARG4(voba_cls_str, content, args, 0);
+    VOBA_DEF_ARG4(voba_cls_str, filename, args, 1);
     int error = 0;
     voba_value_t module = VOBA_NIL;
     voba_value_t syn = src2syn(content,filename,&module, &error);
