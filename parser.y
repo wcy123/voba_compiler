@@ -57,6 +57,6 @@ T_INT
 |T_STRING  
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
 | '(' ')' { $$ = make_syntax(voba_make_array_0(),&@$);}
-| error { printf("TODO ERRORR RECOVERY\n"); }
+| error { fprintf(stderr,"TODO ERRORR RECOVERY %d - %d\n",@$.start_pos, @$.end_pos); }
 ;
 

@@ -8,5 +8,6 @@
     XX(cond)                                    \
     XX(let)                                     \
     XX(match)                                   \
+    XX(value)                                   \
 
 

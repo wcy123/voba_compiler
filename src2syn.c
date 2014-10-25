@@ -26,13 +26,17 @@ voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t 
     }
     z1_scan_bytes(content->data,content->len,scanner);
     int r = z1parse(scanner,&ret, *module);
-    voba_value_t si = make_source_info(filename,content1);
-    attach_source_info(ret,si);
-    z1lex_destroy(scanner);
-    if(r == 0){
-        *error = 0;
+    if(!voba_is_nil(ret)){
+        voba_value_t si = make_source_info(filename,content1);
+        attach_source_info(ret,si);
+        if(r == 0){
+            *error = 0;
+        }else{
+            *error = 1;
+        }
     }else{
         *error = 1;
     }
+    z1lex_destroy(scanner);
     return ret;
 }

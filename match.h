@@ -18,16 +18,16 @@ extern voba_value_t voba_cls_rule;
 voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e);
 
 enum pattern_type_e {
-    PATTERN_CONSTANT,
+    PATTERN_VALUE,
     PATTERN_VAR,
     PATTERN_APPLY
 };
 typedef struct pattern_s pattern_t;
-typedef struct pattern_constant_s pattern_constant_t;
+typedef struct pattern_value_s pattern_value_t;
 typedef struct pattern_var_s pattern_var_t;
 typedef struct pattern_apply_s pattern_apply_t;
-struct pattern_constant_s {
-    voba_value_t syn_value;
+struct pattern_value_s {
+    voba_value_t a_ast_value;
 };
 struct pattern_var_s {
     voba_value_t var;
@@ -39,14 +39,14 @@ struct pattern_apply_s {
 struct pattern_s {
     enum pattern_type_e type;
     union {
-        pattern_constant_t constant;
+        pattern_value_t value;
         pattern_var_t var;
         pattern_apply_t apply;
     }u;
 };
 #define PATTERN(s)  VOBA_USER_DATA_AS(pattern_t *,s)
 extern voba_value_t voba_cls_pattern;
-voba_value_t make_pattern_constant(voba_value_t value);
+voba_value_t make_pattern_value(voba_value_t value);
 voba_value_t make_pattern_var(voba_value_t value);
 voba_value_t make_pattern_apply(voba_value_t cls, voba_value_t a_patterns);
 voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env);

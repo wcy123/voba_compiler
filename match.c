@@ -23,12 +23,12 @@ voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e)
     p_rule->env = e;
     return ret;
 }
-voba_value_t make_pattern_constant(voba_value_t syn_value)
+voba_value_t make_pattern_value(voba_value_t a_ast_value)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_pattern);
     pattern_t * p_pattern = PATTERN(ret);
-    p_pattern->type = PATTERN_CONSTANT;
-    p_pattern->u.constant.syn_value = syn_value;
+    p_pattern->type = PATTERN_VALUE;
+    p_pattern->u.value.a_ast_value = a_ast_value;
     return ret;
 }
 voba_value_t make_pattern_var(voba_value_t var)
@@ -64,7 +64,7 @@ void walk_pattern_env(voba_value_t pattern, voba_value_t env)
 {
     pattern_t * p = PATTERN(pattern);
     switch(p->type){
-    case PATTERN_CONSTANT:
+    case PATTERN_VALUE:
         break;
     case PATTERN_VAR:
         env_push_var(env,p->u.var.var);

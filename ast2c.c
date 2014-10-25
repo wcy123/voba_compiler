@@ -181,7 +181,7 @@ static void ast2c_decl_prelude(c_backend_t* bk)
                              "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
                              "##include <exec_once.h>\n"
                              "##include <voba/include/module.h>\n"
-                             "##define voba_match_eq voba_eq\n"
+                             "##define voba_match_eq voba_eql\n"
                              "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"));
 }
 
@@ -329,7 +329,7 @@ static voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, vo
     TEMPLATE(&s1,
              VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args)\n"
                              "{\n"
-                             "    #1"
+                             "#1"
                              "    return #2; /* return #0 */\n"
                              "}\n")
              ,uuid,indent(s2),expr);
@@ -432,16 +432,22 @@ static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     ast_let_t * ast_let  = &ast->u.let;
     voba_str_t * id = new_uniq_id();
     voba_str_t * s1 = voba_str_empty();
+    voba_str_t * s2 = voba_str_empty();
     ast2c_decl_env(ast_let->env,bk,&s1);
     voba_value_t a_ast_exprs = ast_let->a_ast_exprs;
-    voba_str_t * body = ast2c_ast_exprs(a_ast_exprs,bk,s);
+    voba_str_t * body = ast2c_ast_exprs(a_ast_exprs,bk,&s2);
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    #2\n"
+             VOBA_CONST_CHAR("    /*let env*/\n"
+                             "#2\n"
+                             "    /*decl let return value*/\n"
                              "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n"
-                             "    #0 = #1; /* let statement return */\n")
+                             "    /*let body*/\n"
+                             "#3\n" 
+                             "    #0 = #1; /* set letreturn value*/\n")
              ,id
              ,body
-             ,indent(s1));
+             ,indent(s1)
+             ,indent(s2));
     return id;
 }
 static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t ** s)
@@ -549,15 +555,15 @@ static inline void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t**
     OUT(*s,VOBA_CONST_CHAR(":\n"));
     return;
 }
-static inline void ast2c_match_pattern_constant(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s)
 {
     pattern_t * p_pattern = PATTERN(pattern);
     switch(p_pattern->type){
-    case PATTERN_CONSTANT:
-        ast2c_match_pattern_constant(v,label_fail,p_pattern,bk,s);
+    case PATTERN_VALUE:
+        ast2c_match_pattern_value(v,label_fail,p_pattern,bk,s);
         break;
     case PATTERN_VAR:
         ast2c_match_pattern_var(v,label_fail,p_pattern,bk,s);
@@ -570,17 +576,16 @@ static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, vo
     }
     return;
 }
-static inline void ast2c_match_pattern_constant(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
 {
-    voba_value_t syn_const_value = p_pattern->u.constant.syn_value;
-    voba_value_t const_value = SYNTAX(syn_const_value)->v;
-    voba_str_t * src_const_value = ast2c_constant(const_value,bk,s);
+    voba_value_t a_ast_exprs = p_pattern->u.value.a_ast_value;
+    voba_str_t * expr = ast2c_ast_exprs(a_ast_exprs,bk,s);
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "     if(!voba_match_eq(#0,#1)){\n"
                  "         goto #2; /* match failed */\n"
                  "     }\n")
-             ,v,src_const_value,label_fail);
+             ,v,expr,label_fail);
     return;
 }
 static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)

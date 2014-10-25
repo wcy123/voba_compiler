@@ -1,4 +1,3 @@
-#include <voba_str.h>
 #define EXEC_ONCE_TU_NAME "c_backend"
 #include <exec_once.h>
 #include <voba/include/value.h>
