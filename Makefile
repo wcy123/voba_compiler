@@ -47,7 +47,7 @@ clean:
 	rm *.o *.so parser.c flex.c read_module_info_lex.inc
 
 flex.c: flex.l
-	flex -P z1 --noline -o $@ flex.l
+	flex -d -P z1 --noline -o $@ flex.l
 parser.c: parser.y
 	bison -p z1 parser.y
 

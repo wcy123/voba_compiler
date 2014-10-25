@@ -32,14 +32,16 @@ int32_t search_symbol_in_array(voba_value_t syn_symbol, voba_value_t a)
     int64_t len = voba_array_len(a);
     assert(voba_is_a(syn_symbol,voba_cls_syn));
     voba_value_t symbol = SYNTAX(syn_symbol)->v;
-    fprintf(stderr,__FILE__ ":%d:[%s] searching for 0x%lx %s\n", __LINE__, __FUNCTION__,
+    if(0) fprintf(stderr,__FILE__ ":%d:[%s] searching for 0x%lx %s\n", __LINE__, __FUNCTION__,
             symbol, voba_value_to_str(voba_symbol_name(symbol))->data);
 
     for(n = 0; n < len; ++n){
         voba_value_t var = voba_array_at(a,n);
         voba_value_t v = SYNTAX(VAR(var)->syn_s_name)->v;
-        fprintf(stderr,__FILE__ ":%d:[%s] compare with var 0x%lx\n", __LINE__, __FUNCTION__,
-                v);//, voba_value_to_str(voba_symbol_name(v))->data);
+        if(0){
+            fprintf(stderr,__FILE__ ":%d:[%s] compare with var 0x%lx\n", __LINE__, __FUNCTION__,
+                    v);//, voba_value_to_str(voba_symbol_name(v))->data);
+        }
         if(voba_eq(SYNTAX(VAR(var)->syn_s_name)->v, symbol)){
             ret = (int32_t)n;
             break;

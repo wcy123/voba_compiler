@@ -27,9 +27,10 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
         VAR(top_var)->u.m.module_id = module_id;
         VAR(top_var)->u.m.module_name = module_name;
         env_push_var(env,top_var);
-        fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx\n", __LINE__, __FUNCTION__
-                ,top_var);
-
+        if(0){
+            fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx\n", __LINE__, __FUNCTION__
+                    ,top_var);
+        }
     }else{
         voba_value_t top_var = var;
         assert(voba_is_a(top_var,voba_cls_var) && var_is_top(VAR(top_var)));

@@ -1,12 +1,13 @@
-%option nodebug
-%option noyywrap
 %{
 
 int fileno(FILE *stream);
 int yyget_column  (yyscan_t yyscanner);
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#define EXEC_ONCE_TU_NAME "flex"
+#include <exec_once.h>
 #include <voba/include/value.h>
 #include "parser.syn.h"
 
@@ -26,10 +27,11 @@ static char *string_buf_ptr;
 %option bison-bridge
 %option bison-locations
 %option reentrant
-
+%option debug
+%option noyywrap
 %x comment str
 DIGIT    [0-9]
-ID       [a-zA-Z_><+*/-][a-zA-Z0-9?_><+*/-]*
+ID       [a-zA-Z_><+*/=-][a-zA-Z0-9?_><+*/=-]*
 %%
 
 
