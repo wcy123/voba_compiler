@@ -14,7 +14,7 @@ static voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t env, v
             cur = voba_la_cdr(cur);
         }
     }else {
-        ret = voba_array_push(ret,make_ast_constant(make_syn_nil()));
+        ret = voba_array_push(ret,make_ast_constant(make_syn_const(VOBA_NIL)));
     }
     return ret;
 }
@@ -24,13 +24,16 @@ static voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t env,voba_val
     voba_value_t expr = SYNTAX(syn_expr)->v;
     voba_value_t cls = voba_get_class(expr);
     if(cls == voba_cls_nil){
-        ret = make_ast_constant(make_syn_nil());
+        ret = make_ast_constant(make_syn_const(VOBA_NIL));
     }
 #define COMPILE_EXPR_SMALL_TYPES(tag,name,type)                         \
     else if(cls == voba_cls_##name){                                    \
         ret = make_ast_constant(syn_expr);                              \
     }
     VOBA_SMALL_TYPES(COMPILE_EXPR_SMALL_TYPES)
+    else if(cls == voba_cls_bool){
+        ret = make_ast_constant(syn_expr);
+    }
     else if(cls == voba_cls_str){
         ret = make_ast_constant(syn_expr);
     }
@@ -55,8 +58,6 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
         if(voba_is_a(f,voba_cls_symbol)){
             if(voba_eq(f, K(toplevel_env,quote))){
                 report_error(VOBA_CONST_CHAR("not implemented for quote"),syn_f,toplevel_env);
-            }else if(voba_eq(f, K(toplevel_env,if))){
-                report_error(VOBA_CONST_CHAR("not implemented for if"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,import))){
                 report_error(VOBA_CONST_CHAR("illegal form. import is the keyword"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,fun))){
@@ -65,6 +66,8 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
                 ret = compile_let(syn_form, env, toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,match))){
                 ret = compile_match(syn_form, env, toplevel_env);
+            }else if(voba_eq(f, K(toplevel_env,if))){
+                ret = compile_if(syn_form, env, toplevel_env);
             }else{
                 // if the first s-exp is a symbol but not a keyword,
                 // compile it as same as default behaviour,
@@ -495,6 +498,50 @@ static inline voba_value_t compile_match_action(voba_value_t syn_rule, voba_valu
     uint32_t offset = 1; // (pattern action ...) skip pattern
     voba_value_t la_syn_exprs = voba_la_from_array1(rule,offset);
     ret = compile_exprs(la_syn_exprs, env, toplevel_env);
+    return ret;
+}
+static inline voba_value_t compile_if(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t form = SYNTAX(syn_form)->v;
+    int64_t len = voba_array_len(form);
+    if(len >= 3){
+        voba_value_t syn_cond = voba_array_at(form,1);
+        voba_value_t ast_cond = compile_expr(syn_cond,env,toplevel_env);
+        if(!voba_is_nil(ast_cond)){
+            voba_value_t syn_then  = voba_array_at(form,2);
+            voba_value_t ast_then = compile_expr(syn_then,env,toplevel_env);
+            if(ast_then){
+                uint32_t offset = 3;/* skip if, cond, then */
+                voba_value_t la_syn_else = voba_la_from_array1(form,offset);
+                voba_value_t a_ast_else = compile_exprs(la_syn_else,env,toplevel_env);
+                if(a_ast_else){
+                    voba_value_t new_env = make_env();
+                    ENV(new_env)->parent = env;
+                    
+                    voba_value_t a_ast_then = voba_make_array_1(ast_then);
+                    voba_value_t pat_then = make_pattern_else(); // match everything except FALSE
+                    voba_value_t rule_then = make_rule(pat_then, a_ast_then, new_env);
+
+                    voba_value_t syn_false = make_syn_const(VOBA_FALSE);
+                    voba_value_t ast_false = compile_expr(syn_false,new_env,toplevel_env);
+                    voba_value_t a_ast_false = voba_make_array_1(ast_false);
+                    voba_value_t pat_false = make_pattern_value(a_ast_false); // match everything except FALSE
+                    voba_value_t rule_false = make_rule(pat_false, a_ast_else,new_env);
+                        
+                    voba_value_t a_rules  = voba_make_array_2(rule_false, rule_then);
+                    voba_value_t match  = make_match(a_rules);
+
+                    ret = make_ast_match(ast_cond,match);
+                }
+            }
+        }
+    }else{
+        report_error(VOBA_STRCAT(
+                         VOBA_CONST_CHAR("illegal form. (if <COND> <THEN> <ELSE>...) len == "),
+                         voba_str_fmt_int64_t(len,10)),
+                     syn_form,toplevel_env);
+    }
     return ret;
 }
 /* Local Variables: */

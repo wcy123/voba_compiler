@@ -11,21 +11,26 @@ voba_value_t make_match(voba_value_t a_rules)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_match);
     match_t * p_match = MATCH(ret);
+    assert(voba_is_a(a_rules,voba_cls_array));
     p_match->a_rules = a_rules;
     return ret;
 }
-voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e)
+voba_value_t make_rule(voba_value_t pat, voba_value_t action, voba_value_t env)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_rule);
+    assert(voba_is_a(pat,voba_cls_pattern));
+    assert(voba_is_a(action,voba_cls_array));
+    assert(voba_is_a(env,voba_cls_env));
     rule_t * p_rule = RULE(ret);
-    p_rule->pattern = p;
-    p_rule->a_ast_action = a;
-    p_rule->env = e;
+    p_rule->pattern = pat;
+    p_rule->a_ast_action = action;
+    p_rule->env = env;
     return ret;
 }
 voba_value_t make_pattern_value(voba_value_t a_ast_value)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_pattern);
+    assert(voba_is_a(a_ast_value,voba_cls_array));
     pattern_t * p_pattern = PATTERN(ret);
     p_pattern->type = PATTERN_VALUE;
     p_pattern->u.value.a_ast_value = a_ast_value;

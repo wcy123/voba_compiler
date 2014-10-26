@@ -1,18 +1,4 @@
 #include "src.h"
-static voba_value_t make_syn_nil()
-{
-    static YYLTYPE s = { 0,0};
-    static voba_value_t si = VOBA_NIL;
-    static voba_value_t ret = VOBA_NIL;
-    if(voba_is_nil(si)){
-        si = make_src(
-            VOBA_CONST_CHAR(__FILE__),
-            VOBA_CONST_CHAR("nil"));
-        ret = make_syntax(VOBA_NIL,&s);
-        attach_src(ret,si);
-    }
-    return ret;
-}
 // for import, try to find the var, 
 //     no var existed, it is a foreign var.
 //     if a local var, var becomes a module var

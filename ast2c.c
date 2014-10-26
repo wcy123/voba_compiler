@@ -303,6 +303,13 @@ static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, vo
             VOBA_CONST_CHAR("voba_make_i32("),
             voba_str_fmt_int32_t(voba_value_to_i32(value),10),
             VOBA_CONST_CHAR(")"));
+    }else if(cls == voba_cls_bool){
+        if(voba_is_false(value)){
+            ret = VOBA_CONST_CHAR("VOBA_FALSE");
+        }else{
+            assert(voba_is_true(value));
+            ret = VOBA_CONST_CHAR("VOBA_TRUE");
+        }
     }else{
         fprintf(stderr,__FILE__ ":%d:[%s] type %s is not supported yet\n", __LINE__, __FUNCTION__,
             voba_get_class_name(value));
@@ -556,6 +563,7 @@ static inline void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t**
     return;
 }
 static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s)
@@ -570,6 +578,9 @@ static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, vo
         break;
     case PATTERN_APPLY:
         ast2c_match_pattern_apply(v,label_fail,p_pattern,bk,s);
+        break;
+    case PATTERN_ELSE:
+        ast2c_match_pattern_else(v,label_fail,p_pattern,bk,s);
         break;
     default:
         assert(0&&"never goes here");
@@ -586,6 +597,11 @@ static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fa
                  "         goto #2; /* match failed */\n"
                  "     }\n")
              ,v,expr,label_fail);
+    return;
+}
+static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+{
+    TEMPLATE(s, VOBA_CONST_CHAR("     /* match else */\n"));
     return;
 }
 static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)

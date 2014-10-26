@@ -68,6 +68,18 @@ void attach_src(voba_value_t syn, voba_value_t src)
         }
     }
 }
+voba_value_t make_syn_const(voba_value_t value)
+{
+    static YYLTYPE s = { 0,0};
+    voba_value_t si = VOBA_NIL;
+    voba_value_t ret = VOBA_NIL;
+    si = make_src(
+        VOBA_CONST_CHAR(__FILE__),
+        VOBA_CONST_CHAR("nil"));
+    ret = make_syntax(value,&s);
+    attach_src(ret,si);
+    return ret;
+}
 EXEC_ONCE_PROGN{
     voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));
 }

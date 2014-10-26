@@ -16,4 +16,4 @@ typedef struct syntax_s {
 extern voba_value_t voba_cls_syn;
 
 void attach_src(voba_value_t syn, voba_value_t src);
-
+voba_value_t make_syn_const(voba_value_t value);
