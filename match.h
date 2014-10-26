@@ -20,7 +20,8 @@ voba_value_t make_rule(voba_value_t p, voba_value_t a, voba_value_t e);
 enum pattern_type_e {
     PATTERN_VALUE,
     PATTERN_VAR,
-    PATTERN_APPLY
+    PATTERN_APPLY,
+    PATTERN_ELSE
 };
 typedef struct pattern_s pattern_t;
 typedef struct pattern_value_s pattern_value_t;
@@ -49,6 +50,7 @@ extern voba_value_t voba_cls_pattern;
 voba_value_t make_pattern_value(voba_value_t value);
 voba_value_t make_pattern_var(voba_value_t value);
 voba_value_t make_pattern_apply(voba_value_t cls, voba_value_t a_patterns);
+voba_value_t make_pattern_else();
 voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env);
 /* Local Variables: */
 /* mode:c */
