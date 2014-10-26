@@ -50,6 +50,13 @@ voba_value_t make_pattern_apply(voba_value_t ast_cls, voba_value_t a_patterns)
     return ret;
 
 }
+voba_value_t make_pattern_else()
+{
+    voba_value_t ret = voba_make_user_data(voba_cls_pattern);
+    pattern_t * p_pattern = PATTERN(ret);
+    p_pattern->type = PATTERN_ELSE;
+    return ret;    
+}
 void walk_pattern_env(voba_value_t pattern, voba_value_t env);
 voba_value_t calculate_pattern_env(voba_value_t pattern, voba_value_t env)
 {
@@ -65,6 +72,7 @@ void walk_pattern_env(voba_value_t pattern, voba_value_t env)
     pattern_t * p = PATTERN(pattern);
     switch(p->type){
     case PATTERN_VALUE:
+    case PATTERN_ELSE:
         break;
     case PATTERN_VAR:
         env_push_var(env,p->u.var.var);
