@@ -21,7 +21,8 @@ typedef struct toplevel_env_s {
     XX(APPLY)                                           \
     XX(LET)                                             \
     XX(MATCH)                                           \
-
+    XX(FOR)                                             \
+    
 typedef enum ast_type_e {
 #define DECLARE_AST_TYPE_ENUM(X) X,
     AST_TYPES(DECLARE_AST_TYPE_ENUM)
@@ -53,6 +54,10 @@ typedef struct ast_match_s {
     voba_value_t ast_value; // the value to match against
     voba_value_t match; // a match object
 } ast_match_t;
+typedef struct ast_for_s {
+    voba_value_t ast_iter; // invoke repeatly until return VOBA_UNDEF
+    voba_value_t ast_match;
+} ast_for_t;
 
 typedef struct ast_s {
     ast_type_t  type;
@@ -64,6 +69,7 @@ typedef struct ast_s {
         ast_apply_t apply;
         ast_let_t let;
         ast_match_t match;
+        ast_for_t _for;
     } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
@@ -76,6 +82,7 @@ voba_value_t make_ast_var(voba_value_t var);
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs);
 voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs);
 voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match);
+voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t ast_match);
 voba_value_t create_toplevel_env(voba_value_t module);
 
 
