@@ -8,8 +8,7 @@
 #include <voba/core/builtin.h>
 #include "ast.h"
 DEFINE_CLS(sizeof(syntax_t),syn)
-VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args);
-EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));}
+
 
 
 static inline voba_str_t* indent(voba_str_t * s, int level)
@@ -69,5 +68,7 @@ void attach_src(voba_value_t syn, voba_value_t src)
         }
     }
 }
-
+EXEC_ONCE_PROGN{
+    voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));
+}
 
