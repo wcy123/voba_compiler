@@ -19,7 +19,7 @@ inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_valu
     voba_str_t* s = voba_str_empty();
     s = voba_vstrcat
         (s,
-         voba_value_to_str(syntax_source_filename(syn)),
+         SRC(SYNTAX(syn)->src)->filename,
          VOBA_CONST_CHAR(":"),
          voba_str_fmt_uint32_t(start_line,10),
          VOBA_CONST_CHAR(":"),
@@ -34,7 +34,7 @@ inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_valu
          NULL);
     fwrite(s->data,s->len,1,stderr);
     fprintf(stderr,"    ");
-    voba_str_t* c = voba_value_to_str(syntax_source_content(syn));
+    voba_str_t* c = SRC(SYNTAX(syn)->src)->content;
     uint32_t pos1 = SYNTAX(syn)->start_pos;
     uint32_t pos2 = SYNTAX(syn)->end_pos;
     uint32_t i = pos1;

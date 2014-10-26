@@ -11,10 +11,7 @@ DEFINE_CLS(sizeof(syntax_t),syn)
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args);
 EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));}
 
-extern int yyparse();
-extern voba_value_t yylval;
-int yydebug = 0;
-EXEC_ONCE_PROGN{yydebug = getenv("VOBA_YYDEBUG") != NULL;}
+
 static inline voba_str_t* indent(voba_str_t * s, int level)
 {
     return voba_strcat(s,voba_str_from_char(' ',level * 4));
@@ -61,6 +58,16 @@ VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args
 {
     VOBA_DEF_ARG4(voba_cls_syn, syn, args, 0);
     return voba_make_string(dump_location(syn,0));
+}
+
+void attach_src(voba_value_t syn, voba_value_t src)
+{
+    SYNTAX(syn)->src = src;
+    if(voba_is_a(SYNTAX(syn)->v,voba_cls_array)){
+        for(size_t n = 0 ; n < voba_array_len(SYNTAX(syn)->v); ++n){
+            attach_src(voba_array_at(SYNTAX(syn)->v,n),src);
+        }
+    }
 }
 
 

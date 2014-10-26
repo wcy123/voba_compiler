@@ -1,3 +1,4 @@
+#define EXEC_ONCE_TU_NAME "src2syn"
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -5,6 +6,7 @@
 #include <exec_once.h>
 #include "ast.h"
 #include "src2syn.h"
+#include "src.h"
 #include "syn.h"
 #include "parser.h"
 
@@ -13,6 +15,10 @@ int z1lex_init ( yyscan_t * ptr_yy_globals ) ;
 int z1lex_destroy ( yyscan_t yyscanner ) ;
 void z1set_debug (int  bdebug , yyscan_t yyscanner);
 struct z1_buffer_state*  z1_scan_bytes (char *bytes,int len ,yyscan_t yyscanner );
+int yydebug = 0;
+EXEC_ONCE_PROGN{
+    yydebug = getenv("VOBA_YYDEBUG") != NULL;
+}
 voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t * module, int * error)
 {
     voba_value_t ret =  VOBA_NIL;
@@ -27,8 +33,8 @@ voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t 
     z1_scan_bytes(content->data,content->len,scanner);
     int r = z1parse(scanner,&ret, *module);
     if(!voba_is_nil(ret)){
-        voba_value_t si = make_source_info(filename,content1);
-        attach_source_info(ret,si);
+        voba_value_t si = make_src(voba_value_to_str(filename),content);
+        attach_src(ret,si);
         if(r == 0){
             *error = 0;
         }else{

@@ -55,7 +55,6 @@ typedef struct ast_match_s {
 } ast_match_t;
 
 typedef struct ast_s {
-    //DEFINE_SOURCE_LOCATION
     ast_type_t  type;
     union {
         ast_set_var_t set_var;

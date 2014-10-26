@@ -1,14 +1,15 @@
+#include "src.h"
 static voba_value_t make_syn_nil()
 {
     static YYLTYPE s = { 0,0};
     static voba_value_t si = VOBA_NIL;
     static voba_value_t ret = VOBA_NIL;
     if(voba_is_nil(si)){
-        si = make_source_info(
-            voba_make_string(VOBA_CONST_CHAR(__FILE__)),
-            voba_make_string(VOBA_CONST_CHAR("nil")));
+        si = make_src(
+            VOBA_CONST_CHAR(__FILE__),
+            VOBA_CONST_CHAR("nil"));
         ret = make_syntax(VOBA_NIL,&s);
-        attach_source_info(ret,si);
+        attach_src(ret,si);
     }
     return ret;
 }
@@ -262,7 +263,7 @@ static inline void compile_top_expr_import_module_info(voba_value_t info,
         voba_value_t symbol = voba_make_symbol(voba_value_to_str(symbol_name),
                                                TOPLEVEL_ENV(toplevel_env)->module);
         voba_value_t syn_module_var_name = make_syntax(symbol,&yyloc);
-        attach_source_info(syn_module_var_name,make_source_info(filename,content));
+        attach_src(syn_module_var_name,make_src(voba_value_to_str(filename),voba_value_to_str(content)));
         create_topleve_var_for_import(syn_module_var_name,module_id,module_name,toplevel_env);
     }
 }
