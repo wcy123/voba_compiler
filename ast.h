@@ -56,7 +56,7 @@ typedef struct ast_match_s {
 } ast_match_t;
 typedef struct ast_for_s {
     voba_value_t ast_iter; // invoke repeatly until return VOBA_UNDEF
-    voba_value_t ast_match;
+    voba_value_t match;
 } ast_for_t;
 
 typedef struct ast_s {

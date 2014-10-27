@@ -28,6 +28,7 @@ static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t ** s);
 static inline voba_str_t * ast2c_new_var(voba_str_t* comment, c_backend_t * bk, voba_str_t** s);
 //static inline void ast2c_begin_scope(c_backend_t * bk, voba_str_t** s);
@@ -225,6 +226,9 @@ static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
         break;
     case MATCH:
         ret = ast2c_ast_match(ast,bk,s);
+        break;
+    case FOR:
+        ret = ast2c_ast_for(ast,bk,s);
         break;
     default:
         assert(0 && "never goes here");
@@ -493,30 +497,42 @@ static inline void ast2c_comment(voba_str_t * c, c_backend_t* bk, voba_str_t**s)
     OUT(*s, c);
     OUT(*s, VOBA_CONST_CHAR("*/"));
 }
-static inline voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s);
+
 static inline void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_goto(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_match_t* ast_match  = &ast->u.match;
     voba_value_t ast_value = ast_match->ast_value;
     ast_t * p_ast_value = AST(ast_value);
     voba_str_t* s_ast_value = ast2c_ast(p_ast_value,bk,s);
-    voba_str_t * id = new_uniq_id();
+    voba_str_t * s_match_ret = new_uniq_id();
     voba_str_t * label_success = new_uniq_id();
-    match_t * p_match = MATCH(ast_match->match);
-    voba_value_t a_rules = p_match->a_rules;
-    int64_t len = voba_array_len(a_rules);
+    voba_value_t match = ast_match->match;
     TEMPLATE(s, VOBA_CONST_CHAR(
                  "    /* start of a match statement */\n"
                  "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF; /* return value for match statement */\n")
-             ,id);
+             ,s_match_ret);
+    ast2c_match(s_match_ret, s_ast_value, label_success,match,bk,s);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR("    #0:;\n"
+                             "    /* end of a match statement */\n")
+             ,label_success);
+    return s_match_ret;
+}
+static inline voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s)
+{
+    match_t * p_match = MATCH(match);
+    voba_value_t a_rules = p_match->a_rules;
+    int64_t len = voba_array_len(a_rules);
     voba_str_t * label_this = new_uniq_id();
     for(int64_t i = 0; i < len; ++i){
         voba_value_t rule = voba_array_at(a_rules,i);
         voba_str_t * label_next = ((i == (len - 1))?label_success:new_uniq_id());
         voba_str_t * s_rule = voba_str_empty();
-        ast2c_match_rule(s_ast_value, id, rule,label_success, label_next,bk,&s_rule);
+        ast2c_match_rule(s_ast_value, s_match_ret, rule,label_success, label_next,bk,&s_rule);
         TEMPLATE(s, VOBA_CONST_CHAR("    /* match pattern #2 start*/\n"
                                     "    #0 {\n"
                                     "    #1\n"
@@ -525,14 +541,10 @@ static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
                  , (i == 0?VOBA_CONST_CHAR("/*empty label*/") : voba_strcat_char(label_this,':'))
                  ,indent(s_rule)
                  ,voba_str_fmt_int64_t(i + 1,10)
-                 );
+            );
         label_this = label_next;
     }
-    TEMPLATE(s,
-             VOBA_CONST_CHAR("    #0:;\n"
-                             "    /* end of a match statement */\n")
-             ,label_success);
-    return id;
+    return;
 }
 static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s);
@@ -694,6 +706,49 @@ static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_ac
                              "    #1 = #2; /* match statement return value*/\n")
              ,indent(s1),ret_id, expr);
     return;
+}
+static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t * label_begin = new_uniq_id();
+    voba_str_t * label_end = new_uniq_id();
+    voba_str_t * for_ret = new_uniq_id();
+    ast_for_t * p_ast_for = &ast->u._for;
+    voba_value_t ast_iter = p_ast_for->ast_iter;
+    ast_t * p_ast_iter = AST(ast_iter);
+    voba_value_t match = p_ast_for->match;
+    voba_str_t * iter = ast2c_ast(p_ast_iter,bk,s);
+    voba_str_t * iter_args = new_uniq_id();
+    voba_str_t * iter_ret = new_uniq_id();
+    voba_str_t * s_match_ret = new_uniq_id();
+    voba_str_t * s_body = voba_str_empty();
+    ast2c_match(s_match_ret, iter_ret, label_end, match, bk,&s_body);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR("    voba_value_t #5 __attribute__((unused)) = VOBA_UNDEF;/* return value for `for' statement */\n"
+                             "    voba_value_t #2 = VOBA_UNDEF;/* input value of each iteration  */\n"
+                             "    voba_value_t #6 __attribute__((unused)) = VOBA_UNDEF;/* output value of each iteration  */\n"
+                             "    #0:{ /*prelude of `for' statement */\n"
+                             "    voba_value_t #1 [] = {0}; /* args for iterator*/\n"
+                             "    #2 = voba_apply(#3,voba_make_array(#1)); /*invoke the iterator*/\n"
+                             "    if(voba_eq(#2,VOBA_UNDEF)){\n"
+                             "        goto #4;/* exit for loop */\n"
+                             "    }\n"
+                             "    /*for body begin*/\n"
+                             "#7\n"
+                             "    /*for body end*/\n"
+                             "    goto #0; /* for goto begin*/\n"
+                             "    #4:  /* end label */\n"
+                             "    if(0) goto #4;/* suppress compilation warning */\n"
+                             "    }\n")
+             , label_begin      /* begin label 0 */
+             , iter_args        /* iter_args   1 */
+             , iter_ret         /* iter_ret    2 */
+             , iter             /* iter        3 */
+             , label_end        /* end label   4 */
+             , for_ret          /* for_ret     5 */
+             , s_match_ret      /* s_match_ret 6 */
+             , indent(s_body)   /* s_body      7 */
+        );
+    return for_ret;
 }
 static voba_str_t* new_uniq_id()
 {

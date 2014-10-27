@@ -297,12 +297,12 @@ voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match)
     AST(r)->u.match.match = match;
     return r;
 }
-voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t ast_match)
+voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t match)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = FOR;
     AST(r)->u._for.ast_iter = ast_iter;
-    AST(r)->u._for.ast_match = ast_match;
+    AST(r)->u._for.match = match;
     return r;
 
 }

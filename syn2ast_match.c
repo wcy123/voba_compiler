@@ -10,13 +10,15 @@
 #include "syn2ast_match.h"
 
 static inline voba_value_t compile_match_value(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env);
-static inline voba_value_t compile_match_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env);
 voba_value_t compile_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t ast_value = compile_match_value(syn_form,env,toplevel_env);
     if(!voba_is_nil(ast_value)){
-        voba_value_t match = compile_match_match(syn_form,env,toplevel_env);
+        voba_value_t form = SYNTAX(syn_form)->v;
+        uint32_t offset = 2; /* skip `match` and `value' */
+        voba_value_t la_syn_form = voba_la_from_array1(form,offset);
+        voba_value_t match = compile_match_match(la_syn_form,env,toplevel_env);
         if(!voba_is_nil(match)){
             ret = make_ast_match(ast_value,match);
         }
@@ -39,18 +41,17 @@ static inline voba_value_t compile_match_value(voba_value_t syn_form, voba_value
     return ret;
 }
 static inline voba_value_t compile_match_rule(voba_value_t syn_rule, voba_value_t env,voba_value_t toplevel_env);
-static inline voba_value_t compile_match_match(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+voba_value_t compile_match_match(voba_value_t la_syn_form, voba_value_t env,voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
-    voba_value_t form = SYNTAX(syn_form)->v;
-    int64_t len = voba_array_len(form);
     voba_value_t a_rules = voba_make_array_0();
-    for(int64_t i = 2; i < len; ++i){
-        voba_value_t syn_rule = voba_array_at(form,i);
+    while(!voba_la_is_nil(la_syn_form)){
+        voba_value_t syn_rule = voba_la_car(la_syn_form);
         voba_value_t rule = compile_match_rule(syn_rule, env, toplevel_env);
         if(!voba_is_nil(rule)){
             voba_array_push(a_rules,rule);
         }
+        la_syn_form = voba_la_cdr(la_syn_form);
     }
     ret = make_match(a_rules);
     return ret;

@@ -40,6 +40,7 @@ C_SRCS += env.c
 C_SRCS += src.c
 C_SRCS += syn.c
 C_SRCS += ast.c
+C_SRCS += var.c
 C_SRCS += c_backend.c
 C_SRCS += module_info.c
 C_SRCS += match.c
@@ -85,7 +86,7 @@ read_module_info.o: read_module_info.c read_module_info_lex.inc
 read_module_info_lex.inc: read_module_info_lex.l
 	flex --noline  read_module_info_lex.l
 
-.PHONY: depend
+
 depend: 
 	for i in $(C_SRCS); do $(CC) -MM $(CFLAGS) $$i; done > $@
 
