@@ -156,7 +156,7 @@ static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_valu
             voba_value_t top_var = create_topleve_var_for_def(syn_s_name,toplevel_env);
             voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
             voba_value_t next = voba_make_closure_3(
-                compile_top_expr_def_fun_next, top_var, top_expr, env);
+                compile_top_expr_def_fun_next, top_var, syn_top_expr, env);
             voba_array_push(TOPLEVEL_ENV(toplevel_env)->next,next);
         }else{
             report_error(VOBA_CONST_CHAR("illegal form. function name must be a symbol."),
