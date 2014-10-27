@@ -36,23 +36,23 @@ ID       [a-zA-Z_><+*/=-][a-zA-Z0-9?_><+*/=-]*
 
 
 -?{DIGIT}+    {      /* ------INT_TOKEN----- */
-    *yylval = make_syntax(voba_make_i32(atoi(yytext)),yylloc);
+    *yylval = make_syntax(voba_make_i32(atoi(yytext)),yylloc->start_pos,yylloc->end_pos);
     return T_INT;
 }
 
 -?{DIGIT}*"."{DIGIT}*        {   /* ------FLOAT_TOKEN----- */
-    *yylval = make_syntax(voba_make_float(strtof(yytext,NULL)),yylloc);
+    *yylval = make_syntax(voba_make_float(strtof(yytext,NULL)),yylloc->start_pos,yylloc->end_pos);
     return T_FLOAT;
 }
 
 -?{DIGIT}*\.?{DIGIT}*e[-+]?{DIGIT}+        {   /* ------FLOAT_TOKEN----- */
-     *yylval = make_syntax(voba_make_float(strtof(yytext,NULL)),yylloc);
+     *yylval = make_syntax(voba_make_float(strtof(yytext,NULL)),yylloc->start_pos,yylloc->end_pos);
      return T_FLOAT;
 }
 
 {ID}   {          /* -----------ID_TOKEN-------------- */
      // TODO: add a global variable for symbol table.
-     *yylval = make_syntax(voba_make_symbol(voba_str_from_data(yytext,yyleng),module),yylloc);
+     *yylval = make_syntax(voba_make_symbol(voba_str_from_data(yytext,yyleng),module),yylloc->start_pos,yylloc->end_pos);
      return T_SYMBOL;
 }
 
@@ -69,7 +69,7 @@ ID       [a-zA-Z_><+*/=-][a-zA-Z0-9?_><+*/=-]*
      BEGIN(INITIAL);
      *string_buf_ptr = '\0';
      // return the literal string
-     *yylval = make_syntax(voba_make_cstr(GC_strdup(string_buf)),yylloc);
+     *yylval = make_syntax(voba_make_cstr(GC_strdup(string_buf)),yylloc->start_pos,yylloc->end_pos);
      return T_STRING;
 }
 <str>\n        {

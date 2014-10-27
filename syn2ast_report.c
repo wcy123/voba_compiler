@@ -1,3 +1,11 @@
+#define EXEC_ONCE_TU_NAME "syn2ast_report"
+#include <exec_once.h>
+#include <voba/include/value.h>
+#include "src.h"
+#include "ast.h"
+#include "syn.h"
+#include "syn2ast_report.h"
+
 #define LEVEL_ERROR 1
 #define LEVEL_WARNING 2
 inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
@@ -54,11 +62,11 @@ inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_valu
     fprintf(stderr,"^\n");
     return;
 }
-inline static void report_error(voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
+void report_error(voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
 {
     report(LEVEL_ERROR,msg,syn,toplevel_env);
 }
-inline static void report_warn(voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
+void report_warn(voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
 {
     report(LEVEL_WARNING,msg,syn,toplevel_env);
 }

@@ -4,21 +4,10 @@
 #define EXEC_ONCE_TU_NAME "syn2ast"
 #include <exec_once.h>
 #include <voba/core/builtin.h>
-#include "parser.syn.h"
 #include "ast.h"
-#include "module_info.h"
-#include "read_module_info.h"
-
+#include "syn.h"
 #include "syn2ast_report.h"
-#include "syn2ast_scan1.h"
-#include "syn2ast_scan2.h"
-#include "env.h"
-#include "var.h"
-#include "keywords.h"
-#include "syn2ast_report.c"
-#include "syn2ast_other.c"
-#include "syn2ast_scan1.c"
-#include "syn2ast_scan2.c"
+#include "syn2ast_decl_top_var.h"
 // `syn` is the syntax object to be compiled into an ast
 // `module` is the symbol table for all symbols.
 voba_value_t syn2ast(voba_value_t syn,voba_value_t module, int * error)

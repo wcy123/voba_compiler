@@ -36,7 +36,33 @@ install: libvoba_compiler.so
 	install libvoba_compiler.so $(PREFIX)/voba/core
 	install compiler.h $(PREFIX)/voba/core/
 
-libvoba_compiler.so:  var.o env.o src.o syn.o ast.o c_backend.o module_info.o match.o src2syn.o syn2ast.o ast2c.o flex.o parser.o read_module_info.o compiler.o 
+C_SRCS += env.c
+C_SRCS += src.c
+C_SRCS += syn.c
+C_SRCS += ast.c
+C_SRCS += c_backend.c
+C_SRCS += module_info.c
+C_SRCS += match.c
+C_SRCS += src2syn.c
+C_SRCS += syn2ast.c
+C_SRCS += syn2ast_basic.c
+C_SRCS += syn2ast_decl_top_var.c
+C_SRCS += syn2ast_for.c
+C_SRCS += syn2ast_if.c
+C_SRCS += syn2ast_let.c
+C_SRCS += syn2ast_match.c
+C_SRCS += syn2ast_other.c
+C_SRCS += syn2ast_report.c
+C_SRCS += ast2c.c
+C_SRCS += read_module_info.c
+C_SRCS += compiler.c
+
+
+OBJS += flex.o
+OBJS += parser.o
+OBJS += $(patsubst %.c,%.o,$(C_SRCS))
+
+libvoba_compiler.so:  $(OBJS)
 	$(CXX) -shared -Wl,-soname,$@  -o $@ $+ $(LDFLAGS) -lexec_once
 
 flex.o: parser.o
@@ -58,5 +84,12 @@ read_module_info.o: read_module_info.c read_module_info_lex.inc
 
 read_module_info_lex.inc: read_module_info_lex.l
 	flex --noline  read_module_info_lex.l
-syn2ast.o: syn2ast_scan1.c syn2ast_scan1.h syn2ast_scan2.c syn2ast_scan2.h syn2ast_report.c
+
+.PHONY: depend
+depend: 
+	for i in $(C_SRCS); do $(CC) -MM $(CFLAGS) $$i; done > $@
+
+include depend
+
+.DELETE_ON_ERROR:
 

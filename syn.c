@@ -76,10 +76,50 @@ voba_value_t make_syn_const(voba_value_t value)
     si = make_src(
         VOBA_CONST_CHAR(__FILE__),
         VOBA_CONST_CHAR("nil"));
-    ret = make_syntax(value,&s);
+    ret = make_syntax(value,s.start_pos,s.end_pos);
     attach_src(ret,si);
     return ret;
 }
+/* voba_value_t syn_new1(voba_value_t v, voba_value_t syn) */
+/* { */
+/*     assert(voba_is_a(syn,voba_cls_syn)); */
+/*     voba_value_t ret = make_syntax(VOBA_NIL,NULL); */
+/*     syn_t * p_dst = SYNTAX(ret); */
+/*     syn_t * p_src = SYNTAX(syn); */
+/*     p_dst->start_pos = p_src->start_pos; */
+/*     p_dst->end_pos = p_src->end_pos; */
+/*     p_dst->src = p_src->src; */
+/*     p_dst->v = v; */
+/* } */
+/* voba_value_t syn_new2(voba_value_t v, voba_value_t syn1,voba_value_t syn2) */
+/* { */
+/*     assert(voba_is_a(syn,voba_cls_syn)); */
+/*     voba_value_t ret = make_syntax(VOBA_NIL,NULL); */
+/*     syn_t * p_dst = SYNTAX(ret); */
+/*     syn_t * p_src1 = SYNTAX(syn1); */
+/*     syn_t * p_src2 = SYNTAX(syn2); */
+/*     p_dst->start_pos = p_src1->start_pos; */
+/*     p_dst->end_pos = p_src2->end_pos; */
+/*     p_dst->src = p_src1->src; */
+/*     p_dst->v = v; */
+/* } */
+
+voba_value_t make_syntax(voba_value_t v, uint32_t start_pos, uint32_t end_pos)
+{
+    voba_value_t ret = voba_make_user_data(voba_cls_syn);
+    SYNTAX(ret)->v = v;
+    SYNTAX(ret)->start_pos = start_pos;
+    SYNTAX(ret)->end_pos = end_pos;
+    SYNTAX(ret)->src = VOBA_NIL;
+    return ret;
+}
+void syn_get_line_column(int start, voba_value_t syn,uint32_t * line, uint32_t * col)
+{
+    uint32_t pos = start?SYNTAX(syn)->start_pos: SYNTAX(syn)->end_pos;
+    voba_str_t * c = SRC(SYNTAX(syn)->src)->content;
+    get_line_column(c,pos,line,col);
+}
+
 EXEC_ONCE_PROGN{
     voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));
 }

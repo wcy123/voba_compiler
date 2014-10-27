@@ -17,27 +17,11 @@ void get_line_column(voba_str_t* c, uint32_t pos, uint32_t* line, uint32_t *col)
         }
     }
 }
-static inline void syn_get_line_column(int start, voba_value_t syn,uint32_t * line, uint32_t * col)
-{
-    uint32_t pos = start?SYNTAX(syn)->start_pos: SYNTAX(syn)->end_pos;
-    voba_str_t * c = SRC(SYNTAX(syn)->src)->content;
-    get_line_column(c,pos,line,col);
-}
 inline
 static void syntax_loc(voba_value_t a , YYLTYPE* b)
 {
     SYNTAX(a)->start_pos = b->start_pos;
     SYNTAX(a)->end_pos = b->end_pos;
-}
-inline
-static voba_value_t make_syntax(voba_value_t v, YYLTYPE* b)
-{
-    voba_value_t ret = voba_make_user_data(voba_cls_syn);
-    SYNTAX(ret)->v = v;
-    SYNTAX(ret)->start_pos = b == NULL? 0:b->start_pos;
-    SYNTAX(ret)->end_pos = b == NULL ? 0: b->end_pos;
-    SYNTAX(ret)->src = VOBA_NIL;
-    return ret;
 }
 
 

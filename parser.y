@@ -46,7 +46,7 @@ program: list_of_sexp {
 ;
 
 list_of_sexp:
-sexp { $$ = make_syntax(voba_make_array_1($1),&@$); } 
+sexp { $$ = make_syntax(voba_make_array_1($1),@$.start_pos, @$.end_pos); } 
 | list_of_sexp sexp { $$ = $1; voba_array_push(SYNTAX($1)->v,$2); syntax_loc($$,&(@$)); } 
 ;
 
@@ -56,7 +56,7 @@ T_INT
 |T_SYMBOL 
 |T_STRING  
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
-| '(' ')' { $$ = make_syntax(voba_make_array_0(),&@$);}
+| '(' ')' { $$ = make_syntax(voba_make_array_0(),@$.start_pos,@$.end_pos);}
 | error { fprintf(stderr,"TODO ERRORR RECOVERY %d - %d\n",@$.start_pos, @$.end_pos); }
 ;
 
