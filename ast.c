@@ -269,6 +269,7 @@ voba_value_t make_ast_var(voba_value_t var)
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t a_ast_exprs)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
+    assert(voba_is_a(var,voba_cls_var));
     AST(r)->type = SET_VAR;
     AST(r)->u.set_var.var = VAR(var);
     AST(r)->u.set_var.a_ast_exprs = a_ast_exprs;

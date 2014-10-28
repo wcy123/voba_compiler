@@ -191,7 +191,10 @@ static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
     int64_t len = voba_array_len(a_asts);
     for(int64_t i = 0; i < len; ++i){
         voba_str_t * s = voba_str_empty();
-        ast2c_ast(AST(voba_array_at(a_asts,i)),bk,&s);
+        voba_value_t ast  = voba_array_at(a_asts,i);
+        assert(voba_is_a(ast,voba_cls_ast));
+        ast_t * p_ast = AST(ast);
+        ast2c_ast(p_ast,bk,&s);
         bk->start = voba_strcat(bk->start,s);
     }
     TEMPLATE(&bk->impl,

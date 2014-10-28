@@ -101,10 +101,10 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
     return ret;
 }
 
-VOBA_FUNC
-static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
+VOBA_FUNC static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
 {
-    voba_value_t syn_name = voba_array_at(self,0);
+    voba_value_t var = voba_array_at(self,0);
+    VOBA_ASSERT_CLS(var,voba_cls_var,0);
     voba_value_t la_syn_exprs = voba_array_at(self,1);
     VOBA_ASSERT_N_ARG( args, 0);
     voba_value_t toplevel_env = voba_array_at( args, 0);
@@ -112,7 +112,7 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
     voba_value_t exprs = compile_exprs(la_syn_exprs,TOPLEVEL_ENV(toplevel_env)->env,toplevel_env);
     voba_value_t ret = VOBA_NIL;
     if(!voba_is_nil(exprs)){
-        ret = make_ast_set_var(syn_name, exprs);
+        ret = make_ast_set_var(var, exprs);
     }
     if(0) fprintf(stderr,__FILE__ ":%d:[%s] v = 0x%lx type = 0x%lx\n", __LINE__, __FUNCTION__,
             ret, voba_get_class(ret));
@@ -121,10 +121,10 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
 }
 static inline void compile_top_expr_def_name(voba_value_t syn_name, voba_value_t la_syn_exprs,voba_value_t toplevel_env)
 {
+    voba_value_t var = create_topleve_var_for_def(syn_name,toplevel_env);
     voba_value_t closure = voba_make_closure_2
-        (compile_top_expr_def_name_next,syn_name,la_syn_exprs);
+        (compile_top_expr_def_name_next,var,la_syn_exprs);
     voba_array_push(TOPLEVEL_ENV(toplevel_env)->next, closure);
-    create_topleve_var_for_def(syn_name,toplevel_env);
     return;
 }
 VOBA_FUNC
