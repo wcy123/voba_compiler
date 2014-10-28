@@ -3,7 +3,6 @@
 #define EXEC_ONCE_TU_NAME "ast"
 #include <voba/include/value.h>
 #include <exec_once.h>
-#include <voba/core/builtin.h>
 #include "parser.syn.h"
 #include "ast.h"
 #include "read_module_info.h"
@@ -255,15 +254,6 @@ voba_value_t make_ast_var(voba_value_t var)
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = VAR;
     AST(r)->u.var.var = VAR(var);
-    if(1){
-        voba_value_t args[] = {1, var};
-        voba_str_t * s = voba_value_to_str(voba_apply(voba_symbol_value(s_to_string),voba_make_array(args)));
-        if(0){
-            fprintf(stderr,__FILE__ ":%d:[%s] making a ast var %s\n", __LINE__, __FUNCTION__
-                    , s->data);
-        }
-
-    }
     return r;
 }
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t a_ast_exprs)
