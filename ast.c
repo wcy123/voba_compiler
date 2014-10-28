@@ -21,7 +21,7 @@
 // AST_TYPES(AST_DECLARE_TYPE_PRINT_DISPATCHER);
 
 // voba_cls_ast is defined here.
-DEFINE_CLS(sizeof(ast_t),ast);
+VOBA_DEF_CLS(sizeof(ast_t),ast);
 
 /* VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args); */
 /* EXEC_ONCE_PROGN{ */
@@ -218,7 +218,7 @@ int is_ast(voba_value_t x)
 /* } */
 
 static
-DEFINE_CLS(sizeof(toplevel_env_t),toplevel_env);
+VOBA_DEF_CLS(sizeof(toplevel_env_t),toplevel_env);
 voba_value_t create_toplevel_env(voba_value_t module)
 {
     voba_value_t r = voba_make_user_data(voba_cls_toplevel_env);

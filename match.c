@@ -4,9 +4,9 @@
 #include <voba/core/builtin.h>
 #include "match.h"
 #include "env.h"
-DEFINE_CLS(sizeof(match_t),match);
-DEFINE_CLS(sizeof(rule_t),rule);
-DEFINE_CLS(sizeof(pattern_t),pattern);
+VOBA_DEF_CLS(sizeof(match_t),match);
+VOBA_DEF_CLS(sizeof(rule_t),rule);
+VOBA_DEF_CLS(sizeof(pattern_t),pattern);
 voba_value_t make_match(voba_value_t a_rules)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_match);

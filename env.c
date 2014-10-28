@@ -6,8 +6,8 @@
 #include "var.h"
 #include "ast.h"
 
-DEFINE_CLS(sizeof(env_t),env);
-DEFINE_CLS(sizeof(compiler_fun_t),compiler_fun);
+VOBA_DEF_CLS(sizeof(env_t),env);
+VOBA_DEF_CLS(sizeof(compiler_fun_t),compiler_fun);
 
 voba_value_t make_env()
 {

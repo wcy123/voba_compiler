@@ -5,7 +5,7 @@
 #include "c_backend.h"
 
 static
-DEFINE_CLS(sizeof(c_backend_t),c_backend);
+VOBA_DEF_CLS(sizeof(c_backend_t),c_backend);
 
 
 voba_value_t make_c_backend()
@@ -26,7 +26,9 @@ EXEC_ONCE_PROGN{
 VOBA_FUNC static voba_value_t to_string_c_backend(voba_value_t self, voba_value_t args)
 {
     voba_str_t * ret = voba_str_empty();
-    VOBA_DEF_ARG4(voba_cls_c_backend,bk,args,0);
+    VOBA_ASSERT_N_ARG(args,0); voba_value_t bk = voba_array_at(args,0);
+VOBA_ASSERT_CLS(bk,voba_cls_c_backend,0);
+;
     ret = voba_strcat(ret, C_BACKEND(bk)->decl);
     ret = voba_strcat(ret, C_BACKEND(bk)->impl);
     ret = voba_strcat(ret, VOBA_CONST_CHAR("EXEC_ONCE_PROGN {\n"));

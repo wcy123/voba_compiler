@@ -2,7 +2,7 @@
 #include <exec_once.h>
 #include <voba/include/value.h>
 #include "src.h"
-DEFINE_CLS(sizeof(src_t),src);
+VOBA_DEF_CLS(sizeof(src_t),src);
 voba_value_t make_src(voba_str_t* filename, voba_str_t* c)
 {
     voba_value_t ret = voba_make_user_data(voba_cls_src);

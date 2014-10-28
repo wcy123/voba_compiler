@@ -7,7 +7,7 @@
 #include "exec_once.h"
 #include <voba/core/builtin.h>
 #include "ast.h"
-DEFINE_CLS(sizeof(syntax_t),syn)
+VOBA_DEF_CLS(sizeof(syntax_t),syn)
 
 
 
@@ -55,7 +55,9 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
 }
 VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args)
 {
-    VOBA_DEF_ARG4(voba_cls_syn, syn, args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  syn = voba_array_at( args, 0);
+VOBA_ASSERT_CLS( syn,voba_cls_syn, 0);
+;
     return voba_make_string(dump_location(syn,0));
 }
 

@@ -95,7 +95,8 @@ static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value
     //            ^la_syn_exprs
     VOBA_DEF_CVAR(syn_name,self,0);
     VOBA_DEF_CVAR(la_syn_exprs,self,1);
-    VOBA_DEF_ARG3(toplevel_env, args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_array_at( args, 0);
+;
     if(0)fprintf(stderr,__FILE__ ":%d:[%s] \n", __LINE__, __FUNCTION__);
     voba_value_t exprs = compile_exprs(la_syn_exprs,TOPLEVEL_ENV(toplevel_env)->env,toplevel_env);
     voba_value_t ret = VOBA_NIL;
@@ -123,7 +124,8 @@ static voba_value_t compile_top_expr_def_fun_next(voba_value_t self, voba_value_
     voba_value_t la_syn_arg_list = voba_array_at(self,2);
     voba_value_t la_syn_body = voba_array_at(self,3);
     voba_value_t env = voba_array_at(self,4);
-    VOBA_DEF_ARG3(toplevel_env, args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_array_at( args, 0);
+;
     // -------------------------------
     voba_value_t fun = make_compiler_fun();
     voba_value_t a_var_A = compile_arg_list(la_syn_arg_list,toplevel_env);
@@ -306,7 +308,8 @@ static inline void compile_top_expr_import(voba_value_t syn_top_expr,voba_value_
 VOBA_FUNC static voba_value_t compile_top_expr_any_next(voba_value_t self, voba_value_t args)
 {
     VOBA_DEF_CVAR(syn_top_expr,self,0);
-    VOBA_DEF_ARG3(toplevel_env, args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_array_at( args, 0);
+;
     return compile_expr(syn_top_expr, TOPLEVEL_ENV(toplevel_env)->env, toplevel_env);
 }
 static inline void compile_top_expr_any(voba_value_t syn_top_expr, voba_value_t toplevel_env)
