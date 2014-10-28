@@ -749,6 +749,7 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * label_begin = new_uniq_id();
     voba_str_t * label_end = new_uniq_id();
+    voba_str_t * label_end_iter = new_uniq_id();
     voba_str_t * for_ret = new_uniq_id();
     ast_for_t * p_ast_for = &ast->u._for;
     voba_value_t ast_iter = p_ast_for->ast_iter;
@@ -759,7 +760,7 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     voba_str_t * iter_ret = new_uniq_id();
     voba_str_t * s_match_ret = new_uniq_id();
     voba_str_t * s_body = voba_str_empty();
-    ast2c_match(s_match_ret, iter_ret, label_end, match, bk,&s_body);
+    ast2c_match(s_match_ret, iter_ret, label_end_iter, match, bk,&s_body);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    voba_value_t #5 __attribute__((unused)) = VOBA_UNDEF;/* return value for `for' statement */\n"
                              "    voba_value_t #2 = VOBA_UNDEF;/* input value of each iteration  */\n"
@@ -773,8 +774,9 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
                              "    /*for body begin*/\n"
                              "#7\n"
                              "    /*for body end*/\n"
-                             "    goto #0; /* for goto begin*/\n"
-                             "    #4:  /* end label */\n"
+                             "    #8: /* end label iteration */\n"
+                             "    goto #0; /* for goto begin */\n"
+                             "    #4:  /* end label `for' */\n"
                              "    if(0) goto #4;/* suppress compilation warning */\n"
                              "    }\n")
              , label_begin      /* begin label 0 */
@@ -785,6 +787,7 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
              , for_ret          /* for_ret     5 */
              , s_match_ret      /* s_match_ret 6 */
              , indent(s_body)   /* s_body      7 */
+             , label_end_iter/* label_end_iter 8 */
         );
     return for_ret;
 }
