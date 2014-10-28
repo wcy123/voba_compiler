@@ -17,13 +17,13 @@ voba_value_t make_c_backend()
     r->impl = voba_str_empty();
     return ret;
 }
-VOBA_FUNC static voba_value_t to_string_c_backend(voba_value_t self, voba_value_t args);
+VOBA_FUNC static voba_value_t str_c_backend(voba_value_t self, voba_value_t args);
 EXEC_ONCE_PROGN{
-    voba_gf_add_class(voba_symbol_value(s_to_string),
+    voba_gf_add_class(voba_symbol_value(s_str),
                       voba_cls_c_backend,
-                      voba_make_func(to_string_c_backend));
+                      voba_make_func(str_c_backend));
 }
-VOBA_FUNC static voba_value_t to_string_c_backend(voba_value_t self, voba_value_t args)
+VOBA_FUNC static voba_value_t str_c_backend(voba_value_t self, voba_value_t args)
 {
     voba_str_t * ret = voba_str_empty();
     VOBA_ASSERT_N_ARG(args,0); voba_value_t bk = voba_array_at(args,0);

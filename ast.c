@@ -22,11 +22,11 @@
 // voba_cls_ast is defined here.
 VOBA_DEF_CLS(sizeof(ast_t),ast);
 
-/* VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args); */
+/* VOBA_FUNC static voba_value_t str_ast(voba_value_t self, voba_value_t args); */
 /* EXEC_ONCE_PROGN{ */
-/*     voba_gf_add_class(voba_symbol_value(s_to_string), */
+/*     voba_gf_add_class(voba_symbol_value(s_str), */
 /*                       voba_cls_ast, */
-/*                       voba_make_func(to_string_ast)); */
+/*                       voba_make_func(str_ast)); */
 /* } */
 int is_ast(voba_value_t x)
 {
@@ -50,7 +50,7 @@ int is_ast(voba_value_t x)
 /* static voba_str_t* print_ast_SET_TOP(ast_t * ast, int level) */
 /* { */
 /*     voba_value_t args[] = {1 , (SYNTAX(ast->u.set_top.syn_s_name)->v)}; */
-/*     voba_value_t ss = voba_apply(voba_symbol_value(s_to_string), */
+/*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
 /*                                  voba_make_array(args)); */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     ret = voba_vstrcat */
@@ -70,7 +70,7 @@ int is_ast(voba_value_t x)
 /* { */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.constant.value}; */
-/*     voba_value_t ss = voba_apply(voba_symbol_value(s_to_string), */
+/*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
 /*                                  voba_make_array(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
@@ -87,7 +87,7 @@ int is_ast(voba_value_t x)
 /*     voba_value_t a_ast_closure = ast->u.fun.a_ast_closure; */
 /*     voba_value_t a_ast_exprs = ast->u.fun.a_ast_exprs; */
 /*     voba_value_t args[] = {1 , (SYNTAX(ast->u.fun.syn_s_name)->v)}; */
-/*     voba_value_t ss = voba_apply(voba_symbol_value(s_to_string), */
+/*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
 /*                                  voba_make_array(args)); */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     return voba_vstrcat */
@@ -113,7 +113,7 @@ int is_ast(voba_value_t x)
 /* { */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.arg.syn_s_name }; */
-/*     voba_value_t ss = voba_apply(voba_symbol_value(s_to_string), */
+/*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
 /*                                  voba_make_array(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
@@ -158,7 +158,7 @@ int is_ast(voba_value_t x)
 /* { */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.top_var.syn_s_name }; */
-/*     voba_value_t ss = voba_apply(voba_symbol_value(s_to_string), */
+/*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
 /*                                  voba_make_array(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
@@ -204,7 +204,7 @@ int is_ast(voba_value_t x)
 /*     assert(0 && "never goes here"); */
 /*     return NULL; */
 /* } */
-/* VOBA_FUNC static voba_value_t to_string_ast(voba_value_t self, voba_value_t args) */
+/* VOBA_FUNC static voba_value_t str_ast(voba_value_t self, voba_value_t args) */
 /* { */
 /*     VOBA_DEF_ARG(ast, args, 0, is_ast); */
 /*     voba_str_t * x = voba_str_empty(); */

@@ -20,7 +20,7 @@ int var_is_top(var_t* v)
             (v)->flag == VAR_PRIVATE_TOP ||
             (v)->flag == VAR_FOREIGN_TOP);
 }
-static inline voba_str_t* to_string_flag(var_t * var)
+static inline voba_str_t* str_flag(var_t * var)
 {
     voba_str_t * ret = VOBA_CONST_CHAR("ERRRO");
     switch(var->flag){
@@ -47,9 +47,9 @@ static inline voba_str_t* to_string_flag(var_t * var)
     }
     return ret;
 }
-VOBA_FUNC static voba_value_t to_string_var(voba_value_t self,voba_value_t vs);
-EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string),voba_cls_var,voba_make_func(to_string_var));}
-VOBA_FUNC static voba_value_t to_string_var(voba_value_t self,voba_value_t vs)
+VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs);
+EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_str),voba_cls_var,voba_make_func(str_var));}
+VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs)
 {
     voba_value_t v = voba_array_at(vs,0);
     voba_str_t* ret = voba_str_empty();
@@ -57,7 +57,7 @@ VOBA_FUNC static voba_value_t to_string_var(voba_value_t self,voba_value_t vs)
     ret = VOBA_STRCAT(ret,
                       VOBA_CONST_CHAR("<VAR ID="), voba_str_fmt_int64_t(var->syn_s_name,16),
                       VOBA_CONST_CHAR(" NAME="), voba_value_to_str(voba_symbol_name(SYNTAX(var->syn_s_name)->v)),
-                      VOBA_CONST_CHAR(" FLAG="), to_string_flag(var),
+                      VOBA_CONST_CHAR(" FLAG="), str_flag(var),
                       VOBA_CONST_CHAR(">"));
     return voba_make_string(ret);
     

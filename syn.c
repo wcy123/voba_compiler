@@ -47,13 +47,13 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
         ret = voba_strcat(ret,VOBA_CONST_CHAR("]"));
     }else{
         voba_value_t args[] = {1, SYNTAX(syn)->v};
-        ret = voba_strcat(ret, voba_value_to_str(voba_apply(voba_symbol_value(s_to_string),
+        ret = voba_strcat(ret, voba_value_to_str(voba_apply(voba_symbol_value(s_str),
                                                             voba_make_array(args))));
         ret = voba_strcat_cstr(ret,"");
     }
     return ret;
 }
-VOBA_FUNC static voba_value_t to_string_syn(voba_value_t self, voba_value_t args)
+VOBA_FUNC static voba_value_t str_syn(voba_value_t self, voba_value_t args)
 {
     VOBA_ASSERT_N_ARG( args, 0); voba_value_t  syn = voba_array_at( args, 0);
 VOBA_ASSERT_CLS( syn,voba_cls_syn, 0);
@@ -123,6 +123,6 @@ void syn_get_line_column(int start, voba_value_t syn,uint32_t * line, uint32_t *
 }
 
 EXEC_ONCE_PROGN{
-    voba_gf_add_class(voba_symbol_value(s_to_string), voba_cls_syn, voba_make_func(to_string_syn));
+    voba_gf_add_class(voba_symbol_value(s_str), voba_cls_syn, voba_make_func(str_syn));
 }
 

@@ -160,17 +160,17 @@ void env_push_var(voba_value_t env, voba_value_t var)
     assert(voba_is_a(var,voba_cls_var));
     voba_array_push(ENV(env)->a_var,var);
 }
-VOBA_FUNC static voba_value_t to_string_env(voba_value_t self,voba_value_t vs);
-EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string),voba_cls_env,voba_make_func(to_string_env));}
-VOBA_FUNC static voba_value_t to_string_env(voba_value_t self,voba_value_t vs)
+VOBA_FUNC static voba_value_t str_env(voba_value_t self,voba_value_t vs);
+EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_str),voba_cls_env,voba_make_func(str_env));}
+VOBA_FUNC static voba_value_t str_env(voba_value_t self,voba_value_t vs)
 {
     voba_value_t v = voba_array_at(vs,0);
     voba_str_t* ret = voba_str_empty();
     env_t* env = ENV(v);
     voba_value_t args[] = {1, env->a_var};
-    voba_value_t a = voba_apply(voba_symbol_value(s_to_string), voba_make_array(args));
+    voba_value_t a = voba_apply(voba_symbol_value(s_str), voba_make_array(args));
     args[1] = env->parent;
-    voba_value_t parent = voba_apply(voba_symbol_value(s_to_string), voba_make_array(args));
+    voba_value_t parent = voba_apply(voba_symbol_value(s_str), voba_make_array(args));
     ret = VOBA_STRCAT(ret,
                       VOBA_CONST_CHAR("<ENV"),
                       VOBA_CONST_CHAR(" vars="), voba_value_to_str(a),
@@ -180,19 +180,19 @@ VOBA_FUNC static voba_value_t to_string_env(voba_value_t self,voba_value_t vs)
     
 }
 
-VOBA_FUNC static voba_value_t to_string_compiler_fun(voba_value_t self,voba_value_t vs);
-EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_to_string),voba_cls_compiler_fun,voba_make_func(to_string_compiler_fun));}
-VOBA_FUNC static voba_value_t to_string_compiler_fun(voba_value_t self,voba_value_t vs)
+VOBA_FUNC static voba_value_t str_compiler_fun(voba_value_t self,voba_value_t vs);
+EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_str),voba_cls_compiler_fun,voba_make_func(str_compiler_fun));}
+VOBA_FUNC static voba_value_t str_compiler_fun(voba_value_t self,voba_value_t vs)
 {
     voba_value_t v = voba_array_at(vs,0);
     voba_str_t* ret = voba_str_empty();
     compiler_fun_t* fun = COMPILER_FUN(v);
     voba_value_t args[] = {1, fun->a_var_A};
-    voba_value_t a = voba_apply(voba_symbol_value(s_to_string), voba_make_array(args));
+    voba_value_t a = voba_apply(voba_symbol_value(s_str), voba_make_array(args));
     args[1] = fun->a_var_C;
-    voba_value_t c = voba_apply(voba_symbol_value(s_to_string), voba_make_array(args));
+    voba_value_t c = voba_apply(voba_symbol_value(s_str), voba_make_array(args));
     args[1] = fun->parent;
-    voba_value_t parent = voba_apply(voba_symbol_value(s_to_string), voba_make_array(args));
+    voba_value_t parent = voba_apply(voba_symbol_value(s_str), voba_make_array(args));
     ret = VOBA_STRCAT(ret,
                       VOBA_CONST_CHAR("<FUN"),
                       VOBA_CONST_CHAR(" args="), voba_value_to_str(a),
