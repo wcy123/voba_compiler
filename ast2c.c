@@ -285,15 +285,16 @@ static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t **
     }
     return ret;
 }
-static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_constant(voba_value_t syn_a, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_constant(ast_t * ast, c_backend_t* bk, voba_str_t** s)
 {
-    voba_value_t syn_value = ast->u.constant.value;
-    voba_value_t value = SYNTAX(syn_value)->v;    
-    return ast2c_constant(value,bk,s);
+    voba_value_t syn_value = ast->u.constant.syn_value;
+    return ast2c_constant(syn_value, bk, s);
 }
-static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_constant(voba_value_t syn_value, c_backend_t* bk, voba_str_t** s)
 {
+    voba_value_t value = SYNTAX(syn_value)->v;
     voba_str_t * ret = voba_str_empty();
     voba_value_t cls = voba_get_class(value);
     if(cls == voba_cls_str){
@@ -314,12 +315,49 @@ static inline voba_str_t* ast2c_constant(voba_value_t value, c_backend_t* bk, vo
             assert(voba_is_true(value));
             ret = VOBA_CONST_CHAR("VOBA_TRUE");
         }
+    }else if(cls == voba_cls_array){
+        ret = ast2c_constant_array(syn_value,bk,s);
     }else{
         fprintf(stderr,__FILE__ ":%d:[%s] type %s is not supported yet\n", __LINE__, __FUNCTION__,
             voba_get_class_name(value));
         assert(0&&"type is supported yet");
     }
     return ret;
+}
+static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t* s_const = new_uniq_id();
+    voba_str_t* s_c_const = new_uniq_id();
+    TEMPLATE(
+        &bk->decl,
+        VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF; /* var for constant*/\n"),
+        s_const
+        );
+    voba_str_t* s0 = voba_str_empty();
+    voba_value_t a = SYNTAX(syn_a)->v;
+    int64_t len = voba_array_len(a);
+    TEMPLATE(
+        &s0,
+        VOBA_CONST_CHAR("    voba_value_t #0 [] = { #1"),
+        s_c_const,
+        voba_str_fmt_int64_t(len,10)
+        );
+    for(int64_t i = 0; i < len; ++i){
+        TEMPLATE(
+            &s0,
+            VOBA_CONST_CHAR(",#0"),
+            ast2c_constant(voba_array_at(a,i),bk,s));
+    }
+    TEMPLATE(
+        &s0,
+        VOBA_CONST_CHAR(
+            "};\n"
+            "    #0 = voba_make_array(#1); /* constant */\n"
+            ),
+        s_const,
+        s_c_const);
+    bk->start = voba_strcat(bk->start,s0);
+    return s_const;
 }
 static voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {

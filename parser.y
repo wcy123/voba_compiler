@@ -57,6 +57,11 @@ T_INT
 |T_STRING  
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
 | '(' ')' { $$ = make_syntax(voba_make_array_0(),@$.start_pos,@$.end_pos);}
+| '\'' sexp {
+    voba_value_t s_quote = voba_make_symbol(VOBA_CONST_CHAR("quote"),module);
+    voba_value_t syn_s_quote = make_syntax(s_quote,@1.start_pos, @1.end_pos);
+    $$ = make_syntax(voba_make_array_2(syn_s_quote, $2),@1.start_pos, @2.end_pos);
+  }
 | error { fprintf(stderr,"TODO ERRORR RECOVERY %d - %d\n",@$.start_pos, @$.end_pos); }
 ;
 

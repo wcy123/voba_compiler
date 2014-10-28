@@ -33,7 +33,7 @@ typedef struct ast_set_var_s {
     voba_value_t a_ast_exprs; // a list of ast
 } ast_set_var_t;
 typedef struct ast_constant_s {
-    voba_value_t value;
+    voba_value_t syn_value;
 } ast_constant_t;
 typedef struct ast_fun_s {
     voba_value_t syn_s_name; // NIL for annonymous fun.

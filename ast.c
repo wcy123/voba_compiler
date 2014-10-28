@@ -243,11 +243,11 @@ voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value
     AST(r)->u.fun.a_ast_exprs = a_ast_exprs;
     return r;
 }   
-voba_value_t make_ast_constant(voba_value_t value)
+voba_value_t make_ast_constant(voba_value_t syn_value)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = CONSTANT;
-    AST(r)->u.constant.value = value;
+    AST(r)->u.constant.syn_value = syn_value;
     return r;
 }
 voba_value_t make_ast_var(voba_value_t var)

@@ -10,6 +10,7 @@
 #include "syn2ast_match.h"
 #include "syn2ast_for.h"
 #include "syn2ast_if.h"
+#include "syn2ast_quote.h"
 static inline voba_value_t compile_fun(voba_value_t syn_form, voba_value_t env, voba_value_t toplevel_env);
 static inline voba_value_t compile_arg_list(voba_value_t la_arg, voba_value_t toplevel_env);
 static inline voba_value_t compile_arg(voba_value_t a, int32_t index, voba_value_t toplevel_env);
@@ -74,7 +75,7 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
         voba_value_t f = SYNTAX(syn_f)->v;
         if(voba_is_a(f,voba_cls_symbol)){
             if(voba_eq(f, K(toplevel_env,quote))){
-                report_error(VOBA_CONST_CHAR("not implemented for quote"),syn_f,toplevel_env);
+                ret = compile_quote(syn_form,env,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,import))){
                 report_error(VOBA_CONST_CHAR("illegal form. import is the keyword"),syn_f,toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,fun))){
