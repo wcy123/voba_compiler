@@ -16,7 +16,7 @@ static inline voba_value_t compile_arg_list(voba_value_t la_arg, voba_value_t to
 static inline voba_value_t compile_arg(voba_value_t a, int32_t index, voba_value_t toplevel_env);
 static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env, voba_value_t toplevel_env);
 static inline voba_value_t compile_symbol(voba_value_t syn_symbol, voba_value_t env,voba_value_t toplevel_env);
-
+static inline voba_value_t compile_it(voba_value_t syn_symbol, voba_value_t env,voba_value_t toplevel_env);
 
 voba_value_t compile_exprs(voba_value_t la_syn_exprs, voba_value_t env, voba_value_t toplevel_env)
 {
@@ -56,12 +56,52 @@ voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t env,voba_value_t to
         ret = make_ast_constant(syn_expr);
     }
     else if(cls == voba_cls_symbol){
-        ret = compile_symbol(syn_expr,env,toplevel_env);
+        if( voba_eq(syn_expr, K(toplevel_env, it)) ){
+            ret = compile_it(syn_expr,env,toplevel_env);
+        }else{
+            ret = compile_symbol(syn_expr,env,toplevel_env);
+        }
     }
     else if(cls == voba_cls_array){
         ret = compile_array(syn_expr,env,toplevel_env);
     }else{
         report_error(VOBA_CONST_CHAR("invalid expression"),syn_expr,toplevel_env);
+    }
+    return ret;
+}
+voba_value_t compile_def(voba_value_t top_var, voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    
+    voba_value_t form = SYNTAX(syn_form)->v;
+    assert(voba_array_len(form) >= 2);
+
+    // extract args
+    voba_value_t syn_f_args = voba_array_at(form,1);
+    voba_value_t a_f_args = SYNTAX(syn_f_args)->v;
+    voba_value_t la_f_args = voba_la_from_array0(a_f_args);
+    voba_value_t syn_s_name = voba_la_car(la_f_args);
+    assert(voba_la_len(la_f_args) > 1);
+    assert(voba_is_a(SYNTAX(syn_s_name)->v,voba_cls_symbol));
+    voba_value_t la_syn_arg_list = voba_la_cdr(la_f_args); // skip f;
+
+    // extract body
+    uint32_t offset = 2; // skip def, args
+    voba_value_t la_syn_body = voba_la_from_array1(form,offset);
+    
+              
+    voba_value_t a_var_A = compile_arg_list(la_syn_arg_list,toplevel_env);
+    if(a_var_A){
+        voba_value_t fun = make_compiler_fun();
+        COMPILER_FUN(fun)->a_var_A = a_var_A;
+        COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
+        COMPILER_FUN(fun)->parent = env;
+        voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
+        if(a_ast_exprs){
+            voba_value_t ast_fun = make_ast_fun(syn_s_name,COMPILER_FUN(fun),a_ast_exprs);
+            voba_value_t ast_exprs = voba_make_array_1(ast_fun);
+            ret = make_ast_set_var(top_var, ast_exprs);
+        }
     }
     return ret;
 }
@@ -184,39 +224,8 @@ static inline voba_value_t compile_symbol(voba_value_t syn_symbol, voba_value_t 
     }
     return ret;
 }
-voba_value_t compile_def(voba_value_t top_var, voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+static inline voba_value_t compile_it(voba_value_t syn_symbol, voba_value_t env,voba_value_t toplevel_env)
 {
-    voba_value_t ret = VOBA_NIL;
-    
-    voba_value_t form = SYNTAX(syn_form)->v;
-    assert(voba_array_len(form) >= 2);
-
-    // extract args
-    voba_value_t syn_f_args = voba_array_at(form,1);
-    voba_value_t a_f_args = SYNTAX(syn_f_args)->v;
-    voba_value_t la_f_args = voba_la_from_array0(a_f_args);
-    voba_value_t syn_s_name = voba_la_car(la_f_args);
-    assert(voba_la_len(la_f_args) > 1);
-    assert(voba_is_a(SYNTAX(syn_s_name)->v,voba_cls_symbol));
-    voba_value_t la_syn_arg_list = voba_la_cdr(la_f_args); // skip f;
-
-    // extract body
-    uint32_t offset = 2; // skip def, args
-    voba_value_t la_syn_body = voba_la_from_array1(form,offset);
-    
-              
-    voba_value_t a_var_A = compile_arg_list(la_syn_arg_list,toplevel_env);
-    if(a_var_A){
-        voba_value_t fun = make_compiler_fun();
-        COMPILER_FUN(fun)->a_var_A = a_var_A;
-        COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
-        COMPILER_FUN(fun)->parent = env;
-        voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
-        if(a_ast_exprs){
-            voba_value_t ast_fun = make_ast_fun(syn_s_name,COMPILER_FUN(fun),a_ast_exprs);
-            voba_value_t ast_exprs = voba_make_array_1(ast_fun);
-            ret = make_ast_set_var(top_var, ast_exprs);
-        }
-    }
+    voba_value_t ret = make_ast_it();
     return ret;
 }

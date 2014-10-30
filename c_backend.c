@@ -15,6 +15,7 @@ voba_value_t make_c_backend()
     r->decl = voba_str_empty();
     r->start = voba_str_empty();
     r->impl = voba_str_empty();
+    r->it = NULL;
     return ret;
 }
 VOBA_FUNC static voba_value_t str_c_backend(voba_value_t self, voba_value_t args);

@@ -22,6 +22,7 @@ typedef struct toplevel_env_s {
     XX(LET)                                             \
     XX(MATCH)                                           \
     XX(FOR)                                             \
+    XX(IT)                                              \
     
 typedef enum ast_type_e {
 #define DECLARE_AST_TYPE_ENUM(X) X,
@@ -83,6 +84,7 @@ voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs);
 voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs);
 voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match);
 voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t ast_match);
+voba_value_t make_ast_it();
 voba_value_t create_toplevel_env(voba_value_t module);
 
 

@@ -11,6 +11,7 @@
     XX(match)                                   \
     XX(value)                                   \
     XX(for)                                     \
+    XX(it)                                      \
     
 #define VOBA_DECLARE_KEYWORD(key) k_##key,
 enum voba_keyword_e {

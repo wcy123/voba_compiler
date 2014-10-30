@@ -11,95 +11,51 @@
 #include "c_backend.h"
 #include "module_info.h"
 #include "ast2c.h"
-static void import_modules(toplevel_env_t* toplevel, c_backend_t* out);
+#include "ast2c_utils.h"
+#include "ast2c_utils.c"
+static inline void ast2c_decl_prelude(c_backend_t* bk);
+static inline void import_modules(toplevel_env_t* toplevel, c_backend_t* out);
+static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk);
+static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk);
+voba_value_t ast2c(toplevel_env_t* toplevel)
+{
+    voba_value_t ret = make_c_backend();
+    c_backend_t * bk = C_BACKEND(ret);
+    // #include blahblah
+    ast2c_decl_prelude(bk);
+    // EXEC_ONCE_PROGN { for each module; import module; }
+    import_modules(toplevel,bk);
+    // declare static voba_value_t top_var = VOBA_NIL
+    // top_var = m["var_top"]
+    ast2c_decl_top_var(ENV(toplevel->env),bk);
+    // output all asts
+    ast2c_all_asts(toplevel->a_asts,bk);
+    return ret;
+}
+static inline void ast2c_decl_prelude(c_backend_t* bk)
+{
+    TEMPLATE(&bk->decl,
+             VOBA_CONST_CHAR("##include <stdint.h>\n"
+                             "##include <assert.h>\n"
+                             "##include <voba/include/value.h>\n"
+                             "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
+                             "##include <exec_once.h>\n"
+                             "##include <voba/include/module.h>\n"
+                             "##define voba_match_eq voba_eql\n"
+                             "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"));
+}
 static void import_module(voba_value_t a_modules, c_backend_t * bk);
-static voba_str_t * quote_string(voba_str_t * s);
-static inline voba_str_t* indent(voba_str_t * s);
-static voba_str_t* new_uniq_id();
-static inline void ast2c_begin_scope(c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_end_scope(c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s);
-static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t ** s);
-static inline voba_str_t * ast2c_new_var(voba_str_t* comment, c_backend_t * bk, voba_str_t** s);
-//static inline void ast2c_begin_scope(c_backend_t * bk, voba_str_t** s);
-//static inline void ast2c_end_scope(c_backend_t * bk, voba_str_t** s);
-static inline void ast2c_assign(voba_str_t * var, voba_str_t * value, c_backend_t* bk, voba_str_t**s);
-static inline void ast2c_comment(voba_str_t * c, c_backend_t* bk, voba_str_t**s);
-#define DECL(s)  OUT(bk->decl,s);
-#define START(s) OUT(bk->start,s);
-#define IMPL(s)  OUT(bk->impl,s);
-#define TEMPLATE(s,template,...)                                        \
-    do{                                                                 \
-        voba_str_t* args_____never [] = {(voba_str_t*)0, ##__VA_ARGS__ }; \
-        size_t args_len____never = sizeof(args_____never)/sizeof(voba_value_t) - 1; \
-        ast2c_template(__FILE__,__LINE__,__func__,s, template, args_len____never, &args_____never[1]); \
-    }while(0)
-static inline void ast2c_template(const char * file, int line,const char * fn, voba_str_t **s, voba_str_t* template, size_t len, voba_str_t* array[]);
-static inline voba_str_t * output(voba_str_t * stream, voba_str_t * s, const char * file, int line, const char * fn)
+static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)
 {
-    if(file){
-        uint32_t i = 0 ; 
-        for(i = 0; i < s->len; ++i){
-            if(s->data[i] == '\n'){
-                stream = voba_strcat(stream,voba_str_from_cstr("/*"));
-                stream = voba_strcat(stream,voba_str_from_cstr(file));
-                stream = voba_strcat(stream,voba_str_from_cstr(":"));
-                stream = voba_strcat(stream,voba_str_fmt_int32_t(line,10));
-                stream = voba_strcat(stream,voba_str_from_cstr(":["));
-                stream = voba_strcat(stream,voba_str_from_cstr(fn));
-                stream = voba_strcat(stream,voba_str_from_cstr("]"));
-                stream = voba_strcat(stream,voba_str_from_cstr("*/"));
-                stream = voba_strcat(stream,voba_str_from_cstr("\n"));
-            }else{
-                stream = voba_strcat_char(stream,s->data[i]);
-            }
-        }
-    }else{
-        stream = voba_strcat(stream,s);
+    voba_value_t a_modules  = toplevel->a_modules;
+    int64_t len = voba_array_len(a_modules);
+    for(int64_t i = 0 ; i < len ; ++i){
+        import_module(voba_array_at(a_modules,i),out);
     }
-    return stream;
 }
-#define DEBUG_OUTPUT
-#ifdef DEBUG_OUTPUT
-#define OUT(stream,s)  (stream) = output(stream,s,__FILE__,__LINE__, __func__);
-#else
-#define OUT(stream,s)  (stream) = output(stream,s,NULL,0,NULL);
-#endif
-static voba_str_t * var_c_id(var_t* var)
-{
-    voba_value_t syn_s_name = var->syn_s_name;
-    return voba_strcat(voba_str_from_char('x',1), voba_str_fmt_int64_t(syn_s_name,16));
-}
-static voba_str_t * var_c_symbol_name(var_t* var)
-{
-    voba_value_t syn_s_name = var->syn_s_name;
-    return voba_value_to_str(voba_symbol_name(SYNTAX(syn_s_name)->v));
-}
-static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, voba_str_t* module_id, voba_str_t * syn_name, voba_str_t * var_name)
-{
-    TEMPLATE(&bk->start,
-             VOBA_CONST_CHAR(
-                 "{\n"
-                 "    #2 = voba_module_var(#3,#0,#1);\n"
-                 "}\n")
-             ,quote_string(module_id)
-             ,quote_string(syn_name)
-             ,var_name
-             ,quote_string(module_name)
-        );
-    return;
-}
-static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
+static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t ** s);
+static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, voba_str_t* module_id, voba_str_t * syn_name, voba_str_t * var_name);
+static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
 {
     ast2c_decl_env(env,bk,&bk->decl);
     ast2c_import_var(bk,
@@ -129,22 +85,21 @@ static void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
         }
     }
 }
-static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)
+static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, voba_str_t* module_id, voba_str_t * syn_name, voba_str_t * var_name)
 {
-    voba_value_t a_modules  = toplevel->a_modules;
-    int64_t len = voba_array_len(a_modules);
-    for(int64_t i = 0 ; i < len ; ++i){
-        import_module(voba_array_at(a_modules,i),out);
-    }
+    TEMPLATE(&bk->start,
+             VOBA_CONST_CHAR(
+                 "{\n"
+                 "    #2 = voba_module_var(#3,#0,#1);\n"
+                 "}\n")
+             ,quote_string(module_id)
+             ,quote_string(syn_name)
+             ,var_name
+             ,quote_string(module_name)
+        );
+    return;
 }
-static voba_str_t * quote_string(voba_str_t * s)
-{
-    voba_str_t * ret = voba_str_empty();
-    ret = voba_strcat_char(ret,'"');
-    ret = voba_strcat(ret,s);
-    ret = voba_strcat_char(ret,'"');
-    return ret;
-}
+
 static void import_module(voba_value_t module_info, c_backend_t * bk)
 {
     module_info_t * mi  = MODULE_INFO(module_info);
@@ -173,20 +128,9 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "    voba_import_module(name,id,symbols);\n"
                  "}\n"));
 }
-static void ast2c_decl_prelude(c_backend_t* bk)
-{
-    TEMPLATE(&bk->decl,
-             VOBA_CONST_CHAR("##include <stdint.h>\n"
-                             "##include <assert.h>\n"
-                             "##include <voba/include/value.h>\n"
-                             "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
-                             "##include <exec_once.h>\n"
-                             "##include <voba/include/module.h>\n"
-                             "##define voba_match_eq voba_eql\n"
-                             "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"));
-}
 
-static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
+static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s);
+static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
 {
     int64_t len = voba_array_len(a_asts);
     for(int64_t i = 0; i < len; ++i){
@@ -205,7 +149,16 @@ static void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
                         "}\n"
             ));
 }
-static voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
+static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
     switch(ast->type){
@@ -515,32 +468,6 @@ static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t **
     }
     return;
 }
-static inline voba_str_t * ast2c_new_var(voba_str_t * comment, c_backend_t * bk, voba_str_t** s)
-{
-    voba_str_t * id = new_uniq_id();
-    OUT(*s, VOBA_CONST_CHAR("    voba_value_t "));
-    OUT(*s, id);
-    ast2c_comment(comment,bk,s);
-    OUT(*s,VOBA_CONST_CHAR(" __attribute__ ((unused)) = VOBA_UNDEF;\n"));
-    return id;
-}
-static inline void ast2c_assign(voba_str_t * var, voba_str_t * value, c_backend_t* bk, voba_str_t**s)
-{
-    OUT(*s, var);    
-    OUT(*s, VOBA_CONST_CHAR("="));
-    OUT(*s, value);
-    OUT(*s, VOBA_CONST_CHAR(";\n"));
-    return;
-}
-static inline void ast2c_comment(voba_str_t * c, c_backend_t* bk, voba_str_t**s)
-{
-    OUT(*s, VOBA_CONST_CHAR("/*"));    
-    OUT(*s, c);
-    OUT(*s, VOBA_CONST_CHAR("*/"));
-}
-
-static inline void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_goto(voba_str_t * label, c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s);
 static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
@@ -600,20 +527,6 @@ static inline voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, v
              VOBA_CONST_CHAR("    goto #0; // match goto end\n")
              ,label_success);
     return ret;
-}
-static inline void ast2c_goto(voba_str_t * label, c_backend_t* bk, voba_str_t** s)
-{
-    OUT(*s,VOBA_CONST_CHAR("\ngoto "));
-    OUT(*s,label);
-    OUT(*s,VOBA_CONST_CHAR(";\n"));
-    return;
-}
-static inline void ast2c_label(voba_str_t * label, c_backend_t* bk, voba_str_t** s)
-{
-    OUT(*s,VOBA_CONST_CHAR("\n"));
-    OUT(*s,label);
-    OUT(*s,VOBA_CONST_CHAR(":\n"));
-    return;
 }
 static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
@@ -794,97 +707,4 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
         );
     return for_ret;
 }
-static voba_str_t* new_uniq_id()
-{
-    static int c = 0;
-    return voba_strcat(VOBA_CONST_CHAR("s"),voba_str_fmt_int32_t(c++,10));
-}
 
-static inline void ast2c_begin_scope(c_backend_t* bk, voba_str_t** s)
-{
-    OUT(*s,VOBA_CONST_CHAR("{\n"));
-}
-static inline void ast2c_end_scope(c_backend_t* bk, voba_str_t** s)
-{
-    OUT(*s,VOBA_CONST_CHAR("}\n"));
-}
-static inline void ast2c_template(const char * file, int line,const char * fn, voba_str_t **s, voba_str_t* template, size_t len, voba_str_t* array[])
-{
-    uint32_t i = 0;
-    if(0){
-        *s = voba_strcat(*s,voba_str_from_cstr("\n/*"));
-        *s = voba_strcat(*s,voba_str_from_cstr(file));
-        *s = voba_strcat(*s,voba_str_from_cstr(":"));
-        *s = voba_strcat(*s,voba_str_fmt_int32_t(line,10));
-        *s = voba_strcat(*s,voba_str_from_cstr(":["));
-        *s = voba_strcat(*s,voba_str_from_cstr(fn));
-        *s = voba_strcat(*s,voba_str_from_cstr("]"));
-        *s = voba_strcat(*s,voba_str_from_cstr("    { */\n"));
-    }
-    for(i = 0; i < template->len; ){
-        if(template->data[i] == '#' && 
-           i+1 < template->len &&
-           template->data[i+1] >='0' &&
-           template->data[i+1] <='9'){
-            uint32_t index = template->data[i+1] - '0';
-            if(index < len){
-                *s = voba_strcat(*s, array[index]);
-                i+=2;
-            }else{
-                fprintf(stderr,__FILE__ ":%d:[%s] out of range; index = %d, len = %ld\n", line,file,
-                        index,len);
-                assert(0&&"out of range");
-            }
-        }else if(template->data[i] == '#' && 
-                 i+1 < template->len &&
-                 template->data[i+1] =='#'){
-            *s = voba_strcat_char(*s, '#');
-            i+=2;
-        }else if(template->data[i] == '\n'){
-            *s = voba_strcat(*s,voba_str_from_cstr("\n"));
-            i+=1;
-        }else{
-            *s = voba_strcat_char(*s, template->data[i]);
-            i++;
-        }
-    }
-    if(0){
-        *s = voba_strcat(*s,voba_str_from_cstr("/*"));
-        *s = voba_strcat(*s,voba_str_from_cstr(file));
-        *s = voba_strcat(*s,voba_str_from_cstr(":"));
-        *s = voba_strcat(*s,voba_str_fmt_int32_t(line,10));
-        *s = voba_strcat(*s,voba_str_from_cstr(":["));
-        *s = voba_strcat(*s,voba_str_from_cstr(fn));
-        *s = voba_strcat(*s,voba_str_from_cstr("]"));
-        *s = voba_strcat(*s,voba_str_from_cstr("    } */\n"));
-    }
-    return;
-}
-static inline voba_str_t* indent(voba_str_t * s)
-{
-    uint32_t i = 0;
-    voba_str_t * ret = voba_str_empty();
-    for(i = 0; i < s->len; ++i){
-        if(s->data[i] == '\n' && i != s->len-1){
-            ret = voba_strcat(ret, VOBA_CONST_CHAR("\n    "));
-        }else{
-            ret = voba_strcat_char(ret, s->data[i]);
-        }
-    }
-    return ret;
-}
-voba_value_t ast2c(toplevel_env_t* toplevel)
-{
-    voba_value_t ret = make_c_backend();
-    c_backend_t * bk = C_BACKEND(ret);
-    // #include blahblah
-    ast2c_decl_prelude(bk);
-    // EXEC_ONCE_PROGN { for each module; import module; }
-    import_modules(toplevel,bk);
-    // declare static voba_value_t top_var = VOBA_NIL
-    // top_var = m["var_top"]
-    ast2c_decl_top_var(ENV(toplevel->env),bk);
-    // output all asts
-    ast2c_all_asts(toplevel->a_asts,bk);
-    return ret;
-}
