@@ -745,14 +745,15 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  VOBA_CONST_CHAR(
                      "    /* try to apply for-if */\n"
                      "    voba_value_t #0 [] = {1, #1}; /* args for `if', the filter*/\n"
-                     "    #2 = voba_apply(#3, voba_make_array(#0)); /* for-if */\n"
-                     "    if(!voba_is_false(#2)){ /* skip this iteration, continue  */\n"
-                     "        goto #0/* for-if failed */\n"
+                     "    voba_value_t #2 = voba_apply(#3, voba_make_array(#0)); /* for-if */\n"
+                     "    if(voba_is_false(#2)){ /* skip this iteration, continue  */\n"
+                     "        goto #4;/* for-if failed */\n"
                      "    }\n"
                      )
                  ,if_args
                  ,for_each_value
                  ,if_value
+                 ,for_if
                  ,for_each_begin
             );
     }
