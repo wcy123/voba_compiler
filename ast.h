@@ -56,8 +56,11 @@ typedef struct ast_match_s {
     voba_value_t match; // a match object
 } ast_match_t;
 typedef struct ast_for_s {
-    voba_value_t ast_iter; // invoke repeatly until return VOBA_UNDEF
-    voba_value_t match;
+    voba_value_t ast_iter;      /* :each, invoke repeatly until return VOBA_UNDEF */
+    voba_value_t match;         /* :do, for body */
+    voba_value_t _if ;          /* :if */
+    voba_value_t accumulate;   /* :accumulate */
+    voba_value_t init;          /* :init */
 } ast_for_t;
 typedef struct ast_it_s {
     voba_value_t syn_it;
@@ -87,7 +90,7 @@ voba_value_t make_ast_var(voba_value_t var);
 voba_value_t make_ast_set_var(voba_value_t var, voba_value_t exprs);
 voba_value_t make_ast_let(env_t * p_env, voba_value_t a_ast_exprs);
 voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match);
-voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t ast_match);
+voba_value_t make_ast_for();
 voba_value_t make_ast_it(voba_value_t syn_it);
 voba_value_t create_toplevel_env(voba_value_t module);
 

@@ -231,6 +231,8 @@ voba_value_t create_toplevel_env(voba_value_t module)
     TOPLEVEL_ENV(r)->a_asts = VOBA_NIL;
 #   define VOBA_DEFINE_KEYWORD(key) voba_array_push(TOPLEVEL_ENV(r)->keywords, VOBA_SYMBOL(key,module));
     VOBA_KEYWORDS(VOBA_DEFINE_KEYWORD);
+#   define VOBA_DEFINE_COLON_KEYWORD(key) voba_array_push(TOPLEVEL_ENV(r)->keywords, voba_make_symbol_cstr(":" #key,module));
+    VOBA_COLON_KEYWORDS(VOBA_DEFINE_COLON_KEYWORD);
     return r;
 }
 voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value_t a_ast_exprs)
@@ -288,12 +290,15 @@ voba_value_t make_ast_match(voba_value_t ast_value, voba_value_t match)
     AST(r)->u.match.match = match;
     return r;
 }
-voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t match)
+voba_value_t make_ast_for()
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = FOR;
-    AST(r)->u._for.ast_iter = ast_iter;
-    AST(r)->u._for.match = match;
+    AST(r)->u._for.ast_iter = VOBA_NIL;      /* :each, invoke repeatly until return VOBA_UNDEF */
+    AST(r)->u._for.match = VOBA_NIL;         /* :do, for body */
+    AST(r)->u._for._if = VOBA_NIL ;          /* :if */
+    AST(r)->u._for.accumulate = VOBA_NIL;   /* :accumulator */
+    AST(r)->u._for.init = VOBA_NIL;          /* :init */
     return r;
 
 }

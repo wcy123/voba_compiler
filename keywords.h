@@ -1,21 +1,32 @@
 #pragma once
 #define K(toplevel_env,key) voba_array_at(TOPLEVEL_ENV(toplevel_env)->keywords,k_##key)
-#define VOBA_KEYWORDS(XX)                       \
-    XX(def)                                     \
-    XX(fun)                                     \
-    XX(quote)                                   \
-    XX(import)                                  \
+#define COLON(toplevel_env,key) voba_array_at(TOPLEVEL_ENV(toplevel_env)->keywords,c_##key)
+#define VOBA_KEYWORDS(XX)                              \
+    XX(def)                                            \
+    XX(fun)                                            \
+    XX(quote)                                          \
+    XX(import)                                         \
+    XX(if)                                             \
+    XX(cond)                                           \
+    XX(let)                                            \
+    XX(match)                                          \
+    XX(value)                                          \
+    XX(for)                                            \
+    XX(it)                                             \
+
+#define VOBA_COLON_KEYWORDS(XX)                 \
     XX(if)                                      \
-    XX(cond)                                    \
-    XX(let)                                     \
-    XX(match)                                   \
-    XX(value)                                   \
-    XX(for)                                     \
-    XX(it)                                      \
-    
+    XX(each)                                    \
+    XX(init)                                    \
+    XX(accumulate)                              \
+    XX(do)
+
 #define VOBA_DECLARE_KEYWORD(key) k_##key,
+#define VOBA_DECLARE_COLON_KEYWORD(key) c_##key,
+
 enum voba_keyword_e {
     VOBA_KEYWORDS(VOBA_DECLARE_KEYWORD)
+    VOBA_COLON_KEYWORDS(VOBA_DECLARE_COLON_KEYWORD)
     K_N_OF_KEYWORDS
 };
 
