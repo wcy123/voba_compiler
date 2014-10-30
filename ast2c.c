@@ -8,6 +8,7 @@
 #include "var.h"
 #include "env.h"
 #include "match.h"
+#include "syn2ast_report.h"
 #include "c_backend.h"
 #include "module_info.h"
 #include "ast2c.h"
@@ -17,10 +18,12 @@ static inline void ast2c_decl_prelude(c_backend_t* bk);
 static inline void import_modules(toplevel_env_t* toplevel, c_backend_t* out);
 static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk);
 static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk);
-voba_value_t ast2c(toplevel_env_t* toplevel)
+voba_value_t ast2c(voba_value_t tvl)
 {
+    toplevel_env_t* toplevel = TOPLEVEL_ENV(tvl);
     voba_value_t ret = make_c_backend();
     c_backend_t * bk = C_BACKEND(ret);
+    bk->toplevel_env = tvl;
     // #include blahblah
     ast2c_decl_prelude(bk);
     // EXEC_ONCE_PROGN { for each module; import module; }
@@ -149,15 +152,16 @@ static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
                         "}\n"
             ));
 }
-static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
@@ -186,12 +190,15 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
     case FOR:
         ret = ast2c_ast_for(ast,bk,s);
         break;
+    case IT:
+        ret = ast2c_ast_it(ast,bk,s);
+        break;
     default:
         assert(0 && "never goes here");
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
     int64_t len = voba_array_len(exprs);
@@ -200,7 +207,7 @@ static voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_st
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_value_t exprs = ast->u.set_var.a_ast_exprs;
     var_t * var = ast->u.set_var.var;
@@ -315,12 +322,12 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
     bk->start = voba_strcat(bk->start,s0);
     return s_const;
 }
-static voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = VOBA_CONST_CHAR("ast2c_ast_fun_with_closure is not implemented");
     return ret;
 }
-static voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_fun_t* ast_fn = &(ast->u.fun);
     voba_str_t * uuid = new_uniq_id();
@@ -343,7 +350,7 @@ static voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, vo
     TEMPLATE(&ret, VOBA_CONST_CHAR("voba_make_func(#0)"),uuid);
     return ret;
 }
-static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t* ret = voba_str_empty();
     ast_fun_t* ast_fn = &ast->u.fun;
@@ -355,7 +362,7 @@ static voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = voba_str_empty();
     TEMPLATE(&ret,
@@ -363,7 +370,7 @@ static voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
              ,voba_str_fmt_int32_t(index,10));
     return ret;
 }
-static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = voba_str_empty();
     TEMPLATE(&ret,
@@ -371,7 +378,7 @@ static voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba_str_t*
              ,voba_str_fmt_int32_t(index,10));
     return ret;
 }
-static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t* ret = voba_str_empty();
     ast_var_t* tv = &ast->u.var;
@@ -400,7 +407,7 @@ static voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     }
     return ret;
 }
-static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = new_uniq_id();
     voba_value_t exprs = ast->u.apply.a_ast_exprs;
@@ -432,7 +439,7 @@ static voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
              ,ret, fun, args_name);
     return ret;
 }
-static voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_let_t * ast_let  = &ast->u.let;
     voba_str_t * id = new_uniq_id();
@@ -469,7 +476,7 @@ static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t **
     return;
 }
 static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s);
-static voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_match_t* ast_match  = &ast->u.match;
     voba_value_t ast_value = ast_match->ast_value;
@@ -661,7 +668,7 @@ static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_ac
              ,indent(s1),ret_id, expr);
     return;
 }
-static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * label_begin = new_uniq_id();
     voba_str_t * label_end = new_uniq_id();
@@ -708,3 +715,13 @@ static voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
     return for_ret;
 }
 
+static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t *  ret  = voba_str_empty();
+    if(bk->it == NULL){
+        report_error(VOBA_CONST_CHAR("no appropriate `it' in this context"),ast->u.it.syn_it,bk->toplevel_env);
+    }else{
+        ret = VOBA_CONST_CHAR("");
+    }
+    return ret;
+}

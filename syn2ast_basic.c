@@ -226,6 +226,6 @@ static inline voba_value_t compile_symbol(voba_value_t syn_symbol, voba_value_t 
 }
 static inline voba_value_t compile_it(voba_value_t syn_symbol, voba_value_t env,voba_value_t toplevel_env)
 {
-    voba_value_t ret = make_ast_it();
+    voba_value_t ret = make_ast_it(syn_symbol);
     return ret;
 }

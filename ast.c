@@ -297,9 +297,10 @@ voba_value_t make_ast_for(voba_value_t ast_iter, voba_value_t match)
     return r;
 
 }
-voba_value_t make_ast_it()
+voba_value_t make_ast_it(voba_value_t syn_it)
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = IT;
+    AST(r)->u.it.syn_it = syn_it;
     return r;
 }

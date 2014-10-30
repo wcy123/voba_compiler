@@ -19,7 +19,7 @@ int yydebug = 0;
 EXEC_ONCE_PROGN{
     yydebug = getenv("VOBA_YYDEBUG") != NULL;
 }
-voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t * module, int * error)
+voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t * module, uint32_t * error)
 {
     voba_value_t ret =  VOBA_NIL;
     void * scanner;

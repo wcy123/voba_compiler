@@ -10,7 +10,7 @@
 #include "syn2ast_decl_top_var.h"
 // `syn` is the syntax object to be compiled into an ast
 // `module` is the symbol table for all symbols.
-voba_value_t syn2ast(voba_value_t syn,voba_value_t module, int * error)
+voba_value_t syn2ast(voba_value_t syn,voba_value_t module)
 {
     voba_value_t asts = VOBA_NIL;
     voba_value_t toplevel_env = create_toplevel_env(module);
@@ -28,11 +28,8 @@ voba_value_t syn2ast(voba_value_t syn,voba_value_t module, int * error)
         voba_value_t ast = voba_apply(voba_array_at(next,i),voba_make_array(args));
         if(!voba_is_nil(ast)){
             voba_array_push(asts,ast);
-        }else{
-            ++ *error;
         }
     }
-    *error = TOPLEVEL_ENV(toplevel_env)->n_of_errors;
     TOPLEVEL_ENV(toplevel_env)->a_asts = asts;
     return toplevel_env;
 }
