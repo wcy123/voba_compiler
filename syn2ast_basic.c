@@ -56,7 +56,8 @@ voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t env,voba_value_t to
         ret = make_ast_constant(syn_expr);
     }
     else if(cls == voba_cls_symbol){
-        if( voba_eq(syn_expr, K(toplevel_env, it)) ){
+        voba_value_t expr = SYNTAX(syn_expr)->v;
+        if( voba_eq(expr, K(toplevel_env, it)) ){
             ret = compile_it(syn_expr,env,toplevel_env);
         }else{
             ret = compile_symbol(syn_expr,env,toplevel_env);

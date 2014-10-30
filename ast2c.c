@@ -141,7 +141,7 @@ static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
         voba_value_t ast  = voba_array_at(a_asts,i);
         assert(voba_is_a(ast,voba_cls_ast));
         ast_t * p_ast = AST(ast);
-        ast2c_ast(p_ast,bk,&s);
+        bk->it = ast2c_ast(p_ast,bk,&s);
         bk->start = voba_strcat(bk->start,s);
     }
     TEMPLATE(&bk->impl,
@@ -202,9 +202,12 @@ static inline voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, 
 {
     voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
     int64_t len = voba_array_len(exprs);
+    voba_str_t * old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
         ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s);
+        bk->it = ret;
     }
+    bk->it = old_it;
     return ret;
 }
 static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
@@ -415,11 +418,16 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
     int64_t len = voba_array_len(exprs);
     voba_str_t * args_name = new_uniq_id();
     assert(len >=1);
+    voba_str_t * old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
         voba_value_t expr = voba_array_at(exprs,i);
         voba_str_t * sexpr = ast2c_ast(AST(expr), bk, s);
+        if(i > 0){
+            bk->it = sexpr;
+        }
         voba_array_push(args,voba_make_string(sexpr));
     }
+    bk->it = old_it;
     voba_str_t * fun = voba_value_to_str(voba_array_at(args,0));
     TEMPLATE(s,
              VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n"
@@ -718,10 +726,11 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t *  ret  = voba_str_empty();
-    if(bk->it == NULL){
-        report_error(VOBA_CONST_CHAR("no appropriate `it' in this context"),ast->u.it.syn_it,bk->toplevel_env);
+    if(bk->it != NULL){
+        ret = voba_strcat(ret,bk->it);
+        ret = voba_strcat(ret,VOBA_CONST_CHAR("/*it*/"));
     }else{
-        ret = VOBA_CONST_CHAR("");
+        report_error(VOBA_CONST_CHAR("no appropriate `it' in this context"),ast->u.it.syn_it,bk->toplevel_env);
     }
     return ret;
 }

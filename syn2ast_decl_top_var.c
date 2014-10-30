@@ -336,7 +336,7 @@ static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t topl
             report_warn(VOBA_CONST_CHAR("top expr is an empty list"), syn_top_expr,toplevel_env);
         }
     }else{
-        report_error(VOBA_CONST_CHAR("unrecognised form"),syn_top_expr,toplevel_env);
+        compile_top_expr_any(syn_top_expr, toplevel_env);
     }
     return;
 }
