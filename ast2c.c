@@ -511,6 +511,8 @@ static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_valu
     voba_value_t a_rules = p_match->a_rules;
     int64_t len = voba_array_len(a_rules);
     voba_str_t * label_this = new_uniq_id();
+    voba_str_t * old_it = bk->it;
+    bk->it = s_ast_value;
     for(int64_t i = 0; i < len; ++i){
         voba_value_t rule = voba_array_at(a_rules,i);
         voba_str_t * label_next = ((i == (len - 1))?label_success:new_uniq_id());
@@ -527,6 +529,7 @@ static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_valu
             );
         label_this = label_next;
     }
+    bk->it = old_it;
     return;
 }
 static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s);
@@ -678,49 +681,118 @@ static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_ac
 }
 static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
-    voba_str_t * label_begin = new_uniq_id();
-    voba_str_t * label_end = new_uniq_id();
-    voba_str_t * label_end_iter = new_uniq_id();
-    voba_str_t * for_ret = new_uniq_id();
-    ast_for_t * p_ast_for = &ast->u._for;
-    voba_value_t ast_iter = p_ast_for->ast_iter;
-    ast_t * p_ast_iter = AST(ast_iter);
-    voba_value_t match = p_ast_for->match;
-    voba_str_t * iter = ast2c_ast(p_ast_iter,bk,s);
-    voba_str_t * iter_args = new_uniq_id();
-    voba_str_t * iter_ret = new_uniq_id();
-    voba_str_t * s_match_ret = new_uniq_id();
+    ast_for_t *  p_ast_for            = &ast->u._for;
+    voba_value_t each             = p_ast_for->each;
+    ast_t *      p_each           = AST(each);
+    voba_value_t match                = p_ast_for->match;
+    voba_str_t * for_each_generator   = ast2c_ast(p_each,bk,s);
+    voba_str_t * for_if               = voba_is_nil(p_ast_for->_if)?NULL:ast2c_ast(AST(p_ast_for->_if),bk,s);
+    voba_str_t * for_init             = voba_is_nil(p_ast_for->init)?NULL:ast2c_ast(AST(p_ast_for->init),bk,s);
+    voba_str_t * for_accumulate       = voba_is_nil(p_ast_for->accumulate)?NULL:ast2c_ast(AST(p_ast_for->accumulate),bk,s);
+    voba_str_t * for_each_begin       = new_uniq_id();
+    voba_str_t * for_each_end         = new_uniq_id();
+    voba_str_t * for_end              = new_uniq_id();
+    voba_str_t * for_final            = new_uniq_id();
+    voba_str_t * for_each_args        = new_uniq_id();
+    voba_str_t * for_each_value       = new_uniq_id();
+    voba_str_t * for_each_output      = new_uniq_id();
+    voba_str_t * for_each_last_output = new_uniq_id();
+
+    
     voba_str_t * s_body = voba_str_empty();
-    ast2c_match(s_match_ret, iter_ret, label_end_iter, match, bk,&s_body);
+    voba_str_t * old_it = bk->it;
+    bk->it = for_each_value;
+    ast2c_match(for_each_output, for_each_value, for_each_end, match, bk,&s_body);
+    bk->it = old_it;
+
+    /* declare variables */
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    voba_value_t #5 __attribute__((unused)) = VOBA_UNDEF;/* return value for `for' statement */\n"
-                             "    voba_value_t #2 = VOBA_UNDEF;/* input value of each iteration  */\n"
-                             "    voba_value_t #6 __attribute__((unused)) = VOBA_UNDEF;/* output value of each iteration  */\n"
-                             "    #0:{ /*prelude of `for' statement */\n"
-                             "    voba_value_t #1 [] = {0}; /* args for iterator*/\n"
-                             "    #2 = voba_apply(#3,voba_make_array(#1)); /*invoke the iterator*/\n"
-                             "    if(voba_eq(#2,VOBA_UNDEF)){\n"
-                             "        goto #4;/* exit for loop */\n"
-                             "    }\n"
-                             "    /*for body begin*/\n"
-                             "#7\n"
-                             "    /*for body end*/\n"
-                             "    #8: /* end label iteration */\n"
-                             "    goto #0; /* for goto begin */\n"
-                             "    #4:  /* end label `for' */\n"
-                             "    if(0) goto #4;/* suppress compilation warning */\n"
-                             "    }\n")
-             , label_begin      /* begin label 0 */
-             , iter_args        /* iter_args   1 */
-             , iter_ret         /* iter_ret    2 */
-             , iter             /* iter        3 */
-             , label_end        /* end label   4 */
-             , for_ret          /* for_ret     5 */
-             , s_match_ret      /* s_match_ret 6 */
-             , indent(s_body)   /* s_body      7 */
-             , label_end_iter/* label_end_iter 8 */
+             VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* return value for `for' statement */\n"
+                             "    voba_value_t #1 = VOBA_UNDEF;/* input value of each iteration  */\n"
+                             "    voba_value_t #2 __attribute__((unused)) = VOBA_UNDEF;/* output value of each iteration  */\n"
+                             "    voba_value_t #3 __attribute__((unused)) = VOBA_UNDEF;/* init value for `for' statement*/\n"
+                 ),
+             for_final,
+             for_each_value,
+             for_each_output,
+             for_each_last_output);
+    if(for_init){
+        TEMPLATE(s,
+                 VOBA_CONST_CHAR("    #0 = #1 ; /* initialize the default initial value*/\n")
+                 , for_each_last_output
+                 , for_init);
+    }
+    /* evaluate `for' input for each iteratation */
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    #0:{ /*prelude of `for' statement */\n"
+                 "    voba_value_t #1 [] = {0}; /* args for iterator*/\n"
+                 "    #3 = voba_apply(#2,voba_make_array(#1)); /*invoke the iterator*/\n"
+                 "    if(voba_eq(#3,VOBA_UNDEF)){\n"
+                 "        goto #4;/* exit for loop */\n"
+                 "    }\n"
+                 )
+             ,for_each_begin
+             ,for_each_args
+             ,for_each_generator
+             ,for_each_value
+             ,for_end
         );
-    return for_ret;
+    if(for_if){
+        voba_str_t* if_args  = new_uniq_id();
+        voba_str_t* if_value = new_uniq_id();
+        TEMPLATE(s,
+                 VOBA_CONST_CHAR(
+                     "    /* try to apply for-if */\n"
+                     "    voba_value_t #0 [] = {1, #1}; /* args for `if', the filter*/\n"
+                     "    #2 = voba_apply(#3, voba_make_array(#0)); /* for-if */\n"
+                     "    if(!voba_is_false(#2)){ /* skip this iteration, continue  */\n"
+                     "        goto #0/* for-if failed */\n"
+                     "    }\n"
+                     )
+                 ,if_args
+                 ,for_each_value
+                 ,if_value
+                 ,for_each_begin
+            );
+    }
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /*for body begin*/\n"
+                 "#0\n"
+                 "    /*for body end*/\n"
+                 "    #1: /* end label for each iteration */\n"
+                 )
+             , indent(s_body)
+             , for_each_end
+        );
+    if(for_accumulate){
+        voba_str_t* acc_args  = new_uniq_id();
+        TEMPLATE(s,
+                 VOBA_CONST_CHAR(
+                     "    /* collect return value for `for' statement  */\n"
+                     "    {voba_value_t #0 [] = {2, #1, #2}; /*arguments for accumulator*/\n"
+                     "    #1 = voba_apply(#3, voba_make_array(#0));}/* apply the accumulator */\n"
+                     )
+                 ,acc_args
+                 ,for_each_last_output
+                 ,for_each_output
+                 ,for_accumulate
+            );
+    }
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    goto #0; /* for goto begin */\n"
+                 "    #1:  /* end label `for' */\n"
+                 "    #2 = #3;  /* assign the final value for `for' statement */\n"
+                 "    }\n"
+                 )
+             ,for_each_begin
+             ,for_end
+             ,for_final
+             ,for_each_last_output
+        );
+    return for_final;
 }
 
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s)

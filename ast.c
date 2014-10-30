@@ -294,11 +294,11 @@ voba_value_t make_ast_for()
 {
     voba_value_t r = voba_make_user_data(voba_cls_ast);
     AST(r)->type = FOR;
-    AST(r)->u._for.ast_iter = VOBA_NIL;      /* :each, invoke repeatly until return VOBA_UNDEF */
-    AST(r)->u._for.match = VOBA_NIL;         /* :do, for body */
-    AST(r)->u._for._if = VOBA_NIL ;          /* :if */
-    AST(r)->u._for.accumulate = VOBA_NIL;   /* :accumulator */
-    AST(r)->u._for.init = VOBA_NIL;          /* :init */
+    AST(r)->u._for.each = VOBA_NIL;      /* :each, invoke repeatly until return VOBA_UNDEF */
+    AST(r)->u._for.match = VOBA_NIL;     /* :do, for body */
+    AST(r)->u._for._if = VOBA_NIL ;      /* :if */
+    AST(r)->u._for.accumulate = VOBA_NIL;/* :accumulator */
+    AST(r)->u._for.init = VOBA_NIL;      /* :init */
     return r;
 
 }

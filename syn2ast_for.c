@@ -64,7 +64,7 @@ static inline voba_value_t compile_for_sub(ast_for_t* _for, voba_value_t la_syn_
 static inline voba_value_t for_E(voba_value_t * E, voba_value_t la_syn_form, voba_value_t env, voba_value_t toplevel_env);
 static inline voba_value_t for_each(ast_for_t* _for, voba_value_t la_syn_form, voba_value_t env, voba_value_t toplevel_env)
 {
-    return for_E(&_for->ast_iter,la_syn_form,env,toplevel_env);
+    return for_E(&_for->each,la_syn_form,env,toplevel_env);
 }
 static inline voba_value_t for_init(ast_for_t* _for, voba_value_t la_syn_form, voba_value_t env, voba_value_t toplevel_env)
 {
@@ -108,7 +108,7 @@ static inline voba_value_t for_E(voba_value_t * E, voba_value_t la_syn_form, vob
 static inline int check_ast_for(ast_for_t* _for, voba_value_t syn, voba_value_t toplevel_env)
 {
     int ret = 1;
-    if(voba_is_nil(_for->ast_iter)){
+    if(voba_is_nil(_for->each)){
         ret = 0;
         report_error(VOBA_CONST_CHAR("missing :each in `for' statement"),
                      syn,toplevel_env);
