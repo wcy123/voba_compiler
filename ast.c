@@ -233,6 +233,7 @@ voba_value_t create_toplevel_env(voba_value_t module)
     VOBA_KEYWORDS(VOBA_DEFINE_KEYWORD);
 #   define VOBA_DEFINE_COLON_KEYWORD(key) voba_array_push(TOPLEVEL_ENV(r)->keywords, voba_make_symbol_cstr(":" #key,module));
     VOBA_COLON_KEYWORDS(VOBA_DEFINE_COLON_KEYWORD);
+    voba_array_push(TOPLEVEL_ENV(r)->keywords, voba_make_symbol_cstr("|",module)); /* vbar */
     return r;
 }
 voba_value_t make_ast_fun(voba_value_t syn_s_name, compiler_fun_t* f, voba_value_t a_ast_exprs)

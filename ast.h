@@ -60,6 +60,7 @@ typedef struct ast_for_s {
     voba_value_t each;         /* :each, invoke repeatly until return VOBA_UNDEF */
     voba_value_t match;         /* :do, for body */
     voba_value_t _if ;          /* :if */
+    
     voba_value_t accumulate;   /* :accumulate */
     voba_value_t init;          /* :init */
 } ast_for_t;

@@ -39,6 +39,7 @@ struct pattern_apply_s {
 };
 struct pattern_s {
     enum pattern_type_e type;
+    voba_value_t ast_if;
     union {
         pattern_value_t value;
         pattern_var_t var;

@@ -550,6 +550,7 @@ static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fa
 static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match_pattern_if(voba_value_t ast_if, voba_str_t* label_fail,c_backend_t* bk, voba_str_t** s);
 static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s)
 {
     pattern_t * p_pattern = PATTERN(pattern);
@@ -569,6 +570,27 @@ static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, vo
     default:
         assert(0&&"never goes here");
     }
+    /* all variables in the enviroment is already defined
+     * see ast2c_match_rule ast2c_decl_env
+     * they are already set by the corresponding patterns
+     */
+    if(!voba_is_nil(p_pattern->ast_if)){
+        ast2c_match_pattern_if(p_pattern->ast_if,label_fail,bk,s);
+    }
+    return;
+}
+static inline void ast2c_match_pattern_if(voba_value_t ast_if, voba_str_t* label_fail,c_backend_t* bk, voba_str_t** s)
+{
+    ast_t* p_ast = AST(ast_if);
+    voba_str_t * s_if = ast2c_ast(p_ast,bk,s);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    if(voba_eq(#0,VOBA_FALSE)){/* if pattern guard failed */\n"
+                 "         goto #1; /* goto the pattern failed label */\n"
+                 "    }\n"
+                 )
+             ,s_if
+             ,label_fail);
     return;
 }
 static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
