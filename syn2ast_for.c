@@ -115,3 +115,27 @@ static inline int check_ast_for(ast_for_t* _for, voba_value_t syn, voba_value_t 
     }
     return ret;
 }
+
+voba_value_t compile_break(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
+{
+    voba_value_t ret = VOBA_NIL;
+    voba_value_t form = SYNTAX(syn_form)->v;
+    int64_t len = voba_array_len(form);
+    voba_value_t ast_value = VOBA_NIL;
+    if(len == 1){
+        voba_value_t syn_break = voba_array_at(form,0);
+        ast_value = make_ast_constant(make_syn_const(VOBA_NIL));
+        ret = make_ast_break(ast_value,syn_break);
+    }else if(len == 2){
+        voba_value_t syn_expr = voba_array_at(form,1);
+        ast_value = compile_expr(syn_expr,env,toplevel_env);
+        if(!voba_is_nil(ast_value)){
+            voba_value_t syn_break = voba_array_at(form,0);
+            ret = make_ast_break(ast_value,syn_break);
+        }
+    }else{
+        report_error(VOBA_CONST_CHAR("illegal form: (break [<E>]), len is not 2")
+                     ,syn_form,toplevel_env);
+    }
+    return ret;
+}

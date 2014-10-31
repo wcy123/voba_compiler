@@ -8,6 +8,7 @@
     XX(import)                                         \
     XX(if)                                             \
     XX(cond)                                           \
+    XX(break)                                          \
     XX(let)                                            \
     XX(match)                                          \
     XX(value)                                          \

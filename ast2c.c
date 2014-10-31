@@ -162,6 +162,7 @@ static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t*
 static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
@@ -192,6 +193,9 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
         break;
     case IT:
         ret = ast2c_ast_it(ast,bk,s);
+        break;
+    case BREAK:
+        ret = ast2c_ast_break(ast,bk,s);
         break;
     default:
         assert(0 && "never goes here");
@@ -723,8 +727,15 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     
     voba_str_t * s_body = voba_str_empty();
     voba_str_t * old_it = bk->it;
+    voba_str_t * old_for_end = bk->latest_for_end_label;
+    voba_str_t * old_for_final = bk->latest_for_final;
+    
     bk->it = for_each_value;
+    bk->latest_for_end_label = for_end;
+    bk->latest_for_final = for_final;
     ast2c_match(for_each_output, for_each_value, for_each_end, match, bk,&s_body);
+    bk->latest_for_final = old_for_final;
+    bk->latest_for_end_label = old_for_end;
     bk->it = old_it;
 
     /* declare variables */
@@ -805,9 +816,10 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     }
     TEMPLATE(s,
              VOBA_CONST_CHAR(
+                 "    #2 = #3;  /* assign the final value for `for' statement */\n"
                  "    goto #0; /* for goto begin */\n"
                  "    #1:  /* end label `for' */\n"
-                 "    #2 = #3;  /* assign the final value for `for' statement */\n"
+                 "    if(0) goto #1;  /* suppress warning `label at end of compound statement' */\n"
                  "    }\n"
                  )
              ,for_each_begin
@@ -826,6 +838,29 @@ static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t**
         ret = voba_strcat(ret,VOBA_CONST_CHAR("/*it*/"));
     }else{
         report_error(VOBA_CONST_CHAR("no appropriate `it' in this context"),ast->u.it.syn_it,bk->toplevel_env);
+    }
+    return ret;
+}
+static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t *  ret  = voba_str_empty();
+    voba_str_t * v = ast2c_ast(AST(ast->u._break.ast_value),bk,s);
+    voba_str_t * label = bk->latest_for_end_label;
+    voba_str_t * bv = bk->latest_for_final;
+    if(label){
+        TEMPLATE(s,
+            VOBA_CONST_CHAR(
+                "    #0 = #1; /* break the `for' loop */\n"
+                "    goto #2;\n"
+                )
+                 ,bv
+                 ,v
+                 ,label
+            );
+        assert(bv);
+        ret = v;
+    }else{
+        report_error(VOBA_CONST_CHAR("`break' is not in a `for' statement."),ast->u._break.syn_break,bk->toplevel_env);
     }
     return ret;
 }

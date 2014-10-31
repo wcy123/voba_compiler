@@ -129,6 +129,8 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
                 ret = compile_if(syn_form, env, toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,for))){
                 ret = compile_for(syn_form, env, toplevel_env);
+            }else if(voba_eq(f, K(toplevel_env,break))){
+                ret = compile_break(syn_form, env, toplevel_env);
             }else{
                 // if the first s-exp is a symbol but not a keyword,
                 // compile it as same as default behaviour,

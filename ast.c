@@ -310,3 +310,11 @@ voba_value_t make_ast_it(voba_value_t syn_it)
     AST(r)->u.it.syn_it = syn_it;
     return r;
 }
+voba_value_t make_ast_break(voba_value_t ast_value, voba_value_t syn_break)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
+    AST(r)->type = BREAK;
+    AST(r)->u._break.ast_value = ast_value;
+    AST(r)->u._break.syn_break = syn_break;
+    return r;
+}

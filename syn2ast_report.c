@@ -10,6 +10,7 @@
 #define LEVEL_WARNING 2
 inline static void report(int level, voba_str_t * msg,voba_value_t syn,voba_value_t toplevel_env)
 {
+    assert(voba_is_a(syn,voba_cls_syn));
     switch(level){
     case LEVEL_ERROR:
         TOPLEVEL_ENV(toplevel_env)->n_of_errors ++ ; break;

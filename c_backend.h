@@ -4,6 +4,8 @@ typedef struct c_backend_s {
     voba_str_t * start;
     voba_str_t * impl;
     voba_str_t * it;
+    voba_str_t * latest_for_end_label;
+    voba_str_t * latest_for_final;
     voba_value_t toplevel_env;  /* for error reporting */
 } c_backend_t;
 
