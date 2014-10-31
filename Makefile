@@ -55,6 +55,7 @@ C_SRCS += syn2ast_match.c
 C_SRCS += syn2ast_other.c
 C_SRCS += syn2ast_report.c
 C_SRCS += syn2ast_quote.c
+C_SRCS += syn2ast_and_or.c
 C_SRCS += ast2c.c
 C_SRCS += read_module_info.c
 C_SRCS += compiler.c

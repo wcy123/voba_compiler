@@ -318,3 +318,17 @@ voba_value_t make_ast_break(voba_value_t ast_value, voba_value_t syn_break)
     AST(r)->u._break.syn_break = syn_break;
     return r;
 }
+voba_value_t make_ast_and(voba_value_t a_ast_exprs)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
+    AST(r)->type = AND;
+    AST(r)->u.and.a_ast_exprs = a_ast_exprs;
+    return r;
+}
+voba_value_t make_ast_or(voba_value_t a_ast_exprs)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
+    AST(r)->type = OR;
+    AST(r)->u.or.a_ast_exprs = a_ast_exprs;
+    return r;
+}

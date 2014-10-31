@@ -45,10 +45,7 @@ extern int z1debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    T_INT = 258,
-    T_FLOAT = 259,
-    T_SYMBOL = 260,
-    T_STRING = 261
+    T_VALUE = 258
   };
 #endif
 

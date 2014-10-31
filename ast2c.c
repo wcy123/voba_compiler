@@ -163,6 +163,8 @@ static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_
 static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
@@ -196,6 +198,12 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
         break;
     case BREAK:
         ret = ast2c_ast_break(ast,bk,s);
+        break;
+    case AND:
+        ret = ast2c_ast_and(ast,bk,s);
+        break;
+    case OR:
+        ret = ast2c_ast_or(ast,bk,s);
         break;
     default:
         assert(0 && "never goes here");
@@ -863,4 +871,47 @@ static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_
         report_error(VOBA_CONST_CHAR("`break' is not in a `for' statement."),ast->u._break.syn_break,bk->toplevel_env);
     }
     return ret;
+}
+static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_value_t a_ast_exprs = ast->u.and.a_ast_exprs;
+    int64_t len = voba_array_len(a_ast_exprs);
+
+    voba_str_t * and_return_value = new_uniq_id();
+    voba_str_t * and_end          = new_uniq_id();    
+    TEMPLATE
+        (s,
+         VOBA_CONST_CHAR(
+             "    static voba_value_t #0 = VOBA_UNDEF;/* return value for `and' statement */\n")
+         , and_return_value);
+    voba_str_t* old_it = bk->it;
+    for(int64_t i = 0; i < len; ++i){
+        voba_value_t ast_expr = voba_array_at(a_ast_exprs,i);
+        assert(voba_is_a(ast_expr,voba_cls_ast));
+        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+        bk->it = s_ast_expr;
+        TEMPLATE
+            (s,
+             VOBA_CONST_CHAR(
+                 "    #0 = #1; /*set return value for `and'*/\n"
+                 "    if(voba_eq(#0,VOBA_FALSE)){/* if any Ok, jump to end*/\n"
+                 "        goto #2; /* skip following exprs in `and' */\n"
+                 "    }\n"
+                 )
+             , and_return_value
+             , s_ast_expr
+             , and_end
+                );
+    }
+    bk->it = old_it;
+    TEMPLATE
+        (s,
+         VOBA_CONST_CHAR(
+             "    #0: if(0) goto #0; /* `and` statement end here, suppress warning message */\n")
+         , and_end);
+    return and_return_value;
+}
+static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    return 0;
 }

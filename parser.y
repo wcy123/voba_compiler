@@ -29,7 +29,7 @@
 %parse-param {void* scanner} {voba_value_t * yy_program }
 %param       {voba_value_t module}
 %defines
-%token   T_INT T_FLOAT T_SYMBOL T_STRING
+%token   T_VALUE
 %debug
 %code {
     int z1lex (YYSTYPE *lvalp, YYLTYPE *llocp, void *, voba_value_t module);
@@ -51,10 +51,7 @@ sexp { $$ = make_syntax(voba_make_array_1($1),@$.start_pos, @$.end_pos); }
 ;
 
 sexp:
-T_INT     
-|T_FLOAT  
-|T_SYMBOL 
-|T_STRING  
+T_VALUE     
 | '(' list_of_sexp ')' {$$ = $2; syntax_loc($$,&@$);}
 | '(' ')' { $$ = make_syntax(voba_make_array_0(),@$.start_pos,@$.end_pos);}
 | '\'' sexp {

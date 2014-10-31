@@ -14,7 +14,9 @@
     XX(value)                                          \
     XX(for)                                            \
     XX(it)                                             \
-
+    XX(and)                                            \
+    XX(or)                                             \
+    
 #define VOBA_COLON_KEYWORDS(XX)                 \
     XX(if)                                      \
     XX(each)                                    \
