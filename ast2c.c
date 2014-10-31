@@ -913,5 +913,38 @@ static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t*
 }
 static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
-    return 0;
+    voba_value_t a_ast_exprs = ast->u.or.a_ast_exprs;
+    int64_t len = voba_array_len(a_ast_exprs);
+
+    voba_str_t * or_return_value = new_uniq_id();
+    voba_str_t * or_end          = new_uniq_id();    
+    TEMPLATE
+        (s,
+         VOBA_CONST_CHAR(
+             "    static voba_value_t #0 = VOBA_UNDEF;/* return value for `or' statement */\n")
+         , or_return_value);
+    for(int64_t i = 0; i < len; ++i){
+        voba_value_t ast_expr = voba_array_at(a_ast_exprs,i);
+        assert(voba_is_a(ast_expr,voba_cls_ast));
+        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+        TEMPLATE
+            (s,
+             VOBA_CONST_CHAR(
+                 "    #0 = #1; /*set return value for `or'*/\n"
+                 "    if(!voba_eq(#0,VOBA_FALSE)){/* if any Ok, jump to end*/\n"
+                 "        goto #2; /* skip following exprs in `or' */\n"
+                 "    }\n"
+                 )
+             , or_return_value
+             , s_ast_expr
+             , or_end
+                );
+    }
+    TEMPLATE
+        (s,
+         VOBA_CONST_CHAR(
+             "    #0: if(0) goto #0; /* `or` statement end here, suppress warning message */\n")
+         , or_end);
+    return or_return_value;
 }
+
