@@ -761,7 +761,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  "    #0:{ /*prelude of `for' statement */\n"
                  "    voba_value_t #1 [] = {0}; /* args for iterator*/\n"
                  "    #3 = voba_apply(#2,voba_make_array(#1)); /*invoke the iterator*/\n"
-                 "    if(voba_eq(#3,VOBA_UNDEF)){\n"
+                 "    if(voba_eq(#3,VOBA_DONE)){\n"
                  "        goto #4;/* exit for loop */\n"
                  "    }\n"
                  )
