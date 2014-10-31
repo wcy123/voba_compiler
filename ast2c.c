@@ -442,19 +442,20 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
     bk->it = old_it;
     voba_str_t * fun = voba_value_to_str(voba_array_at(args,0));
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n"
-                             "    voba_value_t #1 [] = { #2\n")
+             VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* return value for apply */\n"
+                             "    voba_value_t #1 [] = { #2 /* prepare arguments for apply */\n")
              ,ret
              ,args_name
              ,voba_str_fmt_int64_t(len-1,10));
     for(int64_t i = 1; i < len; ++i){
         TEMPLATE(s,
-                 VOBA_CONST_CHAR("         ,#0\n")
-                 ,voba_value_to_str(voba_array_at(args,i)));
+                 VOBA_CONST_CHAR("         ,#0 /* argument #1 */\n")
+                 ,voba_value_to_str(voba_array_at(args,i))
+                 ,voba_str_fmt_int64_t(i,10));
     }
     TEMPLATE(s,
              VOBA_CONST_CHAR("    };\n"
-                             "    #0 = voba_apply(#1,voba_make_array(#2));\n"
+                             "    #0 = voba_apply(#1,voba_make_array(#2));/* return value for apply */\n"
                  )
              ,ret, fun, args_name);
     return ret;
