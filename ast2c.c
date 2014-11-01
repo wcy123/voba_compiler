@@ -145,11 +145,16 @@ static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
         bk->start = voba_strcat(bk->start,s);
     }
     TEMPLATE(&bk->impl,
-        VOBA_CONST_CHAR("voba_value_t voba_init(voba_value_t this_module)\n"
-                        "{\n"
-                        "    exec_once_init();\n"
-                        "    return VOBA_NIL;\n"
-                        "}\n"
+        VOBA_CONST_CHAR(
+            "#ifndef VOBA_MODULE_DIRTY_HACK\n"
+            "voba_value_t voba_init(voba_value_t this_module)\n"
+            "#else\n"
+            "int main(int argc, char *argv[])\n"
+            "#endif\n"
+            "{\n"
+            "    exec_once_init();\n"
+            "    return VOBA_NIL;\n"
+            "}\n"
             ));
 }
 static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);

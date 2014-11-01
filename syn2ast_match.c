@@ -160,8 +160,7 @@ static inline voba_value_t compile_match_pattern_with_if(voba_value_t syn_form, 
     voba_value_t ret = VOBA_NIL;
     voba_value_t form = SYNTAX(syn_form)->v;
     assert(voba_is_a(form,voba_cls_array));
-    int64_t len = voba_array_len(form);
-    assert(len == 3);
+    assert(voba_array_len(form) == 3);
     voba_value_t syn_pattern = voba_array_at(form,0);
     voba_value_t syn_if = voba_array_at(form,2);
     voba_value_t pattern = compile_match_pattern(syn_pattern,env,toplevel_env);
