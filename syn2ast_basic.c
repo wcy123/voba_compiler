@@ -83,7 +83,7 @@ voba_value_t compile_def(voba_value_t top_var, voba_value_t syn_form, voba_value
     voba_value_t a_f_args = SYNTAX(syn_f_args)->v;
     voba_value_t la_f_args = voba_la_from_array0(a_f_args);
     voba_value_t syn_s_name = voba_la_car(la_f_args);
-    assert(voba_la_len(la_f_args) > 1);
+    assert(voba_la_len(la_f_args) >= 1);
     assert(voba_is_a(SYNTAX(syn_s_name)->v,voba_cls_symbol));
     voba_value_t la_syn_arg_list = voba_la_cdr(la_f_args); // skip f;
 

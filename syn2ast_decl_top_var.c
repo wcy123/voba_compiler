@@ -151,7 +151,7 @@ static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_valu
     voba_value_t syn_x_form = voba_array_at(top_expr,1);
     voba_value_t x_form = SYNTAX(syn_x_form)->v;
     int64_t xlen = voba_array_len(x_form);
-    if(xlen > 1){
+    if(xlen >= 1){
         voba_value_t syn_s_name = voba_array_at(x_form,0);
         if(voba_is_a(syn_s_name,voba_cls_syn)&&
            voba_is_a(SYNTAX(syn_s_name)->v,voba_cls_symbol)){
