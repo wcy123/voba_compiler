@@ -3,6 +3,7 @@
 #define EXEC_ONCE_TU_NAME "syn2ast_decl_top_var"
 #include <exec_once.h>
 #include <voba/include/value.h>
+#include <voba/include/module.h>
 #include "src.h"
 #include "ast.h"
 #include "syn.h"
@@ -28,9 +29,11 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
         VAR(top_var)->u.m.module_id = module_id;
         VAR(top_var)->u.m.module_name = module_name;
         env_push_var(env,top_var);
-        if(0){
-            fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx\n", __LINE__, __FUNCTION__
-                    ,top_var);
+        if(1){
+            fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx %s\n", __LINE__, __FUNCTION__
+                    ,top_var
+                    ,voba_value_to_str(voba_symbol_name(symbol))->data
+                );
         }
     }else{
         voba_value_t top_var = var;
@@ -43,7 +46,7 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
         case VAR_FOREIGN_TOP:
             report_error(
                 VOBA_STRCAT(VOBA_CONST_CHAR("import name conflicts. symbol = "),
-                            voba_symbol_name(symbol)),
+                            voba_value_to_str(voba_symbol_name(symbol))),
                 // TODO: report previous definitions position.
                 syn_symbol,
                 toplevel_env
@@ -199,11 +202,24 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
 }
 static voba_value_t voba_include_path = VOBA_NIL;
 EXEC_ONCE_PROGN{
-    voba_include_path = voba_make_array_0();
+    const char * env = getenv("VOBA_PATH");
+    if(!env){ env = ".";}
+    voba_include_path = voba_init_path_from_env(env);
 }
 static inline voba_value_t search_module_header_file(voba_value_t module_name)
 {
-    return voba_make_string(VOBA_CONST_CHAR("/home/chunywan/d/working/voba2/builtin/builtin.h"));
+    voba_str_t* pwd = VOBA_CONST_CHAR(".");
+    voba_str_t* prefix = voba_str_empty();
+    voba_str_t* suffix = VOBA_CONST_CHAR(".h");
+    int resolv_realpath = 0;
+    voba_str_t * file = voba_find_file(voba_include_path,
+                                       voba_value_to_str(voba_symbol_name(module_name)),
+                                       pwd,
+                                       prefix, suffix,
+                                       resolv_realpath);
+    voba_value_t ret = VOBA_NIL;
+    if(file) ret = voba_make_string(file) ;
+    return ret;
 }
 static inline voba_value_t read_module_header_file(voba_value_t header_file,voba_value_t syn_v,voba_value_t toplevel_env)
 {
