@@ -9,7 +9,7 @@ int yyget_column  (yyscan_t yyscanner);
 #include <assert.h>
 #define EXEC_ONCE_TU_NAME "flex"
 #include <exec_once.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "parser.syn.h"
 
 #define MAX_STR_CONST 1024

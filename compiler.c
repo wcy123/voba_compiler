@@ -1,4 +1,4 @@
-#include <voba/include/value.h>
+#include <voba/value.h>
 #define EXEC_ONCE_TU_NAME "compiler"
 #include "compiler.h"
 #include "syn.h"

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #define EXEC_ONCE_TU_NAME "syn"
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "voba_str.h"
 #include "parser.syn.h"
 #include "ast.h"

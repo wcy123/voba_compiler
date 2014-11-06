@@ -1,6 +1,6 @@
 #define EXEC_ONCE_TU_NAME "syn2syn"
 #include <exec_once.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "syn2syn.h"
 static voba_value_t syn_tmpt(voba_value_t x, voba_value_t args)
 {

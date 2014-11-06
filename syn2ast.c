@@ -1,6 +1,6 @@
 #include <string.h>
 #include <errno.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #define EXEC_ONCE_TU_NAME "syn2ast"
 #include <exec_once.h>
 #include <voba/core/builtin.h>

@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <assert.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include <exec_once.h>
-#include <voba/include/module.h>
+#include <voba/module.h>
 #include "syn.h"
 #include "ast.h"
 #include "var.h"
@@ -40,10 +40,10 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
     TEMPLATE(&bk->decl,
              VOBA_CONST_CHAR("##include <stdint.h>\n"
                              "##include <assert.h>\n"
-                             "##include <voba/include/value.h>\n"
+                             "##include <voba/value.h>\n"
                              "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
                              "##include <exec_once.h>\n"
-                             "##include <voba/include/module.h>\n"
+                             "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
                              "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"
                              "static voba_value_t gf_iter __attribute__((unused)) = VOBA_UNDEF;\n"));

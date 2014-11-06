@@ -1,6 +1,6 @@
 #define EXEC_ONCE_TU_NAME "syn2ast_for"
 #include <exec_once.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "syn.h"
 #include "ast.h"
 #include "keywords.h"

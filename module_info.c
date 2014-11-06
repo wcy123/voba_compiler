@@ -1,6 +1,6 @@
 #define EXEC_ONCE_TU_NAME "module_info"
 #include <exec_once.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "module_info.h"
 VOBA_DEF_CLS(sizeof(module_info_t),module_info);
 voba_value_t module_info_id(voba_value_t info)    

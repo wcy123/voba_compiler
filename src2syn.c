@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include <exec_once.h>
 #include "ast.h"
 #include "src2syn.h"

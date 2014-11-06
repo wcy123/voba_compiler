@@ -2,8 +2,8 @@
 
 #define EXEC_ONCE_TU_NAME "syn2ast_decl_top_var"
 #include <exec_once.h>
-#include <voba/include/value.h>
-#include <voba/include/module.h>
+#include <voba/value.h>
+#include <voba/module.h>
 #include "src.h"
 #include "ast.h"
 #include "syn.h"
@@ -29,7 +29,7 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
         VAR(top_var)->u.m.module_id = module_id;
         VAR(top_var)->u.m.module_name = module_name;
         env_push_var(env,top_var);
-        if(1){
+        if(0){
             fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx %s\n", __LINE__, __FUNCTION__
                     ,top_var
                     ,voba_value_to_str(voba_symbol_name(symbol))->data
@@ -212,11 +212,14 @@ static inline voba_value_t search_module_header_file(voba_value_t module_name)
     voba_str_t* prefix = voba_str_empty();
     voba_str_t* suffix = VOBA_CONST_CHAR(".h");
     int resolv_realpath = 0;
+    voba_value_t attempts = voba_make_array_0();
     voba_str_t * file = voba_find_file(voba_include_path,
                                        voba_value_to_str(voba_symbol_name(module_name)),
                                        pwd,
                                        prefix, suffix,
-                                       resolv_realpath);
+                                       resolv_realpath,
+                                       attempts
+        );
     voba_value_t ret = VOBA_NIL;
     if(file) ret = voba_make_string(file) ;
     return ret;
@@ -293,7 +296,7 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
     }else{
         // TODO: report the search list.
         report_error(VOBA_STRCAT(VOBA_CONST_CHAR("cannot find module header file. module name = "),
-                                 voba_value_to_str(module_name)),
+                                 voba_value_to_str(voba_symbol_name(module_name))),
                      syn_module_name,toplevel_env);
     }
 }

@@ -1,6 +1,6 @@
 #define EXEC_ONCE_TU_NAME "c_backend"
 #include <exec_once.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include <voba/core/builtin.h>
 #include "c_backend.h"
 

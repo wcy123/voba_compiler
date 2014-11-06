@@ -1,0 +1,60 @@
+CXXFLAGS += -fPIC
+CFLAGS += -fPIC
+CFLAGS += -D _BSD_SOURCE
+CFLAGS += -I $(libdir)
+
+SRCS_C += env.c
+SRCS_C += src.c
+SRCS_C += syn.c
+SRCS_C += ast.c
+SRCS_C += var.c
+SRCS_C += c_backend.c
+SRCS_C += module_info.c
+SRCS_C += match.c
+SRCS_C += src2syn.c
+SRCS_C += syn2ast.c
+SRCS_C += syn2ast_basic.c
+SRCS_C += syn2ast_decl_top_var.c
+SRCS_C += syn2ast_for.c
+SRCS_C += syn2ast_if.c
+SRCS_C += syn2ast_let.c
+SRCS_C += syn2ast_match.c
+SRCS_C += syn2ast_other.c
+SRCS_C += syn2ast_report.c
+SRCS_C += syn2ast_quote.c
+SRCS_C += syn2ast_and_or.c
+SRCS_C += ast2c.c
+SRCS_C += read_module_info.c
+SRCS_C += compiler.c
+SRCS_C += flex.c
+SRCS_C += parser.c
+CLEANED_FILES += libcompiler.so flex.c read_module_info_lex.inc parser.c
+
+
+all: libcompiler.so
+
+
+libcompiler.so: $(OBJS)
+	$(CC) -shared -Wl,-soname,$@ -o $@ $^  $(LDFLAGS)
+flex.c: flex.l
+	flex -d -P z1 --noline -o $@ flex.l
+parser.c: parser.y
+	bison -p z1 parser.y
+read_module_info.o: read_module_info.c read_module_info_lex.inc
+
+read_module_info_lex.inc: read_module_info_lex.l
+	flex --noline  read_module_info_lex.l
+
+
+install_files += $(libdir)/voba/core/libcompiler.so
+$(libdir)/voba/core/libcompiler.so: libcompiler.so
+	$(INSTALL) $< $@
+
+install_files += $(libdir)/voba/core/compiler.h
+$(libdir)/voba/core/compiler.h : compiler.h
+	$(INSTALL) $< $@
+
+# Local Variables:
+# mode:makefile
+# coding: utf-8-unix
+# End:

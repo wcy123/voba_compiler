@@ -8,8 +8,8 @@
     XX(module_info_name)                        \
     XX(module_info_symbols)
     
-#define VOBA_MODULE_NAME "voba_compiler"
+#define VOBA_MODULE_NAME "compiler"
 
 
-#include <voba/include/module_end.h>
+#include <voba/module_end.h>
 

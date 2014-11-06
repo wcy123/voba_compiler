@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>    
 #include <math.h>
-#include <voba/include/value.h>
+#include <voba/value.h>
 #include "parser.syn.h"
 # define YYLLOC_DEFAULT(Current, Rhs, N)                                \
     do                                                                  \
