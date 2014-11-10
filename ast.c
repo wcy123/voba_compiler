@@ -51,7 +51,7 @@ int is_ast(voba_value_t x)
 /* { */
 /*     voba_value_t args[] = {1 , (SYNTAX(ast->u.set_top.syn_s_name)->v)}; */
 /*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
-/*                                  voba_make_array(args)); */
+/*                                  voba_make_tuple(args)); */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
@@ -71,7 +71,7 @@ int is_ast(voba_value_t x)
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.constant.value}; */
 /*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
-/*                                  voba_make_array(args)); */
+/*                                  voba_make_tuple(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
 /*          indent(level), */
@@ -88,7 +88,7 @@ int is_ast(voba_value_t x)
 /*     voba_value_t a_ast_exprs = ast->u.fun.a_ast_exprs; */
 /*     voba_value_t args[] = {1 , (SYNTAX(ast->u.fun.syn_s_name)->v)}; */
 /*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
-/*                                  voba_make_array(args)); */
+/*                                  voba_make_tuple(args)); */
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     return voba_vstrcat */
 /*         (ret, */
@@ -114,7 +114,7 @@ int is_ast(voba_value_t x)
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.arg.syn_s_name }; */
 /*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
-/*                                  voba_make_array(args)); */
+/*                                  voba_make_tuple(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
 /*          indent(level), */
@@ -159,7 +159,7 @@ int is_ast(voba_value_t x)
 /*     voba_str_t* ret = voba_str_empty(); */
 /*     voba_value_t args[] = {1 , ast->u.top_var.syn_s_name }; */
 /*     voba_value_t ss = voba_apply(voba_symbol_value(s_str), */
-/*                                  voba_make_array(args)); */
+/*                                  voba_make_tuple(args)); */
 /*     ret = voba_vstrcat */
 /*         (ret, */
 /*          indent(level), */

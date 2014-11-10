@@ -106,11 +106,11 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
 
 VOBA_FUNC static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
 {
-    voba_value_t var = voba_array_at(self,0);
+    voba_value_t var = voba_tuple_at(self,0);
     VOBA_ASSERT_CLS(var,voba_cls_var,0);
-    voba_value_t la_syn_exprs = voba_array_at(self,1);
+    voba_value_t la_syn_exprs = voba_tuple_at(self,1);
     VOBA_ASSERT_N_ARG( args, 0);
-    voba_value_t toplevel_env = voba_array_at( args, 0);
+    voba_value_t toplevel_env = voba_tuple_at( args, 0);
     if(0)fprintf(stderr,__FILE__ ":%d:[%s] \n", __LINE__, __FUNCTION__);
     voba_value_t exprs = compile_exprs(la_syn_exprs,TOPLEVEL_ENV(toplevel_env)->env,toplevel_env);
     voba_value_t ret = VOBA_NIL;
@@ -133,21 +133,17 @@ static inline void compile_top_expr_def_name(voba_value_t syn_name, voba_value_t
 VOBA_FUNC
 static voba_value_t compile_top_expr_def_fun_next(voba_value_t self, voba_value_t args) 
 {
-    voba_value_t top_var = voba_array_at(self,0);
-    voba_value_t syn_form = voba_array_at(self,1);
-    voba_value_t env = voba_array_at(self,2);
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_array_at( args, 0);
+    voba_value_t top_var = voba_tuple_at(self,0);
+    voba_value_t syn_form = voba_tuple_at(self,1);
+    voba_value_t env = voba_tuple_at(self,2);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_tuple_at( args, 0);
 ;
     return compile_def(top_var,syn_form,env,toplevel_env);
 }
 static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_value_t toplevel_env)
 {
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
-#ifndef NDEBUG    
-    int64_t len = voba_array_len(top_expr);
-#endif
-    assert(len > 0);
-    //voba_value_t syn_def = voba_array_at(top_expr,0);
+    assert(voba_array_len(top_expr) > 0);
     voba_value_t syn_x_form = voba_array_at(top_expr,1);
     voba_value_t x_form = SYNTAX(syn_x_form)->v;
     int64_t xlen = voba_array_len(x_form);
@@ -323,9 +319,9 @@ static inline void compile_top_expr_import(voba_value_t syn_top_expr,voba_value_
 }
 VOBA_FUNC static voba_value_t compile_top_expr_any_next(voba_value_t self, voba_value_t args)
 {
-    voba_value_t syn_top_expr = voba_array_at(self,0);
+    voba_value_t syn_top_expr = voba_tuple_at(self,0);
     VOBA_ASSERT_N_ARG( args, 0);
-    voba_value_t toplevel_env = voba_array_at( args, 0);
+    voba_value_t toplevel_env = voba_tuple_at( args, 0);
     return compile_expr(syn_top_expr, TOPLEVEL_ENV(toplevel_env)->env, toplevel_env);
 }
 static inline void compile_top_expr_any(voba_value_t syn_top_expr, voba_value_t toplevel_env)

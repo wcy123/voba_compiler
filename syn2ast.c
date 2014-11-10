@@ -25,7 +25,7 @@ voba_value_t syn2ast(voba_value_t syn,voba_value_t module)
     asts = voba_make_array_0();
     voba_value_t args [] = {1, toplevel_env};
     for(int64_t i = 0 ; i < len ; ++i) {
-        voba_value_t ast = voba_apply(voba_array_at(next,i),voba_make_array(args));
+        voba_value_t ast = voba_apply(voba_array_at(next,i),voba_make_tuple(args));
         if(!voba_is_nil(ast)){
             voba_array_push(asts,ast);
         }

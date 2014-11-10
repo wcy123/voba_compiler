@@ -11,9 +11,8 @@ EXEC_ONCE_PROGN {
 }
 VOBA_FUNC static voba_value_t v_read_module_info(voba_value_t self, voba_value_t args)
 {
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t content1 = voba_array_at( args, 0);
-VOBA_ASSERT_CLS(content1,voba_cls_str, 0);
-;
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t content1 = voba_tuple_at( args, 0);
+    VOBA_ASSERT_CLS(content1,voba_cls_str, 0);
     return read_module_info(content1);
 }
 voba_value_t read_module_info(voba_value_t content1)
@@ -42,7 +41,7 @@ EXEC_ONCE_PROGN {
 }
 static VOBA_FUNC voba_value_t v_module_info_id(voba_value_t self, voba_value_t args)
 {
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t info = voba_array_at( args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t info = voba_tuple_at( args, 0);
 VOBA_ASSERT_CLS(info,voba_cls_module_info, 0);
 ;
     return module_info_id(info);
@@ -53,7 +52,7 @@ EXEC_ONCE_PROGN {
 }
 static VOBA_FUNC voba_value_t v_module_info_name(voba_value_t self, voba_value_t args)
 {
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_array_at( args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_tuple_at( args, 0);
 VOBA_ASSERT_CLS( info,voba_cls_module_info, 0);
 ;
     return module_info_name(info);
@@ -64,7 +63,7 @@ EXEC_ONCE_PROGN {
 }
 static VOBA_FUNC voba_value_t v_module_info_symbols(voba_value_t self, voba_value_t args)
 {
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_array_at( args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_tuple_at( args, 0);
 VOBA_ASSERT_CLS( info,voba_cls_module_info, 0);
 ;
     return module_info_symbols(info);

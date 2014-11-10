@@ -51,7 +51,7 @@ VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs);
 EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_str),voba_cls_var,voba_make_func(str_var));}
 VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs)
 {
-    voba_value_t v = voba_array_at(vs,0);
+    voba_value_t v = voba_tuple_at(vs,0);
     voba_str_t* ret = voba_str_empty();
     var_t * var = VAR(v);
     ret = VOBA_STRCAT(ret,

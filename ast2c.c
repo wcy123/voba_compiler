@@ -261,12 +261,12 @@ static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_s
         break;
     case VAR_ARGUMENT:
         TEMPLATE(s,
-                 VOBA_CONST_CHAR("    voba_array_set_at(fun_args,#0,#1); /* set #2 */\n"),
+                 VOBA_CONST_CHAR("    voba_tuple_set_at(fun_args,#0,#1); /* set #2 */\n"),
                  voba_str_fmt_uint32_t(var->u.index,10),ret,var_c_symbol_name(var));
         break;
     case VAR_CLOSURE:
         TEMPLATE(s,
-                 VOBA_CONST_CHAR("    voba_array_set_at(self,#0,#1); /* set #2 */\n"),
+                 VOBA_CONST_CHAR("    voba_tuple_set_at(self,#0,#1); /* set #2 */\n"),
                  voba_str_fmt_uint32_t(var->u.index,10),ret,var_c_symbol_name(var));
         break;
     default:
@@ -341,7 +341,7 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
         &s0,
         VOBA_CONST_CHAR(
             "};\n"
-            "    #0 = voba_make_array(#1); /* constant */\n"
+            "    #0 = voba_make_tuple(#1); /* constant */\n"
             ),
         s_const,
         s_c_const);
@@ -392,7 +392,7 @@ static inline voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str
 {
     voba_str_t * ret = voba_str_empty();
     TEMPLATE(&ret,
-             VOBA_CONST_CHAR("voba_array_at(fun_args,#0)")
+             VOBA_CONST_CHAR("voba_tuple_at(fun_args,#0)")
              ,voba_str_fmt_int32_t(index,10));
     return ret;
 }
@@ -400,7 +400,7 @@ static inline voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba
 {
     voba_str_t * ret = voba_str_empty();
     TEMPLATE(&ret,
-             VOBA_CONST_CHAR("voba_array_at(self,#0)")
+             VOBA_CONST_CHAR("voba_tuple_at(self,#0)")
              ,voba_str_fmt_int32_t(index,10));
     return ret;
 }
@@ -466,7 +466,7 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
     }
     TEMPLATE(s,
              VOBA_CONST_CHAR("    };\n"
-                             "    #0 = voba_apply(#1,voba_make_array(#2));/* return value for apply */\n"
+                             "    #0 = voba_apply(#1,voba_make_tuple(#2));/* return value for apply */\n"
                  )
              ,ret, fun, args_name);
     return ret;
@@ -678,7 +678,7 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
                              "        goto #3; /* no function registered*/\n"                             
                              "    }\n"
                              "    voba_value_t #7 [] = {4, #1, #4, voba_make_i32(-1), voba_make_i32(#8)};\n"
-                             "    voba_value_t #6 = #5( voba_make_func(#5), voba_make_array(#7));\n"
+                             "    voba_value_t #6 = #5( voba_make_func(#5), voba_make_tuple(#7));\n"
                              "    if(!voba_eq(VOBA_TRUE,#6)){\n"
                              "        goto #3; /* number of var does not match*/\n"
                              "    }\n"
@@ -701,7 +701,7 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
                  VOBA_CONST_CHAR(
                      "    /* extract #3 sub-value from the main value*/\n"
                      "    voba_value_t #0 [] = {4, #1, #2, voba_make_i32(#3), voba_make_i32(#4)};\n"
-                     "    voba_value_t #5 = #6(VOBA_NIL/*self is not used*/, voba_make_array(#0));/* the sub-value #3*/\n"
+                     "    voba_value_t #5 = #6(VOBA_NIL/*self is not used*/, voba_make_tuple(#0));/* the sub-value #3*/\n"
                      )
                  ,tmp_args //0
                  ,s_cls_id //1
@@ -785,7 +785,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  "         voba_throw_exception(voba_make_string(VOBA_CONST_CHAR(\"cannot find the iterator\")));\n"
                  "    }\n"
                  "    voba_value_t #3 [] = {1, #0}; /* prepare to invoke the iterator*/\n"
-                 "    #2 = #1(voba_make_func(#1),voba_make_array(#3)); /*get the iterator*/ \n"
+                 "    #2 = #1(voba_make_func(#1),voba_make_tuple(#3)); /*get the iterator*/ \n"
                  )
              , for_each_expr
              , for_each_iter_f
@@ -805,7 +805,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
              VOBA_CONST_CHAR(
                  "    #0:{ /*prelude of `for' statement */\n"
                  "    voba_value_t #1 [] = {1,#5}; /* args for iterator*/\n"
-                 "    #3 = voba_apply(#2,voba_make_array(#1)); /*invoke the iterator*/\n"
+                 "    #3 = voba_apply(#2,voba_make_tuple(#1)); /*invoke the iterator*/\n"
                  "    if(voba_eq(#3,VOBA_DONE)){\n"
                  "        goto #4;/* exit for loop */\n"
                  "    }\n"
@@ -824,7 +824,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  VOBA_CONST_CHAR(
                      "    /* try to apply for-if */\n"
                      "    voba_value_t #0 [] = {1, #1}; /* args for `if', the filter*/\n"
-                     "    voba_value_t #2 = voba_apply(#3, voba_make_array(#0)); /* for-if */\n"
+                     "    voba_value_t #2 = voba_apply(#3, voba_make_tuple(#0)); /* for-if */\n"
                      "    if(voba_is_false(#2)){ /* skip this iteration, continue  */\n"
                      "        goto #4;/* for-if failed */\n"
                      "    }\n"
@@ -852,7 +852,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  VOBA_CONST_CHAR(
                      "    /* collect return value for `for' statement  */\n"
                      "    {voba_value_t #0 [] = {2, #1, #2}; /*arguments for accumulator*/\n"
-                     "    #1 = voba_apply(#3, voba_make_array(#0));}/* apply the accumulator */\n"
+                     "    #1 = voba_apply(#3, voba_make_tuple(#0));}/* apply the accumulator */\n"
                      )
                  ,acc_args
                  ,for_each_last_output

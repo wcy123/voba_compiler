@@ -48,14 +48,14 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
     }else{
         voba_value_t args[] = {1, SYNTAX(syn)->v};
         ret = voba_strcat(ret, voba_value_to_str(voba_apply(voba_symbol_value(s_str),
-                                                            voba_make_array(args))));
+                                                            voba_make_tuple(args))));
         ret = voba_strcat_cstr(ret,"");
     }
     return ret;
 }
 VOBA_FUNC static voba_value_t str_syn(voba_value_t self, voba_value_t args)
 {
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  syn = voba_array_at( args, 0);
+    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  syn = voba_tuple_at( args, 0);
 VOBA_ASSERT_CLS( syn,voba_cls_syn, 0);
 ;
     return voba_make_string(dump_location(syn,0));
