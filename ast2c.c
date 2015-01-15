@@ -176,6 +176,7 @@ static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t**
 static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
 {
     voba_str_t* ret = voba_str_empty();
@@ -215,6 +216,9 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
         break;
     case OR:
         ret = ast2c_ast_or(ast,bk,s);
+        break;
+    case YIELD:
+        ret = ast2c_ast_yield(ast,bk,s);
         break;
     default:
         assert(0 && "never goes here");
@@ -348,6 +352,35 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
     bk->start = voba_strcat(bk->start,s0);
     return s_const;
 }
+static inline voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname);
+static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_str_t* ret = voba_str_empty();
+    voba_str_t* str_fun = NULL;
+    ast_fun_t* ast_fn = &ast->u.fun;
+    int64_t len = voba_array_len(ast_fn->f->a_var_C);
+    if(len == 0){
+        str_fun = ast2c_ast_fun_without_closure(ast,bk,s);
+    }else{
+        str_fun = ast2c_ast_fun_with_closure(ast,bk,s);
+    }
+    if(!ast_fn->f->is_generator){
+        if(len == 0){
+            TEMPLATE(&ret, VOBA_CONST_CHAR("voba_make_func(#0)"),str_fun);
+        }else{
+            assert(0 && " not implemented yet ");
+        }
+    }else{
+        if(len == 0){
+            ret = ast2c_ast_generator(bk,str_fun);
+        }else{
+            assert(0 && " not implemented yet ");
+        }
+    }
+    return ret;
+}
 static inline voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_str_t * ret = VOBA_CONST_CHAR("ast2c_ast_fun_with_closure is not implemented");
@@ -372,21 +405,26 @@ static inline voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t*
                              "}\n")
              ,uuid,indent(s2),expr);
     bk->impl = voba_strcat(bk->impl, s1);
-    voba_str_t * ret = voba_str_empty();
-    TEMPLATE(&ret, VOBA_CONST_CHAR("voba_make_func(#0)"),uuid);
-    return ret;
+    return uuid;
 }
-static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname)
 {
-    voba_str_t* ret = voba_str_empty();
-    ast_fun_t* ast_fn = &ast->u.fun;
-    int64_t len = voba_array_len(ast_fn->f->a_var_C);
-    if(len == 0){
-        ret = ast2c_ast_fun_without_closure(ast,bk,s);
-    }else{
-        ret = ast2c_ast_fun_with_closure(ast,bk,s);
-    }
-    return ret;
+    voba_str_t * fname = new_uniq_id();
+    TEMPLATE(&bk->decl,
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args);\n")
+             ,fname);
+    TEMPLATE(&bk->impl,
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args)\n"
+                             "{\n"
+                             " /* a bridge to create a generator */\n"
+                             "    return voba_make_generator(#1, self, fun_args);\n"
+                             "}\n")
+             ,fname,gname);
+    voba_str_t * s = voba_str_empty();
+    TEMPLATE(&s,
+             VOBA_CONST_CHAR("voba_make_func(#0)")
+             ,fname);
+    return s;
 }
 static inline voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s)
 {
@@ -920,7 +958,7 @@ static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t*
     TEMPLATE
         (s,
          VOBA_CONST_CHAR(
-             "    static voba_value_t #0 = VOBA_UNDEF;/* return value for `and' statement */\n")
+             "      voba_value_t #0 = VOBA_UNDEF;/* return value for `and' statement */\n")
          , and_return_value);
     voba_str_t* old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
@@ -959,7 +997,7 @@ static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t**
     TEMPLATE
         (s,
          VOBA_CONST_CHAR(
-             "    static voba_value_t #0 = VOBA_UNDEF;/* return value for `or' statement */\n")
+             "       voba_value_t #0 = VOBA_UNDEF;/* return value for `or' statement */\n")
          , or_return_value);
     for(int64_t i = 0; i < len; ++i){
         voba_value_t ast_expr = voba_array_at(a_ast_exprs,i);
@@ -985,4 +1023,18 @@ static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t**
          , or_end);
     return or_return_value;
 }
-
+static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    voba_value_t ast_expr = ast->u.yield.ast_expr;
+    voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+    voba_str_t * yield_return_value = new_uniq_id();
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    voba_value_t #0 __attribute__((unused)) = 0;\n"
+                 "    #0 = cg_yield(__builtin_frame_address(0), #1);\n"
+                 )
+             , yield_return_value
+             , s_ast_expr
+        );
+    return yield_return_value;
+}

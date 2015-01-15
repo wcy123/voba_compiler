@@ -22,6 +22,7 @@ voba_value_t make_compiler_fun()
     COMPILER_FUN(ret)->a_var_A = voba_make_array_0();
     COMPILER_FUN(ret)->a_var_C = voba_make_array_0();
     COMPILER_FUN(ret)->parent = VOBA_NIL;
+    COMPILER_FUN(ret)->is_generator = 0;
     return ret;
 }
 // return an index to the array `a`

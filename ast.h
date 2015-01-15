@@ -26,6 +26,7 @@ typedef struct toplevel_env_s {
     XX(BREAK)                                           \
     XX(AND)                                             \
     XX(OR)                                              \
+    XX(YIELD)                                           \
     
 typedef enum ast_type_e {
 #define DECLARE_AST_TYPE_ENUM(X) X,
@@ -80,6 +81,9 @@ typedef struct ast_and_s {
 typedef struct ast_or_s {
     voba_value_t a_ast_exprs;
 } ast_or_t;
+typedef struct ast_yield_s {
+    voba_value_t ast_expr;
+} ast_yield_t;
 
 typedef struct ast_s {
     ast_type_t  type;
@@ -96,6 +100,7 @@ typedef struct ast_s {
         ast_break_t _break;
         ast_and_t and;
         ast_or_t or;
+        ast_yield_t yield;        
     } u;
 } ast_t;
 #define AST(s) VOBA_USER_DATA_AS(ast_t *,s)
@@ -113,6 +118,7 @@ voba_value_t make_ast_it(voba_value_t syn_it);
 voba_value_t make_ast_break(voba_value_t ast_value, voba_value_t syn_break);
 voba_value_t make_ast_and(voba_value_t ast_exprs);
 voba_value_t make_ast_or(voba_value_t a_ast_exprs);
+voba_value_t make_ast_yield(voba_value_t ast_expr);
 voba_value_t create_toplevel_env(voba_value_t module);
 
 

@@ -130,7 +130,6 @@ static voba_value_t compile_top_expr_def_fun_next(voba_value_t self, voba_value_
     voba_value_t fun = make_compiler_fun();
     voba_value_t a_var_A = compile_arg_list(la_syn_arg_list,toplevel_env);
     COMPILER_FUN(fun)->a_var_A = a_var_A;
-    COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
     COMPILER_FUN(fun)->parent = env;
     voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
     voba_value_t ast_fun = make_ast_fun(syn_s_name,COMPILER_FUN(fun),a_ast_exprs);

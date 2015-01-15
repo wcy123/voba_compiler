@@ -23,6 +23,7 @@ SRCS_C += syn2ast_other.c
 SRCS_C += syn2ast_report.c
 SRCS_C += syn2ast_quote.c
 SRCS_C += syn2ast_and_or.c
+SRCS_C += syn2ast_yield.c
 SRCS_C += ast2c.c
 SRCS_C += read_module_info.c
 SRCS_C += compiler.c

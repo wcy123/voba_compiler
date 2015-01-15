@@ -332,3 +332,10 @@ voba_value_t make_ast_or(voba_value_t a_ast_exprs)
     AST(r)->u.or.a_ast_exprs = a_ast_exprs;
     return r;
 }
+voba_value_t make_ast_yield(voba_value_t ast_expr)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
+    AST(r)->type = YIELD;
+    AST(r)->u.yield.ast_expr = ast_expr;
+    return r;
+}

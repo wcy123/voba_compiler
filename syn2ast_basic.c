@@ -12,6 +12,7 @@
 #include "syn2ast_if.h"
 #include "syn2ast_quote.h"
 #include "syn2ast_and_or.h"
+#include "syn2ast_yield.h"
 static inline voba_value_t compile_fun(voba_value_t syn_form, voba_value_t env, voba_value_t toplevel_env);
 static inline voba_value_t compile_arg_list(voba_value_t la_arg, voba_value_t toplevel_env);
 static inline voba_value_t compile_arg(voba_value_t a, int32_t index, voba_value_t toplevel_env);
@@ -96,7 +97,6 @@ voba_value_t compile_def(voba_value_t top_var, voba_value_t syn_form, voba_value
     if(a_var_A){
         voba_value_t fun = make_compiler_fun();
         COMPILER_FUN(fun)->a_var_A = a_var_A;
-        COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
         COMPILER_FUN(fun)->parent = env;
         voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
         if(a_ast_exprs){
@@ -136,6 +136,8 @@ static inline voba_value_t compile_array(voba_value_t syn_form, voba_value_t env
                 ret = compile_and(syn_form, env, toplevel_env);
             }else if(voba_eq(f, K(toplevel_env,or))){
                 ret = compile_or(syn_form, env, toplevel_env);
+            }else if(voba_eq(f, K(toplevel_env,yield))){
+                ret = compile_yield(syn_form, env, toplevel_env);
             }else{
                 // if the first s-exp is a symbol but not a keyword,
                 // compile it as same as default behaviour,
@@ -180,7 +182,6 @@ static inline voba_value_t compile_fun(voba_value_t syn_form, voba_value_t env, 
             voba_value_t la_syn_body = voba_la_from_array1(form,offset);
             voba_value_t fun = make_compiler_fun();
             COMPILER_FUN(fun)->a_var_A = a_var_A;
-            COMPILER_FUN(fun)->a_var_C = voba_make_array_0();
             COMPILER_FUN(fun)->parent = env;
             voba_value_t a_ast_exprs = compile_exprs(la_syn_body,fun,toplevel_env);
             voba_value_t syn_s_name = voba_array_at(form,0); // function name is `fun`, the keyword

@@ -18,6 +18,7 @@ typedef struct compiler_fun_s {
     //   compiler_fun for the enclosing compiler_fun
     //   nil for the top level
     voba_value_t parent;
+    int  is_generator  ;
 }compiler_fun_t;
 #define COMPILER_FUN(s) VOBA_USER_DATA_AS(compiler_fun_t *,s)
 extern voba_value_t voba_cls_compiler_fun;
