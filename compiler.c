@@ -15,11 +15,11 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 {
     VOBA_ASSERT_N_ARG( args, 0);
     voba_value_t  content = voba_tuple_at( args, 0);
-    VOBA_ASSERT_CLS( content,voba_cls_str, 0);
+    VOBA_ASSERT_ARG_ISA( content,voba_cls_str, 0);
 
     VOBA_ASSERT_N_ARG( args, 1);
     voba_value_t  filename = voba_tuple_at( args, 1);
-    VOBA_ASSERT_CLS( filename,voba_cls_str, 1);
+    VOBA_ASSERT_ARG_ISA( filename,voba_cls_str, 1);
 
     voba_value_t ret  = VOBA_NIL;
     uint32_t error = 0;

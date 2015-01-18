@@ -107,7 +107,7 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
 VOBA_FUNC static voba_value_t compile_top_expr_def_name_next(voba_value_t self, voba_value_t args)
 {
     voba_value_t var = voba_tuple_at(self,0);
-    VOBA_ASSERT_CLS(var,voba_cls_var,0);
+    VOBA_ASSERT_ARG_ISA(var,voba_cls_var,0);
     voba_value_t la_syn_exprs = voba_tuple_at(self,1);
     VOBA_ASSERT_N_ARG( args, 0);
     voba_value_t toplevel_env = voba_tuple_at( args, 0);

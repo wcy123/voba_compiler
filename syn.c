@@ -56,8 +56,7 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
 VOBA_FUNC static voba_value_t str_syn(voba_value_t self, voba_value_t args)
 {
     VOBA_ASSERT_N_ARG( args, 0); voba_value_t  syn = voba_tuple_at( args, 0);
-VOBA_ASSERT_CLS( syn,voba_cls_syn, 0);
-;
+    VOBA_ASSERT_ARG_ISA( syn,voba_cls_syn, 0);
     return voba_make_string(dump_location(syn,0));
 }
 
