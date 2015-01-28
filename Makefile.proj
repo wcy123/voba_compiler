@@ -55,6 +55,9 @@ install_files += $(libdir)/voba/core/compiler.h
 $(libdir)/voba/core/compiler.h : compiler.h
 	$(INSTALL) $< $@
 
+test:
+	echo no test
+
 # Local Variables:
 # mode:makefile
 # coding: utf-8-unix

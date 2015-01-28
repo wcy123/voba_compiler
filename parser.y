@@ -17,10 +17,13 @@
               YYRHSLOC (Rhs, 0).end_pos;                                \
       }                                                                 \
     while (0)
-%}
+
+#define YYSTYPE voba_value_t
+
+    %}
 
 /* handle locations */
-#define YYSTYPE voba_value_t
+
 //%define api.value.type {voba_value_t}
 %define api.pure full
 %output "parser.c"
