@@ -3,6 +3,12 @@ CFLAGS += -fPIC
 CFLAGS += -D _BSD_SOURCE
 CFLAGS += -I $(libdir)
 
+LDFLAGS += -ldl
+LDFLAGS += -lexec_once
+LDFLAGS += -lvoba_value
+LDFLAGS += -lvoba_module
+LDFLAGS += -L$(libdir)
+
 SRCS_C += env.c
 SRCS_C += src.c
 SRCS_C += syn.c
@@ -32,7 +38,19 @@ SRCS_C += parser.c
 CLEANED_FILES += libcompiler.so flex.c read_module_info_lex.inc parser.c
 
 
-all: libcompiler.so
+all: libcompiler.so voba vobac
+
+voba: voba.o
+	$(CC) -o $@ $^  $(LDFLAGS)
+install_files += $(bindir)/voba
+$(bindir)/voba: voba
+	$(INSTALL) $< $@
+
+vobac: vobac.o
+	$(CC) -o $@ $^  $(LDFLAGS)
+install_files += $(bindir)/vobac
+$(bindir)/vobac: vobac
+	$(INSTALL) $< $@
 
 
 libcompiler.so: $(OBJS)
