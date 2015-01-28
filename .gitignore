@@ -1,10 +1,7 @@
 src/voba_module_lex.c
 *.so
 *.o
-flex.c
-parser.c
 a.*
-read_module_info_lex.inc
 depend
 depend.inc
 # Object files
