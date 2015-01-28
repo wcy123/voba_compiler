@@ -45,6 +45,5 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
 }
 voba_value_t voba_init(voba_value_t this_module)
 {
-    exec_once_init();
     return VOBA_NIL;
 }
