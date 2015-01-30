@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define _GNU_SOURCE         /* See feature_test_macros(7) */
-#define __USE_GNU
 #include <dlfcn.h>
 #include <exec_once.h>
 
