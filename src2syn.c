@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "src2syn"
+#define EXEC_ONCE_TU_NAME "voba.compiler.src2syn"
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>

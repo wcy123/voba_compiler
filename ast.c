@@ -1,6 +1,6 @@
 #include <string.h>
 #include <errno.h>
-#define EXEC_ONCE_TU_NAME "ast"
+#define EXEC_ONCE_TU_NAME "voba.compiler.ast"
 #include <voba/value.h>
 #include <exec_once.h>
 #include "parser.syn.h"

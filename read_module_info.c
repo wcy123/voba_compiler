@@ -1,5 +1,5 @@
 #include <voba/value.h>
-#define EXEC_ONCE_TU_NAME "read_module_info"
+#define EXEC_ONCE_TU_NAME "voba.compiler.read_module_info"
 #include <exec_once.h>
 #include "compiler.h"
 #include "module_info.h"

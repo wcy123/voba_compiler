@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "module_info"
+#define EXEC_ONCE_TU_NAME "voba.compiler.module_info"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "module_info.h"

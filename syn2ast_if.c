@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "syn2ast_if"
+#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast_if"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "ast.h"

@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "syn2syn"
+#define EXEC_ONCE_TU_NAME "voba.compiler.syn2syn"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "syn2syn.h"

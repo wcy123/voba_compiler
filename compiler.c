@@ -1,5 +1,5 @@
 #include <voba/value.h>
-#define EXEC_ONCE_TU_NAME "compiler"
+#define EXEC_ONCE_TU_NAME "voba.compiler"
 #include "compiler.h"
 #include "syn.h"
 #include "ast.h"

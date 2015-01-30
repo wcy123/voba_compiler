@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "var"
+#define EXEC_ONCE_TU_NAME "voba.compiler.var"
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/core/builtin.h>

@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "env"
+#define EXEC_ONCE_TU_NAME "voba.compiler.env"
 #include <voba/value.h>
 #include <voba/core/builtin.h>
 #include "env.h"

@@ -1,4 +1,3 @@
-#define EXEC_ONCE_TU_NAME "syn2ast_report"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "src.h"

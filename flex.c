@@ -655,7 +655,7 @@ int fileno(FILE *stream);
 int z1get_column  (yyscan_t yyscanner);
 #include <math.h>
 #include <assert.h>
-#define EXEC_ONCE_TU_NAME "flex"
+#define EXEC_ONCE_TU_NAME "voba.compiler.flex"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "parser.syn.h"

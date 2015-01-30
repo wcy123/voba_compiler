@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define EXEC_ONCE_TU_NAME "test_parser"
+#define EXEC_ONCE_TU_NAME "voba.compiler.vobac"
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>

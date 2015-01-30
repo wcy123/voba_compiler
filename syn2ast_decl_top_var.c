@@ -1,6 +1,6 @@
 #include <errno.h>
 
-#define EXEC_ONCE_TU_NAME "syn2ast_decl_top_var"
+#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast_decl_top_var"
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>

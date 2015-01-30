@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "src"
+#define EXEC_ONCE_TU_NAME "voba.compiler.src"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "src.h"

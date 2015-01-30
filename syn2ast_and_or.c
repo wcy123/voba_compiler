@@ -1,4 +1,4 @@
-#define EXEC_ONCE_TU_NAME "syn2ast_and_or"
+#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast_and_or"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "syn2ast_and_or.h"
