@@ -41,6 +41,7 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
              VOBA_CONST_CHAR("##include <stdint.h>\n"
                              "##include <assert.h>\n"
                              "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
+                             "##define EXEC_ONCE_DEPENDS {\"voba.module\",NULL};\n"
                              "##include <voba/value.h>\n"
                              "##include <voba/core/builtin.h> // import builtin by default\n"                             
                              "##include <exec_once.h>\n"
