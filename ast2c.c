@@ -244,7 +244,7 @@ static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_s
     voba_value_t exprs = ast->u.set_var.a_ast_exprs;
     var_t * var = ast->u.set_var.var;
     voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s);
-    voba_str_t * ret = new_uniq_id();
+    voba_str_t * ret = new_uniq_id(voba_value_to_str(voba_symbol_name(SYNTAX(var->syn_s_name)->v)));
     TEMPLATE(s,
              VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n"
                              "    #0 = #1;/* value for set var*/\n")
@@ -321,8 +321,8 @@ static inline voba_str_t* ast2c_constant(voba_value_t syn_value, c_backend_t* bk
 }
 static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* bk, voba_str_t** s)
 {
-    voba_str_t* s_const = new_uniq_id();
-    voba_str_t* s_c_const = new_uniq_id();
+    voba_str_t* s_const = new_uniq_id(voba_str_from_cstr("const_array"));
+    voba_str_t* s_c_const = new_uniq_id(voba_str_from_cstr("const_tuple_in_c"));
     TEMPLATE(
         &bk->decl,
         VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF; /* var for constant*/\n"),
@@ -347,7 +347,7 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
         &s0,
         VOBA_CONST_CHAR(
             "};\n"
-            "    #0 = voba_make_tuple(#1); /* constant */\n"
+            "    #0 = voba_array_from_tuple(voba_make_tuple(#1)); /* constant */\n"
             ),
         s_const,
         s_c_const);
@@ -391,7 +391,11 @@ static inline voba_str_t* ast2c_ast_fun_with_closure(ast_t* ast, c_backend_t* bk
 static inline voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_fun_t* ast_fn = &(ast->u.fun);
-    voba_str_t * uuid = new_uniq_id();
+    voba_value_t syn_s_name = ast_fn->syn_s_name;
+    voba_str_t * uuid = new_uniq_id(voba_is_nil(syn_s_name)?
+                                    voba_str_from_cstr("anonymous"):
+                                    voba_value_to_str(voba_symbol_name(SYNTAX(syn_s_name)->v))
+        );
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * s2 = voba_str_empty();
     voba_value_t exprs = ast_fn->a_ast_exprs;
@@ -411,7 +415,7 @@ static inline voba_str_t* ast2c_ast_fun_without_closure(ast_t* ast, c_backend_t*
 }
 static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname)
 {
-    voba_str_t * fname = new_uniq_id();
+    voba_str_t * fname = new_uniq_id(gname);
     TEMPLATE(&bk->decl,
              VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args);\n")
              ,fname);
@@ -475,11 +479,11 @@ static inline voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t*
 }
 static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
-    voba_str_t * ret = new_uniq_id();
+    voba_str_t * ret = new_uniq_id(voba_str_from_cstr("apply_ret"));
     voba_value_t exprs = ast->u.apply.a_ast_exprs;
     voba_value_t args = voba_make_array_0();
     int64_t len = voba_array_len(exprs);
-    voba_str_t * args_name = new_uniq_id();
+    voba_str_t * args_name = new_uniq_id(voba_str_from_cstr("apply_args"));
     assert(len >=1);
     voba_str_t * old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
@@ -514,7 +518,7 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
 static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     ast_let_t * ast_let  = &ast->u.let;
-    voba_str_t * id = new_uniq_id();
+    voba_str_t * id = new_uniq_id(voba_str_from_cstr("let_ret"));
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * s2 = voba_str_empty();
     ast2c_decl_env(ast_let->env,bk,&s1);
@@ -554,8 +558,8 @@ static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_
     voba_value_t ast_value = ast_match->ast_value;
     ast_t * p_ast_value = AST(ast_value);
     voba_str_t* s_ast_value = ast2c_ast(p_ast_value,bk,s);
-    voba_str_t * s_match_ret = new_uniq_id();
-    voba_str_t * label_success = new_uniq_id();
+    voba_str_t * s_match_ret = new_uniq_id(voba_str_from_cstr("match_ret"));
+    voba_str_t * label_success = new_uniq_id(voba_str_from_cstr("match_label_success"));
     voba_value_t match = ast_match->match;
     TEMPLATE(s, VOBA_CONST_CHAR(
                  "    /* start of a match statement */\n"
@@ -574,12 +578,12 @@ static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_valu
     match_t * p_match = MATCH(match);
     voba_value_t a_rules = p_match->a_rules;
     int64_t len = voba_array_len(a_rules);
-    voba_str_t * label_this = new_uniq_id();
+    voba_str_t * label_this = new_uniq_id(voba_str_from_cstr("match_label_this"));
     voba_str_t * old_it = bk->it;
     bk->it = s_ast_value;
     for(int64_t i = 0; i < len; ++i){
         voba_value_t rule = voba_array_at(a_rules,i);
-        voba_str_t * label_next = ((i == (len - 1))?label_success:new_uniq_id());
+        voba_str_t * label_next = ((i == (len - 1))?label_success:new_uniq_id(voba_str_from_cstr("match_label_next")));
         voba_str_t * s_rule = voba_str_empty();
         ast2c_match_rule(s_ast_value, s_match_ret, rule,label_success, label_next,bk,&s_rule);
         TEMPLATE(s, VOBA_CONST_CHAR("    /* match pattern #2 start*/\n"
@@ -698,14 +702,15 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
     pattern_apply_t* p_pat = &p_pattern->u.apply;
     voba_value_t ast_cls = p_pat->ast_cls;
     voba_value_t a_patterns = p_pat->a_patterns;
-    voba_str_t * s_cls_id = new_uniq_id();
-    voba_str_t * tmpf = new_uniq_id();
-    voba_str_t * tmpv1 = new_uniq_id();
-    voba_str_t * tmpv2 = new_uniq_id();
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * s_cls = ast2c_ast(AST(ast_cls),bk,&s1);
     int64_t len = voba_array_len(a_patterns);
     voba_str_t * s_len = voba_str_fmt_int64_t(len,10);
+
+    voba_str_t * s_cls_id = new_uniq_id(voba_str_from_cstr("var_cls"));
+    voba_str_t * tmpf = new_uniq_id(voba_str_from_cstr("pattern_fun"));
+    voba_str_t * tmpv1 = new_uniq_id(voba_str_from_cstr("pattern_ret"));
+    voba_str_t * tmpv2 = new_uniq_id(voba_str_from_cstr("pattern_args"));
     TEMPLATE(s,
              VOBA_CONST_CHAR("    /* evaluate cls */\n"
                              "    #0\n"
@@ -735,8 +740,8 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
         );
     for(int64_t i = 0; i < len; ++i){
         voba_value_t sp = voba_array_at(a_patterns,i);
-        voba_str_t * tmp_args = new_uniq_id();
-        voba_str_t * tmp_apply_ret =  new_uniq_id();
+        voba_str_t * tmp_args = new_uniq_id(voba_str_from_cstr("pattern_args"));
+        voba_str_t * tmp_apply_ret =  new_uniq_id(voba_str_from_cstr("pattern_ret"));
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* extract #3 sub-value from the main value*/\n"
@@ -775,17 +780,17 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * for_if               = voba_is_nil(p_ast_for->_if)?NULL:ast2c_ast(AST(p_ast_for->_if),bk,s);
     voba_str_t * for_init             = voba_is_nil(p_ast_for->init)?NULL:ast2c_ast(AST(p_ast_for->init),bk,s);
     voba_str_t * for_accumulate       = voba_is_nil(p_ast_for->accumulate)?NULL:ast2c_ast(AST(p_ast_for->accumulate),bk,s);
-    voba_str_t * for_each_begin       = new_uniq_id();
-    voba_str_t * for_each_end         = new_uniq_id();
-    voba_str_t * for_end              = new_uniq_id();
-    voba_str_t * for_final            = new_uniq_id();
-    voba_str_t * for_each_args        = new_uniq_id();
-    voba_str_t * for_each_value       = new_uniq_id();
-    voba_str_t * for_each_iter        = new_uniq_id();
-    voba_str_t * for_each_iter_f      = new_uniq_id();
-    voba_str_t * for_each_output      = new_uniq_id();
-    voba_str_t * for_each_last_output = new_uniq_id();
-    voba_str_t * for_each_iter_args   = new_uniq_id();
+    voba_str_t * for_each_begin       = new_uniq_id(voba_str_from_cstr("for_each_begin"));
+    voba_str_t * for_each_end         = new_uniq_id(voba_str_from_cstr("for_each_end"));
+    voba_str_t * for_end              = new_uniq_id(voba_str_from_cstr("for_end"));
+    voba_str_t * for_final            = new_uniq_id(voba_str_from_cstr("for_final"));
+    voba_str_t * for_each_args        = new_uniq_id(voba_str_from_cstr("for_each_args"));
+    voba_str_t * for_each_value       = new_uniq_id(voba_str_from_cstr("for_each_value"));
+    voba_str_t * for_each_iter        = new_uniq_id(voba_str_from_cstr("for_each_iter"));
+    voba_str_t * for_each_iter_f      = new_uniq_id(voba_str_from_cstr("for_each_iter_f"));
+    voba_str_t * for_each_output      = new_uniq_id(voba_str_from_cstr("for_each_output"));
+    voba_str_t * for_each_last_output = new_uniq_id(voba_str_from_cstr("for_each_last_output"));
+    voba_str_t * for_each_iter_args   = new_uniq_id(voba_str_from_cstr("for_each_iter_args"));
 
     
     voba_str_t * s_body = voba_str_empty();
@@ -858,8 +863,8 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
              ,for_each_expr
         );
     if(for_if){
-        voba_str_t* if_args  = new_uniq_id();
-        voba_str_t* if_value = new_uniq_id();
+        voba_str_t* if_args  = new_uniq_id(voba_str_from_cstr("if_args"));
+        voba_str_t* if_value = new_uniq_id(voba_str_from_cstr("if_value"));
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* try to apply for-if */\n"
@@ -887,7 +892,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
              , for_each_end
         );
     if(for_accumulate){
-        voba_str_t* acc_args  = new_uniq_id();
+        voba_str_t* acc_args  = new_uniq_id(voba_str_from_cstr("acc_args"));
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* collect return value for `for' statement  */\n"
@@ -955,8 +960,8 @@ static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_value_t a_ast_exprs = ast->u.and.a_ast_exprs;
     int64_t len = voba_array_len(a_ast_exprs);
 
-    voba_str_t * and_return_value = new_uniq_id();
-    voba_str_t * and_end          = new_uniq_id();    
+    voba_str_t * and_return_value = new_uniq_id(voba_str_from_cstr("and_ret_val"));
+    voba_str_t * and_end          = new_uniq_id(voba_str_from_cstr("and_end"));    
     TEMPLATE
         (s,
          VOBA_CONST_CHAR(
@@ -994,8 +999,8 @@ static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t**
     voba_value_t a_ast_exprs = ast->u.or.a_ast_exprs;
     int64_t len = voba_array_len(a_ast_exprs);
 
-    voba_str_t * or_return_value = new_uniq_id();
-    voba_str_t * or_end          = new_uniq_id();    
+    voba_str_t * or_return_value = new_uniq_id(voba_str_from_cstr("or_ret_val"));
+    voba_str_t * or_end          = new_uniq_id(voba_str_from_cstr("or_end"));    
     TEMPLATE
         (s,
          VOBA_CONST_CHAR(
@@ -1029,7 +1034,7 @@ static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_
 {
     voba_value_t ast_expr = ast->u.yield.ast_expr;
     voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
-    voba_str_t * yield_return_value = new_uniq_id();
+    voba_str_t * yield_return_value = new_uniq_id(voba_str_from_cstr("yield_ret_val"));
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    voba_value_t #0 __attribute__((unused)) = 0;\n"

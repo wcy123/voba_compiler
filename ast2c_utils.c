@@ -16,10 +16,14 @@ static inline voba_str_t * quote_string(voba_str_t * s)
     ret = voba_strcat_char(ret,'"');
     return ret;
 }
-static inline voba_str_t* new_uniq_id()
+static inline voba_str_t* new_uniq_id(voba_str_t * name)
 {
     static int c = 0;
-    return voba_strcat(VOBA_CONST_CHAR("s"),voba_str_fmt_int32_t(c++,10));
+    voba_str_t * ret = voba_str_empty();
+    ret = voba_strcat(ret,voba_c_id_encode(name));
+    ret = voba_strcat_char(ret,'_');
+    ret = voba_strcat(ret,voba_str_fmt_int32_t(c++,10));
+    return ret;
 }
 static inline voba_str_t* indent(voba_str_t * s)
 {
