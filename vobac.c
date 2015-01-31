@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define EXEC_ONCE_TU_NAME "voba.compiler.vobac"
+#define EXEC_ONCE_DEPENDS {"voba.module",NULL}
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>
-#include "compiler.h"
+#include <voba/core/builtin.h>
+#include <voba/core/compiler.h>
+
 
 int main(int argc, char *argv[])
 {
@@ -32,8 +35,8 @@ int main(int argc, char *argv[])
         voba_make_string(voba_str_from_cstr(argv[1]))
     };
     voba_value_t c = voba_apply(voba_symbol_value(s_compile), voba_make_tuple(args));
-    if(!voba_is_nil(c)){
-        fwrite(voba_value_to_str(c)->data, 1, voba_value_to_str(c)->len, stdout);
-    }
+    args[0]=1;
+    args[1] = c;
+    voba_apply(voba_symbol_value(s_print),voba_make_tuple(args));
     return 0;
 }

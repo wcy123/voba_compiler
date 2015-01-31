@@ -7,7 +7,6 @@ int fileno(FILE *stream);
 int yyget_column  (yyscan_t yyscanner);
 #include <math.h>
 #include <assert.h>
-#define EXEC_ONCE_TU_NAME "flex"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "parser.syn.h"

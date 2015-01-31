@@ -1,4 +1,3 @@
-#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast_match"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "ast.h"

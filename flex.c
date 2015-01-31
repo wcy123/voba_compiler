@@ -634,10 +634,10 @@ static yyconst flex_int32_t yy_rule_can_match_eol[33] =
 
 static yyconst flex_int16_t yy_rule_linenum[32] =
     {   0,
-       39,   44,   49,   54,   58,   62,   67,   74,   78,   82,
-       89,   93,  102,  110,  111,  112,  113,  114,  116,  118,
-      125,  128,  131,  134,  137,  158,  162,  166,  171,  173,
-      176
+       38,   43,   48,   53,   57,   61,   66,   73,   77,   81,
+       88,   92,  101,  109,  110,  111,  112,  113,  115,  117,
+      124,  127,  130,  133,  136,  157,  161,  165,  170,  172,
+      175
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -655,7 +655,6 @@ int fileno(FILE *stream);
 int z1get_column  (yyscan_t yyscanner);
 #include <math.h>
 #include <assert.h>
-#define EXEC_ONCE_TU_NAME "voba.compiler.flex"
 #include <exec_once.h>
 #include <voba/value.h>
 #include "parser.syn.h"
