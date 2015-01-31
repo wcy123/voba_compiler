@@ -147,11 +147,12 @@ static inline int is_match_if(voba_value_t form,voba_value_t toplevel_env)
 {
     assert(voba_is_a(form,voba_cls_array));
     int64_t len = voba_array_len(form);
-    int ret = 1;
-    ret = ret && len == 3;
-    voba_value_t syn_vbar = voba_array_at(form,1);
-    voba_value_t vbar = SYNTAX(syn_vbar)->v;
-    ret = ret && voba_eq(vbar, K(toplevel_env,vbar));
+    int ret = 0;
+    if(len == 3){
+        voba_value_t syn_vbar = voba_array_at(form,1);
+        voba_value_t vbar = SYNTAX(syn_vbar)->v;
+        ret = voba_eq(vbar, K(toplevel_env,vbar));
+    }
     return ret;
 }
 static inline voba_value_t compile_match_pattern_with_if(voba_value_t syn_form, voba_value_t env,voba_value_t toplevel_env)
