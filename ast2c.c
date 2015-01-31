@@ -40,8 +40,9 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
     TEMPLATE(&bk->decl,
              VOBA_CONST_CHAR("##include <stdint.h>\n"
                              "##include <assert.h>\n"
-                             "##include <voba/value.h>\n"
                              "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
+                             "##include <voba/value.h>\n"
+                             "##include <voba/core/builtin.h> // import builtin by default\n"                             
                              "##include <exec_once.h>\n"
                              "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
