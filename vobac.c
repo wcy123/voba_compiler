@@ -6,7 +6,7 @@
 #include <voba/value.h>
 #include <voba/module.h>
 #include <voba/core/builtin.h>
-#include <voba/core/compiler.h>
+#include "compiler.h"
 
 
 int main(int argc, char *argv[])
