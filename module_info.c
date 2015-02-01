@@ -5,11 +5,11 @@
 VOBA_DEF_CLS(sizeof(module_info_t),module_info);
 voba_value_t module_info_id(voba_value_t info)    
 {
-    return SYNTAX(MODULE_INFO(info)->syn_id)->v;
+    return MODULE_INFO(info)->syn_id;
 }
 voba_value_t module_info_name(voba_value_t info)    
 {
-    return SYNTAX(MODULE_INFO(info)->syn_name)->v;
+    return MODULE_INFO(info)->syn_name;
 }
 voba_value_t module_info_symbols(voba_value_t info)    
 {

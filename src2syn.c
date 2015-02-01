@@ -23,7 +23,9 @@ voba_value_t src2syn(voba_value_t content1, voba_value_t filename, voba_value_t 
 {
     voba_value_t ret =  VOBA_NIL;
     void * scanner;
-    *module = voba_make_symbol_table();
+    if(voba_is_nil(*module)){
+        *module = voba_make_symbol_table();
+    }
     voba_str_t * content = voba_value_to_str(content1);
     z1lex_init(&scanner);
     if(getenv("YY_FLEX_DEBUG")){

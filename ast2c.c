@@ -120,8 +120,8 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "    const char * id = #1;\n"
                  "    const char * symbols[] = {\n"
                  )
-             ,quote_string(voba_value_to_str(module_info_name(module_info)))
-             ,quote_string(voba_value_to_str(module_info_id(module_info))));
+             ,quote_string(voba_value_to_str(SYNTAX(module_info_name(module_info))->v))
+             ,quote_string(voba_value_to_str(SYNTAX(module_info_id(module_info))->v)));
     voba_value_t a_syn_symbols = module_info_symbols(module_info);
     int64_t len = voba_array_len(a_syn_symbols);
     for(int64_t i = 0; i < len; ++i){
@@ -129,7 +129,7 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  VOBA_CONST_CHAR(
                      "         #0,\n"
                      )
-                 ,quote_string(voba_value_to_str(SYNTAX(voba_array_at(a_syn_symbols,i))->v)));
+                 ,quote_string(voba_value_to_str(voba_symbol_name(SYNTAX(voba_array_at(a_syn_symbols,i))->v))));
     }
     TEMPLATE(&bk->start,
              VOBA_CONST_CHAR(

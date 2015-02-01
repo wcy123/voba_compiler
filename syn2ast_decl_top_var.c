@@ -358,8 +358,17 @@ static inline void compile_top_expr(voba_value_t syn_top_expr, voba_value_t topl
     }
     return;
 }
+#include "src2syn.h"
 void compile_toplevel_exprs(voba_value_t la_syn_top_exprs, voba_value_t toplevel_env)
 {
+    // import builtin at the very beginning.
+    uint32_t error = 0;
+    voba_value_t content = voba_make_string(voba_str_from_cstr("import builtin"));
+    voba_value_t filename = voba_make_string(voba_str_from_cstr("__prelude__"));
+    voba_value_t syn_import_builtin = src2syn(content,filename,&TOPLEVEL_ENV(toplevel_env)->module,
+                                              &error);
+    assert(error == 0);
+    compile_top_expr_import(syn_import_builtin,toplevel_env);
     voba_value_t cur = la_syn_top_exprs;
     while(!voba_la_is_nil(cur)){
         voba_value_t syn_top_expr = voba_la_car(cur);
