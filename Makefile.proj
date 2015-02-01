@@ -56,13 +56,13 @@ $(bindir)/vobac: vobac
 libcompiler.so: $(OBJS)
 	$(CC) -shared -Wl,-soname,$@ -o $@ $^  $(LDFLAGS)
 flex.c: flex.l
-	flex -d -P z1 --noline -o $@ flex.l
+	-flex -d -P z1 --noline -o $@ flex.l
 parser.c: parser.y
-	bison -p z1 parser.y
+	-bison -p z1 parser.y
 read_module_info.o: read_module_info.c read_module_info_lex.inc
 
 read_module_info_lex.inc: read_module_info_lex.l
-	flex --noline  read_module_info_lex.l
+	-flex --noline  read_module_info_lex.l
 
 
 install_files += $(libdir)/voba/core/libcompiler.so
