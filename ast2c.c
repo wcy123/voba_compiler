@@ -84,10 +84,10 @@ static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
             break;
         case VAR_PUBLIC_TOP:
         case VAR_FOREIGN_TOP:
-            assert(!voba_is_nil(var->u.m.module_id));
+            assert(!voba_is_nil(var->u.m.syn_module_id));
             ast2c_import_var(bk,
-                             voba_value_to_str(var->u.m.module_name),
-                             voba_value_to_str(var->u.m.module_id),
+                             voba_value_to_str(SYNTAX(var->u.m.syn_module_name)->v),
+                             voba_value_to_str(SYNTAX(var->u.m.syn_module_id)->v),
                              var_c_symbol_name(var),
                              var_c_id(var));
             break;
@@ -113,7 +113,6 @@ static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, 
 
 static void import_module(voba_value_t module_info, c_backend_t * bk)
 {
-    module_info_t * mi  = MODULE_INFO(module_info);
     TEMPLATE(&bk->start,
              VOBA_CONST_CHAR(
                  "{\n"
@@ -121,15 +120,16 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "    const char * id = #1;\n"
                  "    const char * symbols[] = {\n"
                  )
-             ,quote_string(mi->name)
-             ,quote_string(mi->id));
-    int64_t len = voba_array_len(mi->symbols);
+             ,quote_string(voba_value_to_str(module_info_name(module_info)))
+             ,quote_string(voba_value_to_str(module_info_id(module_info))));
+    voba_value_t a_syn_symbols = module_info_symbols(module_info);
+    int64_t len = voba_array_len(a_syn_symbols);
     for(int64_t i = 0; i < len; ++i){
         TEMPLATE(&bk->start,
                  VOBA_CONST_CHAR(
                      "         #0,\n"
                      )
-                 ,quote_string(voba_value_to_str(voba_array_at(mi->symbols,i))));
+                 ,quote_string(voba_value_to_str(SYNTAX(voba_array_at(a_syn_symbols,i))->v)));
     }
     TEMPLATE(&bk->start,
              VOBA_CONST_CHAR(

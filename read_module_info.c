@@ -22,15 +22,17 @@ voba_value_t read_module_info(voba_value_t content1)
     void * scanner;
     yylex_init(&scanner);
     yy_scan_bytes(content->data,content->len,scanner);
-    module_lex(ret,content,scanner);
+    YYLTYPE pos;
+    YYSTYPE s;
+    module_lex(ret,content,scanner,&s,&pos);
     yylex_destroy(scanner);
-    if(MODULE_INFO(ret)->name == NULL){
+    if(voba_is_nil(MODULE_INFO(ret)->syn_name)){
         ret = voba_make_string(VOBA_CONST_CHAR("read_module_info: VOBA_MODULE_NAME is not defined."));
     }
-    if(MODULE_INFO(ret)->id == NULL){
+    if(voba_is_nil(MODULE_INFO(ret)->syn_id)){
         ret = voba_make_string(VOBA_CONST_CHAR("read_module_info: VOBA_MODULE_ID is not defined."));
     }
-    if(voba_array_len(MODULE_INFO(ret)->symbols) == 0){ 
+    if(voba_array_len(MODULE_INFO(ret)->a_syn_symbols) == 0){ 
         ret = voba_make_string(VOBA_CONST_CHAR("read_module_info: no symbol is defined."));
     }
     return ret;

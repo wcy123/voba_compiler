@@ -19,15 +19,15 @@
 //     if a local var, var becomes a module var
 //     if a module var, throw an error, name conflicts
 //     if a foreign var, throw an error, name conficts again.
-static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_value_t module_id, voba_value_t module_name, voba_value_t toplevel_env)
+static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_value_t syn_module_id, voba_value_t syn_module_name, voba_value_t toplevel_env)
 {
     voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
     voba_value_t symbol = SYNTAX(syn_symbol)->v;
     voba_value_t var = search_symbol(syn_symbol,env);
     if(voba_is_nil(var)){
         voba_value_t top_var = make_var(syn_symbol,VAR_FOREIGN_TOP);
-        VAR(top_var)->u.m.module_id = module_id;
-        VAR(top_var)->u.m.module_name = module_name;
+        VAR(top_var)->u.m.syn_module_id = syn_module_id;
+        VAR(top_var)->u.m.syn_module_name = syn_module_name;
         env_push_var(env,top_var);
         if(0){
             fprintf(stderr,__FILE__ ":%d:[%s] pushing var for import %lx %s\n", __LINE__, __FUNCTION__
@@ -47,8 +47,12 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
             report_error(
                 VOBA_STRCAT(VOBA_CONST_CHAR("import name conflicts. symbol = "),
                             voba_value_to_str(voba_symbol_name(symbol))),
-                // TODO: report previous definitions position.
                 syn_symbol,
+                toplevel_env
+                );
+            report_error(
+                VOBA_CONST_CHAR("previous definition is here"),
+                VAR(top_var)->syn_s_name,
                 toplevel_env
                 );
             break;
@@ -71,11 +75,10 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
     voba_value_t symbol = SYNTAX(syn_symbol)->v;
     voba_value_t var = search_symbol(syn_symbol,TOPLEVEL_ENV(toplevel_env)->env);
     if(voba_is_nil(var)){
-        /* fprintf(stderr,__FILE__ ":%d:[%s] debug cannot found symbol %s\n ", __LINE__, __FUNCTION__, */
-        /*         voba_str_to_cstr(voba_value_to_str(voba_symbol_name(symbol)))); */
-        voba_value_t top_var = make_var(syn_symbol,VAR_PRIVATE_TOP);
-        env_push_var(env,top_var);
-        ret = top_var;
+        // no var existed, it is a local var
+        voba_value_t local_var = make_var(syn_symbol,VAR_PRIVATE_TOP);
+        env_push_var(env,local_var);
+        ret = local_var;
     }else{
         voba_value_t top_var = var;
         ret = top_var;
@@ -86,16 +89,17 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
             report_error(
                 VOBA_STRCAT(VOBA_CONST_CHAR("redefine a symbol. symbol = "),
                             voba_value_to_str(voba_symbol_name(symbol))),
-                // TODO: report previous definitions position.
                 syn_symbol,
+                toplevel_env
+                );
+            report_error(
+                VOBA_CONST_CHAR("previous definition is here"),
+                VAR(top_var)->syn_s_name,
                 toplevel_env
                 );
             break;
         case VAR_FOREIGN_TOP:
             VAR(top_var)->flag = VAR_PUBLIC_TOP;
-            /* fprintf(stderr,__FILE__ ":%d:[%s] %s %s\n", __LINE__, __FUNCTION__, */
-            /*         voba_str_to_cstr(voba_value_to_str(voba_symbol_name(symbol))), */
-            /*         voba_is_nil(AST(top_var)->u.top_var.module_id)?"NIL":voba_str_to_cstr(voba_value_to_str(AST(top_var)->u.top_var.module_id))); */
             break;
         default:
             assert(0);
@@ -247,24 +251,22 @@ static inline voba_value_t read_module_header_file(voba_value_t header_file,voba
     return ret;
 }
 static inline void compile_top_expr_import_module_info(voba_value_t info,
-                                                       voba_value_t filename,
-                                                       voba_value_t content,
-                                                       voba_value_t syn_module_name,voba_value_t toplevel_env)
+                                                       voba_value_t src,
+                                                       voba_value_t toplevel_env)
 {
-    struct YYLTYPE yyloc = {1,1};
-    voba_value_t symbol_names = module_info_symbols(info);
-    voba_value_t module_id = module_info_id(info);
-    voba_value_t module_name = module_info_name(info);
-    int64_t len = voba_array_len(symbol_names);
+    voba_value_t a_syn_symbol_names = module_info_symbols(info);
+    voba_value_t syn_module_id = module_info_id(info);
+    voba_value_t syn_module_name = module_info_name(info);
+    attach_src(syn_module_id,src);
+    attach_src(syn_module_name,src);
+    int64_t len = voba_array_len(a_syn_symbol_names);
     voba_array_push(TOPLEVEL_ENV(toplevel_env)->a_modules,info);
     for(int64_t i = 0; i < len ; i ++){
-        voba_value_t symbol_name = voba_array_at(symbol_names,i);
-        voba_value_t symbol = voba_make_symbol(voba_value_to_str(symbol_name),
-                                               TOPLEVEL_ENV(toplevel_env)->module);
-        voba_value_t syn_module_var_name = make_syntax(symbol,yyloc.start_pos,yyloc.end_pos);
-        attach_src(syn_module_var_name,
-                   make_src(voba_value_to_str(filename),voba_value_to_str(content)));
-        create_topleve_var_for_import(syn_module_var_name,module_id,module_name,toplevel_env);
+        voba_value_t syn_symbol_name = voba_array_at(a_syn_symbol_names,i);
+        attach_src(syn_symbol_name,src);
+        SYNTAX(syn_symbol_name)->v = voba_make_symbol(voba_value_to_str(SYNTAX(syn_symbol_name)->v),
+                                                      TOPLEVEL_ENV(toplevel_env)->module);
+        create_topleve_var_for_import(syn_symbol_name,syn_module_id,syn_module_name,toplevel_env);
     }
 }
 static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_value_t syn_module_name, voba_value_t la_syn_top_expr,voba_value_t toplevel_env)
@@ -276,14 +278,15 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
         if(!voba_is_nil(module_header_content)) {
             voba_value_t module_info = read_module_info(module_header_content);
             if(voba_is_a(module_info,voba_cls_module_info)){
-                compile_top_expr_import_module_info(module_info,module_header_file, module_header_content, syn_module_name,toplevel_env);
+                voba_value_t src = make_src(voba_value_to_str(module_header_file),voba_value_to_str(module_header_content));
+                compile_top_expr_import_module_info(module_info,src,toplevel_env);
             }else{
                 report_error(VOBA_STRCAT(
                                  VOBA_CONST_CHAR("invalid module info, error = "),
                                  voba_value_to_str(module_info),
                                  VOBA_CONST_CHAR("source = "),
                                  voba_value_to_str(module_header_content)),
-                             syn_module_name,
+                             module_info_name(module_info),
                              toplevel_env);
             }
         }else{

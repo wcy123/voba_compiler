@@ -10,8 +10,8 @@ voba_value_t make_var(voba_value_t syn_name, enum var_flag flag)
     voba_value_t ret = voba_make_user_data(voba_cls_var);
     VAR(ret)->syn_s_name = syn_name;
     VAR(ret)->flag = flag;
-    VAR(ret)->u.m.module_id = VOBA_NIL;
-    VAR(ret)->u.m.module_name = VOBA_NIL;
+    VAR(ret)->u.m.syn_module_id = VOBA_NIL;
+    VAR(ret)->u.m.syn_module_name = VOBA_NIL;
     return ret;
 }
 int var_is_top(var_t* v)

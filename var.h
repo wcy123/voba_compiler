@@ -12,8 +12,8 @@ typedef struct var_s {
     enum var_flag flag;
     union {
         struct {
-            voba_value_t module_id; // module id for top var
-            voba_value_t module_name;
+            voba_value_t syn_module_id; // module id for top var
+            voba_value_t syn_module_name;
         }m;
         int32_t index; // for closure and argument 
     }u;
