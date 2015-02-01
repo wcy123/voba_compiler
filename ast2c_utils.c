@@ -1,7 +1,11 @@
 static inline voba_str_t * var_c_id(var_t* var)
 {
     voba_value_t syn_s_name = var->syn_s_name;
-    return voba_strcat(voba_str_from_char('x',1), voba_str_fmt_int64_t(syn_s_name,16));
+    voba_str_t * ret = voba_str_empty();
+    ret = voba_strcat(ret,voba_c_id_encode(var_c_symbol_name(var)));
+    ret = voba_strcat_char(ret,'_');
+    ret = voba_strcat(ret, voba_str_fmt_int64_t(syn_s_name,16));
+    return ret;
 }
 static inline voba_str_t * var_c_symbol_name(var_t* var)
 {

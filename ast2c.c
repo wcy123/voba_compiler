@@ -458,13 +458,13 @@ static inline voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t*
     case VAR_PUBLIC_TOP:
         TEMPLATE(&ret,
                  VOBA_CONST_CHAR("voba_symbol_value(#0 /* #1 */)")
-                 ,var_c_id(var),var_c_symbol_name(var));
+                 ,new_uniq_id(var_c_symbol_name(var)),var_c_symbol_name(var));
         break;
     case VAR_LOCAL:
     case VAR_PRIVATE_TOP:
         TEMPLATE(&ret,
                  VOBA_CONST_CHAR("#0 /* #1 */")
-                 ,var_c_id(var),var_c_symbol_name(var));
+                 ,new_uniq_id(var_c_symbol_name(var)),var_c_symbol_name(var));
         break;
     case VAR_ARGUMENT:
         ret = ast2c_ast_arg(var->u.index,bk,s);
