@@ -18,14 +18,13 @@
       }                                                                 \
     while (0)
 
-#define YYSTYPE voba_value_t
-
     %}
 
 /* handle locations */
 
-//%define api.value.type {voba_value_t}
+%define api.value.type {voba_value_t}
 %define api.pure full
+%no-lines
 %output "parser.c"
 %defines "parser.h"
 %locations

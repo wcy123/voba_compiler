@@ -68,7 +68,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "parser.y" /* yacc.c:339  */
+
 
 #include <stdio.h>
 #include <stdint.h>    
@@ -89,11 +89,9 @@
       }                                                                 \
     while (0)
 
-#define YYSTYPE voba_value_t
-
     
 
-#line 97 "parser.c" /* yacc.c:339  */
+
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -134,7 +132,7 @@ extern int z1debug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+typedef voba_value_t YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -161,9 +159,9 @@ int z1parse (void* scanner, voba_value_t * yy_program, voba_value_t module);
 
 /* Copy the second part of user declarations.  */
 
-#line 165 "parser.c" /* yacc.c:358  */
+
 /* Unqualified %code blocks.  */
-#line 38 "parser.y" /* yacc.c:359  */
+
 
     int z1lex (YYSTYPE *lvalp, YYLTYPE *llocp, void *, voba_value_t module);
 typedef void * yyscan_t;
@@ -172,7 +170,7 @@ void z1error (YYLTYPE * locp, yyscan_t scanner, voba_value_t * p, voba_value_t m
    fprintf (stderr, "%s\n", s);
 }
 
-#line 176 "parser.c" /* yacc.c:359  */
+
 
 #ifdef short
 # undef short
@@ -471,7 +469,7 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    48,    48,    53,    54,    58,    59,    60,    61,    66
+       0,    47,    47,    52,    53,    57,    58,    59,    60,    65
 };
 #endif
 
@@ -1349,54 +1347,54 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 48 "parser.y" /* yacc.c:1646  */
+
     {
 *yy_program = (yyval) = (yyvsp[0]); syntax_loc((yyval),&(yyloc));}
-#line 1356 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 3:
-#line 53 "parser.y" /* yacc.c:1646  */
+
     { (yyval) = make_syntax(voba_make_array_1((yyvsp[0])),(yyloc).start_pos, (yyloc).end_pos); }
-#line 1362 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 4:
-#line 54 "parser.y" /* yacc.c:1646  */
+
     { (yyval) = (yyvsp[-1]); voba_array_push(SYNTAX((yyvsp[-1]))->v,(yyvsp[0])); syntax_loc((yyval),&((yyloc))); }
-#line 1368 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 6:
-#line 59 "parser.y" /* yacc.c:1646  */
+
     {(yyval) = (yyvsp[-1]); syntax_loc((yyval),&(yyloc));}
-#line 1374 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 7:
-#line 60 "parser.y" /* yacc.c:1646  */
+
     { (yyval) = make_syntax(voba_make_array_0(),(yyloc).start_pos,(yyloc).end_pos);}
-#line 1380 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 8:
-#line 61 "parser.y" /* yacc.c:1646  */
+
     {
     voba_value_t s_quote = voba_make_symbol(VOBA_CONST_CHAR("quote"),module);
     voba_value_t syn_s_quote = make_syntax(s_quote,(yylsp[-1]).start_pos, (yylsp[-1]).end_pos);
     (yyval) = make_syntax(voba_make_array_2(syn_s_quote, (yyvsp[0])),(yylsp[-1]).start_pos, (yylsp[0]).end_pos);
   }
-#line 1390 "parser.c" /* yacc.c:1646  */
+
     break;
 
   case 9:
-#line 66 "parser.y" /* yacc.c:1646  */
+
     { fprintf(stderr,"TODO ERRORR RECOVERY %d - %d\n",(yyloc).start_pos, (yyloc).end_pos); }
-#line 1396 "parser.c" /* yacc.c:1646  */
+
     break;
 
 
-#line 1400 "parser.c" /* yacc.c:1646  */
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
