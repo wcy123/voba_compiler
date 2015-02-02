@@ -19,7 +19,6 @@ typedef int YYSTYPE ; // it is not used.
 //   uint32_t start_pos;
 //   uint32_t end_pos;
 // };
-typedef struct YYLTYPE YYLTYPE;
 #define YY_USER_ACTION                                      \
     yylloc->start_pos = yylloc->end_pos;                    \
     yylloc->end_pos += yyleng;                              \
