@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define EXEC_ONCE_TU_NAME "voba.compiler.vobac"
-#define EXEC_ONCE_DEPENDS {"voba.module",NULL}
+#define EXEC_ONCE_DEPENDS {"voba.module"}
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>
