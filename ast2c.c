@@ -101,7 +101,7 @@ static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, 
     TEMPLATE(&bk->start,
              VOBA_CONST_CHAR(
                  "{\n"
-                 "    #2 = voba_module_var(#3,#0,#1);\n"
+                 "    #2 = voba_module_var(#3,#0,voba_make_string(voba_str_from_cstr(#1)));\n"
                  "}\n")
              ,quote_string(module_id)
              ,quote_string(syn_name)
@@ -136,7 +136,16 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "         NULL\n"
                  "    };\n"
                  "    fprintf(stderr,\"loading %s(%s)\\n\",name,id);\n"
-                 "    voba_import_module(name,id,symbols);\n"
+                 "    static voba_value_t                                    \n"
+                 "        symbols2[sizeof(symbols)/sizeof(const char*)] = {           \n"
+                 "        sizeof(symbols)/sizeof(const char*) - 1, VOBA_NIL,          \n"
+                 "    };                                                              \n"
+                 "    for(size_t i = 0 ; symbols[i]!=NULL; ++i){                      \n"
+                 "        symbols2[i+1] =                                             \n"
+                 "            voba_make_string(                                       \n"
+                 "                    voba_str_from_cstr(symbols[i]));                \n"
+                 "    }                                                               \n"
+                 "    voba_import_module(name,id,voba_make_tuple(symbols2));          \n"
                  "}\n"));
 }
 
