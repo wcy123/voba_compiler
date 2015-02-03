@@ -1,6 +1,4 @@
 #include <errno.h>
-
-#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast_decl_top_var"
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>
@@ -200,12 +198,6 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
     }
     return;
 }
-static voba_value_t voba_include_path = VOBA_NIL;
-EXEC_ONCE_PROGN{
-    const char * env = getenv("VOBA_PATH");
-    if(!env){ env = ".";}
-    voba_include_path = voba_init_path_from_env(env);
-}
 static inline voba_value_t search_module_header_file(voba_value_t module_name)
 {
     voba_str_t* pwd = VOBA_CONST_CHAR(".");
@@ -213,7 +205,7 @@ static inline voba_value_t search_module_header_file(voba_value_t module_name)
     voba_str_t* suffix = VOBA_CONST_CHAR(".h");
     int resolv_realpath = 0;
     voba_value_t attempts = voba_make_array_0();
-    voba_str_t * file = voba_find_file(voba_include_path,
+    voba_str_t * file = voba_find_file(voba_module_path(),
                                        voba_value_to_str(voba_symbol_name(module_name)),
                                        pwd,
                                        prefix, suffix,
