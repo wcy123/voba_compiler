@@ -64,16 +64,6 @@ static inline void ast2c_import_var(c_backend_t * bk, voba_str_t * module_name, 
 static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk)
 {
     ast2c_decl_env(env,bk,&bk->decl);
-    ast2c_import_var(bk,
-                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
-                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
-                     voba_str_from_cstr(VOBA_MODULE_LANG_MATCH),
-                     VOBA_CONST_CHAR("gf_match"));
-    ast2c_import_var(bk,
-                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
-                     voba_str_from_cstr(VOBA_MODULE_LANG_ID),
-                     voba_str_from_cstr(VOBA_MODULE_LANG_ITER),
-                     VOBA_CONST_CHAR("gf_iter"));
     voba_value_t a_top_vars = env->a_var;
     int64_t len = voba_array_len(a_top_vars);
     for(int64_t i = 0 ; i < len ; ++i){
