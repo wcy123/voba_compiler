@@ -2,16 +2,12 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <exec_once.h>
-
+#include <voba/value.h>
+#include <voba/module.h>
 int main(int argc, char *argv[])
 {
-    void *handle;
-    handle = dlopen(argv[1], RTLD_LAZY|RTLD_GLOBAL);
-    if (!handle) {
-        fprintf(stderr, "%s\n", dlerror());
-        exit(EXIT_FAILURE);
-    }
     exec_once_init();
-    dlclose(handle);    
+    voba_value_t symbols [] = {0};
+    voba_import_module(argv[1],"__main__",voba_make_tuple(symbols));
     exit(EXIT_SUCCESS);
 }
