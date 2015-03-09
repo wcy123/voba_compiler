@@ -183,7 +183,7 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
                 compile_top_expr_def_name(syn_var_form, voba_la_cdr(la_syn_top_expr),toplevel_env);
             }else{
                 report_error(VOBA_CONST_CHAR("redefine keyword")
-                             ,var_form
+                             ,syn_var_form
                              ,toplevel_env);
             }
         }else if(voba_is_a(var_form,voba_cls_array)){
@@ -198,13 +198,12 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
     }
     return;
 }
-static inline voba_value_t search_module_header_file(voba_value_t module_name)
+static inline voba_value_t search_module_header_file(voba_value_t module_name,voba_value_t attempts)
 {
     voba_str_t* pwd = VOBA_CONST_CHAR(".");
     voba_str_t* prefix = voba_str_empty();
     voba_str_t* suffix = VOBA_CONST_CHAR(".h");
     int resolv_realpath = 0;
-    voba_value_t attempts = voba_make_array_0();
     voba_str_t * file = voba_find_file(voba_module_path(),
                                        voba_value_to_str(voba_symbol_name(module_name)),
                                        pwd,
@@ -264,7 +263,8 @@ static inline void compile_top_expr_import_module_info(voba_value_t info,
 static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_value_t syn_module_name, voba_value_t la_syn_top_expr,voba_value_t toplevel_env)
 {
     voba_value_t module_name = SYNTAX(syn_module_name)->v;
-    voba_value_t module_header_file = search_module_header_file(module_name);
+    voba_value_t attempts = voba_make_array_0();
+    voba_value_t module_header_file = search_module_header_file(module_name,attempts);
     if(!voba_is_nil(module_header_file)){
         voba_value_t module_header_content = read_module_header_file(module_header_file,syn_module_name,toplevel_env);
         if(!voba_is_nil(module_header_content)) {
@@ -285,9 +285,17 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
             // do nothing, error is already reported.
         }
     }else{
-        // TODO: report the search list.
+        int64_t len2 = voba_array_len(attempts);
+        voba_str_t * s = voba_str_empty();
+        for(int64_t i = 0; i < len2; ++i){
+            s = voba_strcat(s, VOBA_CONST_CHAR("    "));
+            s = voba_strcat(s, voba_value_to_str(voba_array_at(attempts,i)));
+            s = voba_strcat(s, VOBA_CONST_CHAR("\n"));
+        }
         report_error(VOBA_STRCAT(VOBA_CONST_CHAR("cannot find module header file. module name = "),
-                                 voba_value_to_str(voba_symbol_name(module_name))),
+                                 voba_value_to_str(voba_symbol_name(module_name)),
+                                 VOBA_CONST_CHAR(", following path are attempted:\n"),
+                                 s),
                      syn_module_name,toplevel_env);
     }
 }

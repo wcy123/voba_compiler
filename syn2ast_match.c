@@ -119,7 +119,7 @@ static inline voba_value_t compile_match_pattern_array(voba_value_t syn_form, vo
     if(len > 0 ){
         voba_value_t syn_first = voba_array_at(form,0);
         voba_value_t first = SYNTAX(syn_first)->v;
-        if(voba_eq(first, K(toplevel_env,value))){
+        if(voba_eq(first, K(toplevel_env,value))){ /// TODO: value is a keyword?
             ret = compile_match_pattern_value(syn_form, env,toplevel_env);
         }else if(is_match_if(form,toplevel_env)){
             ret = compile_match_pattern_with_if(syn_form, env,toplevel_env);
