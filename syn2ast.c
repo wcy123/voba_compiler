@@ -10,10 +10,9 @@
 #include "syn2ast_decl_top_var.h"
 // `syn` is the syntax object to be compiled into an ast
 // `module` is the symbol table for all symbols.
-voba_value_t syn2ast(voba_value_t syn,voba_value_t module)
+voba_value_t syn2ast(voba_value_t syn,voba_value_t module, voba_value_t toplevel_env)
 {
     voba_value_t asts = VOBA_NIL;
-    voba_value_t toplevel_env = create_toplevel_env(module);
     TOPLEVEL_ENV(toplevel_env)->env = make_env();
     if(!voba_is_a(SYNTAX(syn)->v,voba_cls_array)){
         report_error(VOBA_CONST_CHAR("expr must be an array."),syn,toplevel_env);

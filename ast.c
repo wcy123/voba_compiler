@@ -223,6 +223,7 @@ voba_value_t create_toplevel_env(voba_value_t module)
     voba_value_t r = voba_make_user_data(voba_cls_toplevel_env);
     TOPLEVEL_ENV(r)->n_of_errors = 0;
     TOPLEVEL_ENV(r)->n_of_warnings = 0;
+    TOPLEVEL_ENV(r)->file_dirname = VOBA_NIL;
     TOPLEVEL_ENV(r)->module = module;
     TOPLEVEL_ENV(r)->keywords = voba_make_array_0();
     TOPLEVEL_ENV(r)->env = VOBA_NIL; //make_env();
