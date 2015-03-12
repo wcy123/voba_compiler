@@ -4,6 +4,7 @@
 typedef struct toplevel_env_s {
     uint32_t n_of_errors;
     uint32_t n_of_warnings;
+    voba_value_t file_dirname; // file's directory name, used for looking private modules.
     voba_value_t keywords; // an array of keywords, e.g. `def`
     voba_value_t module; // container for symbols
     voba_value_t next; // closure to do next after scan the top level names;

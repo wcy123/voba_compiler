@@ -198,9 +198,8 @@ static inline void compile_top_expr_def(voba_value_t syn_top_expr,voba_value_t t
     }
     return;
 }
-static inline voba_value_t search_module_header_file(voba_value_t module_name,voba_value_t attempts)
+static inline voba_value_t search_module_header_file(voba_value_t module_name,voba_value_t attempts, voba_str_t * pwd)
 {
-    voba_str_t* pwd = VOBA_CONST_CHAR(".");
     voba_str_t* prefix = voba_str_empty();
     voba_str_t* suffix = VOBA_CONST_CHAR(".h");
     int resolv_realpath = 0;
@@ -264,7 +263,7 @@ static inline void compile_top_expr_import_name(voba_value_t syn_import, voba_va
 {
     voba_value_t module_name = SYNTAX(syn_module_name)->v;
     voba_value_t attempts = voba_make_array_0();
-    voba_value_t module_header_file = search_module_header_file(module_name,attempts);
+    voba_value_t module_header_file = search_module_header_file(module_name,attempts,voba_value_to_str(TOPLEVEL_ENV(toplevel_env)->file_dirname));
     if(!voba_is_nil(module_header_file)){
         voba_value_t module_header_content = read_module_header_file(module_header_file,syn_module_name,toplevel_env);
         if(!voba_is_nil(module_header_content)) {
