@@ -62,7 +62,10 @@ undef  {
      *yylval = make_syntax(VOBA_UNDEF,yylloc->start_pos,yylloc->end_pos);
      return T_VALUE;
 }
-
+nil  {
+     *yylval = make_syntax(VOBA_NIL,yylloc->start_pos,yylloc->end_pos);
+     return T_VALUE;
+}
 {ID}   {          /* -----------ID_TOKEN-------------- */
      // TODO: add a global variable for symbol table.
      *yylval = make_syntax(voba_make_symbol(voba_str_from_data(yytext,yyleng),module),yylloc->start_pos,yylloc->end_pos);

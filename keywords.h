@@ -11,7 +11,7 @@
     XX(break)                                          \
     XX(let)                                            \
     XX(match)                                          \
-    XX(value)                                          \
+    XX(value) /* used by pattern matching*/            \
     XX(for)                                            \
     XX(it)                                             \
     XX(and)                                            \
