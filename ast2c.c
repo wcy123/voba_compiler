@@ -48,7 +48,7 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
                              "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
                              "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"
-                             "//static voba_value_t gf_iter __attribute__((unused)) = VOBA_UNDEF;\n"));
+                 ));
 }
 static void import_module(voba_value_t a_modules, c_backend_t * bk);
 static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)
