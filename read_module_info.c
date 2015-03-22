@@ -5,16 +5,6 @@
 #include "module_info.h"
 #include "read_module_info.h"
 #include "read_module_info_lex.inc"
-VOBA_FUNC static voba_value_t v_read_module_info(voba_value_t self, voba_value_t args);
-EXEC_ONCE_PROGN {
-    voba_symbol_set_value(s_read_module_info, voba_make_func(v_read_module_info));
-}
-VOBA_FUNC static voba_value_t v_read_module_info(voba_value_t self, voba_value_t args)
-{
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t content1 = voba_tuple_at( args, 0);
-    VOBA_ASSERT_ARG_ISA(content1,voba_cls_str, 0);
-    return read_module_info(content1);
-}
 voba_value_t read_module_info(voba_value_t content1)
 {
     voba_str_t * content = voba_value_to_str(content1);
@@ -37,37 +27,3 @@ voba_value_t read_module_info(voba_value_t content1)
     }
     return ret;
 }
-static VOBA_FUNC voba_value_t v_module_info_id(voba_value_t self, voba_value_t args);
-EXEC_ONCE_PROGN {
-    voba_symbol_set_value(s_module_info_id, voba_make_func(v_module_info_id));
-}
-static VOBA_FUNC voba_value_t v_module_info_id(voba_value_t self, voba_value_t args)
-{
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t info = voba_tuple_at( args, 0);
-    VOBA_ASSERT_ARG_ISA(info,voba_cls_module_info, 0);
-
-    return module_info_id(info);
-}
-static VOBA_FUNC voba_value_t v_module_info_name(voba_value_t self, voba_value_t args);
-EXEC_ONCE_PROGN {
-    voba_symbol_set_value(s_module_info_name, voba_make_func(v_module_info_name));
-}
-static VOBA_FUNC voba_value_t v_module_info_name(voba_value_t self, voba_value_t args)
-{
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_tuple_at( args, 0);
-    VOBA_ASSERT_ARG_ISA( info,voba_cls_module_info, 0);
-
-    return module_info_name(info);
-}
-static VOBA_FUNC voba_value_t v_module_info_symbols(voba_value_t self, voba_value_t args);
-EXEC_ONCE_PROGN {
-    voba_symbol_set_value(s_module_info_symbols, voba_make_func(v_module_info_symbols));
-}
-static VOBA_FUNC voba_value_t v_module_info_symbols(voba_value_t self, voba_value_t args)
-{
-    VOBA_ASSERT_N_ARG( args, 0); voba_value_t  info = voba_tuple_at( args, 0);
-    VOBA_ASSERT_ARG_ISA( info,voba_cls_module_info, 0);
-
-    return module_info_symbols(info);
-}
-
