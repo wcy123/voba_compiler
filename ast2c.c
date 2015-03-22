@@ -48,7 +48,7 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
                              "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
                              "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"
-                             "static voba_value_t gf_iter __attribute__((unused)) = VOBA_UNDEF;\n"));
+                 ));
 }
 static void import_module(voba_value_t a_modules, c_backend_t * bk);
 static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)
@@ -786,10 +786,10 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * for_each_args        = new_uniq_id(voba_str_from_cstr("for_each_args"));
     voba_str_t * for_each_value       = new_uniq_id(voba_str_from_cstr("for_each_value"));
     voba_str_t * for_each_iter        = new_uniq_id(voba_str_from_cstr("for_each_iter"));
-    voba_str_t * for_each_iter_f      = new_uniq_id(voba_str_from_cstr("for_each_iter_f"));
+    //voba_str_t * for_each_iter_f      = new_uniq_id(voba_str_from_cstr("for_each_iter_f"));
     voba_str_t * for_each_output      = new_uniq_id(voba_str_from_cstr("for_each_output"));
     voba_str_t * for_each_last_output = new_uniq_id(voba_str_from_cstr("for_each_last_output"));
-    voba_str_t * for_each_iter_args   = new_uniq_id(voba_str_from_cstr("for_each_iter_args"));
+    //voba_str_t * for_each_iter_args   = new_uniq_id(voba_str_from_cstr("for_each_iter_args"));
 
     
     voba_str_t * s_body = voba_str_empty();
@@ -811,30 +811,21 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                              "    voba_value_t #1 = VOBA_UNDEF;/* input value of each iteration  */\n"
                              "    voba_value_t #2 __attribute__((unused)) = VOBA_UNDEF;/* output value of each iteration  */\n"
                              "    voba_value_t #3 __attribute__((unused)) = VOBA_UNDEF;/* init value for `for' statement*/\n"
-                             "    voba_func_t  #4 = NULL;/* iter for `for' statement*/\n"
-                             "    voba_value_t #5 __attribute__((unused)) = VOBA_UNDEF;/* tmp args for `for` each */\n"
+                             "    voba_value_t #4 __attribute__((unused)) = VOBA_UNDEF;/* tmp args for `for` each */\n"
 
                  ),
              for_final,
              for_each_value,
              for_each_output,
              for_each_last_output,
-             for_each_iter_f,
              for_each_iter,
         );
     TEMPLATE(s
              ,VOBA_CONST_CHAR(
-                 "    #1 = voba_gf_lookup(voba_symbol_value(gf_iter), voba_get_class(#0)); /* initialized iterator */\n"
-                 "    if(#1 == NULL){\n"
-                 "         voba_throw_exception(voba_make_string(VOBA_CONST_CHAR(\"cannot find the iterator\")));\n"
-                 "    }\n"
-                 "    voba_value_t #3 [] = {1, #0}; /* prepare to invoke the iterator*/\n"
-                 "    #2 = #1(voba_make_func(#1),voba_make_tuple(#3)); /*get the iterator*/ \n"
+                 "    #1 = #0;\n"
                  )
              , for_each_expr
-             , for_each_iter_f
-             , for_each_iter
-             , for_each_iter_args);
+             , for_each_iter);
     if(for_init){
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
