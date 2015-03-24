@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <time.h>
 #include <assert.h>
 #include <voba/value.h>
 #include <exec_once.h>
@@ -14,7 +15,7 @@
 #include "ast2c.h"
 #include "ast2c_utils.h"
 #include "ast2c_utils.c"
-static inline void ast2c_decl_prelude(c_backend_t* bk);
+static inline void ast2c_decl_prelude(c_backend_t* bk,voba_value_t tu_id);
 static inline void import_modules(toplevel_env_t* toplevel, c_backend_t* out);
 static inline void ast2c_decl_top_var(env_t* env, c_backend_t * bk);
 static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk);
@@ -25,7 +26,7 @@ voba_value_t ast2c(voba_value_t tvl)
     c_backend_t * bk = C_BACKEND(ret);
     bk->toplevel_env = tvl;
     // #include blahblah
-    ast2c_decl_prelude(bk);
+    ast2c_decl_prelude(bk, toplevel->full_file_name);
     // EXEC_ONCE_PROGN { for each module; import module; }
     import_modules(toplevel,bk);
     // declare static voba_value_t top_var = VOBA_NIL
@@ -35,12 +36,36 @@ voba_value_t ast2c(voba_value_t tvl)
     ast2c_all_asts(toplevel->a_asts,bk);
     return ret;
 }
-static inline void ast2c_decl_prelude(c_backend_t* bk)
+static inline voba_value_t random_module_id(voba_value_t module_name)
+{
+    time_t xt;
+    time(&xt);
+    struct tm xtm;
+    gmtime_r(&xt,&xtm);
+    voba_str_t* ret = voba_str_empty();
+    ret = VOBA_STRCAT(ret,
+                      voba_value_to_str(module_name),
+                      VOBA_CONST_CHAR(" built at "),
+                      voba_str_fmt_int32_t(xtm.tm_year + 1900,10),
+                      VOBA_CONST_CHAR("-"),
+                      voba_str_fmt_int32_t(xtm.tm_mon + 1,10),
+                      VOBA_CONST_CHAR("-"),
+                      voba_str_fmt_int32_t(xtm.tm_mday,10),
+                      VOBA_CONST_CHAR(" "),
+                      voba_str_fmt_int32_t(xtm.tm_hour,10),
+                      VOBA_CONST_CHAR(":"),
+                      voba_str_fmt_int32_t(xtm.tm_min,10),
+                      VOBA_CONST_CHAR(":"),
+                      voba_str_fmt_int32_t(xtm.tm_sec,10),
+                      VOBA_CONST_CHAR("."));
+    return voba_make_string(ret);
+}
+static inline void ast2c_decl_prelude(c_backend_t* bk, voba_value_t tu_id)
 {
     TEMPLATE(&bk->decl,
              VOBA_CONST_CHAR("##include <stdint.h>\n"
                              "##include <assert.h>\n"
-                             "##define EXEC_ONCE_TU_NAME \"TODO ADD \"\n"
+                             "##define EXEC_ONCE_TU_NAME \"#0\"\n"
                              "##define EXEC_ONCE_DEPENDS {\"voba.module\"};\n"
                              "##include <voba/value.h>\n"
                              "##include <voba/core/builtin.h> // import builtin by default\n"                             
@@ -48,7 +73,8 @@ static inline void ast2c_decl_prelude(c_backend_t* bk)
                              "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
                              "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"
-                 ));
+                 )
+             ,voba_value_to_str(random_module_id(tu_id)));
 }
 static void import_module(voba_value_t a_modules, c_backend_t * bk);
 static void import_modules(toplevel_env_t* toplevel, c_backend_t* out)

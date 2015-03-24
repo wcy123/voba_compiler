@@ -28,6 +28,7 @@ VOBA_FUNC static voba_value_t compile(voba_value_t self, voba_value_t args)
     if(error == 0){
         voba_value_t toplevel = create_toplevel_env(module);
         TOPLEVEL_ENV(toplevel)->file_dirname = mydirname(filename);
+        TOPLEVEL_ENV(toplevel)->full_file_name = filename;
         syn2ast(syn,module,toplevel);
         if(error == 0){
             voba_value_t c = ast2c(toplevel);
