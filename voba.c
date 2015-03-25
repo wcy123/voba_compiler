@@ -4,6 +4,7 @@
 #define EXEC_ONCE_TU_NAME "voba"
 #define EXEC_ONCE_DEPENDS {"voba.module"}
 #include <voba/value.h>
+///@todo clean up this messy dependency.
 #include "../voba_builtin/sys/sys.h"
 static voba_value_t get_argv(int argc, char * argv[])
 {
@@ -20,6 +21,7 @@ int main(int argc, char *argv[])
     void *handle;
     exec_once_init();
     voba_symbol_set_value(s_argv,get_argv(argc,argv));
+    ///@todo, clean up hard coded file name
     handle = dlopen("./build/lib/voba/core/./libprelude.so", RTLD_LAZY|RTLD_GLOBAL);
     if (!handle) {
         fprintf(stderr, "%s\n", dlerror());
