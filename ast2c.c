@@ -808,11 +808,12 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * for_each_begin       = new_uniq_id(voba_str_from_cstr("for_each_begin"));
     voba_str_t * for_each_end         = new_uniq_id(voba_str_from_cstr("for_each_end"));
     voba_str_t * for_end              = new_uniq_id(voba_str_from_cstr("for_end"));
-    voba_str_t * for_final            = new_uniq_id(voba_str_from_cstr("for_final"));
-    voba_str_t * for_each_args        = new_uniq_id(voba_str_from_cstr("for_each_args"));
-    voba_str_t * for_each_value       = new_uniq_id(voba_str_from_cstr("for_each_value"));
+    voba_str_t * for_ret_value            = new_uniq_id(voba_str_from_cstr("for_ret_value"));
+    //voba_str_t * for_each_args        = new_uniq_id(voba_str_from_cstr("for_each_args"));
+    voba_str_t * for_each_input       = new_uniq_id(voba_str_from_cstr("for_each_input"));
     voba_str_t * for_each_iter        = new_uniq_id(voba_str_from_cstr("for_each_iter"));
-    //voba_str_t * for_each_iter_f      = new_uniq_id(voba_str_from_cstr("for_each_iter_f"));
+    voba_str_t * for_each_iter_f      = new_uniq_id(voba_str_from_cstr("for_each_iter_f"));
+    voba_str_t * for_each_iter_self      = new_uniq_id(voba_str_from_cstr("for_each_iter_self"));
     voba_str_t * for_each_output      = new_uniq_id(voba_str_from_cstr("for_each_output"));
     voba_str_t * for_each_last_output = new_uniq_id(voba_str_from_cstr("for_each_last_output"));
     voba_str_t * for_each_iter_args   = new_uniq_id(voba_str_from_cstr("for_each_iter_args"));
@@ -821,37 +822,62 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * s_body = voba_str_empty();
     voba_str_t * old_it = bk->it;
     voba_str_t * old_for_end = bk->latest_for_end_label;
-    voba_str_t * old_for_final = bk->latest_for_final;
+    voba_str_t * old_for_ret_value = bk->latest_for_final;
     
-    bk->it = for_each_value;
+    bk->it = for_each_input;
     bk->latest_for_end_label = for_end;
-    bk->latest_for_final = for_final;
-    ast2c_match(for_each_output, for_each_value, for_each_end, match, bk,&s_body);
-    bk->latest_for_final = old_for_final;
+    bk->latest_for_final = for_ret_value;
+    ast2c_match(for_each_output, for_each_input, for_each_end, match, bk,&s_body);
+    bk->latest_for_final = old_for_ret_value;
     bk->latest_for_end_label = old_for_end;
     bk->it = old_it;
 
     /* declare variables */
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* return value for `for' statement */\n"
-                             "    voba_value_t #1 = VOBA_UNDEF;/* input value of each iteration  */\n"
-                             "    voba_value_t #2 __attribute__((unused)) = VOBA_UNDEF;/* output value of each iteration  */\n"
-                             "    voba_value_t #3 __attribute__((unused)) = VOBA_UNDEF;/* init value for `for' statement*/\n"
-                             "    voba_value_t #4 __attribute__((unused)) = VOBA_UNDEF;/* tmp args for `for` each */\n"
-                 ),
-             for_final,
-             for_each_value,
-             for_each_output,
-             for_each_last_output,
-             for_each_iter,
-        );
+             VOBA_CONST_CHAR(
+                 "    /* return value for `for' statement */\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n")
+             ,for_ret_value);
+    
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* output value of each iteration */\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n")
+             ,for_each_output);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* value specified by :init keyword */\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n")
+             , for_each_last_output);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* for-each-iterator, specified by :each keyword*/\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* */\n")
+             ,for_each_iter);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* arguments for for-each-iterator to get for-each-input*/\n"
+                 "    voba_value_t #0 [] __attribute__((unused)) = {1,VOBA_NIL};\n")
+             ,for_each_iter_args);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* function pointer of for-each-iterator */\n"
+                 "    voba_func_t #0 __attribute__((unused)) = NULL;\n")
+             ,for_each_iter_f);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* function self of for-each-iterator */\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_NIL;\n")
+             ,for_each_iter_self);
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* for-each-input, the return value of for-each-iterator.*/\n"
+                 "    voba_value_t #0 __attribute__((unused)) = VOBA_NIL;\n")
+             ,for_each_input);
     TEMPLATE(s
              ,VOBA_CONST_CHAR(
-                 "    //voba_value_t #0 [] = {0,};\n"
-                 "    //#2 = voba_apply(#1, voba_make_tuple(#0));\n"
-                 "    #2 = #1;/* get for-each-iterator from for-each-value */\n"
+                 "    #1 = #0;/* get for-each-iterator from for-each-value */\n"
                  )
-             , for_each_iter_args
              , for_each_expr
              , for_each_iter);
     if(for_init){
@@ -859,28 +885,55 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  VOBA_CONST_CHAR(
                      "    #0 = #1 ; /* initialize the default initial value*/\n"
                      )
-                 , for_each_last_output
-                 , for_init
+                 , for_each_last_output //  #0
+                 , for_init     // #1
             );
     }
+    TEMPLATE(s,
+             VOBA_CONST_CHAR(
+                 "    /* try to find the iterator function, to speed up.*/\n"
+                 "    #4[1] = #0;\n"
+                 "    switch(voba_get_type1(#1)){ /* type of iterator */\n"
+                 "    case VOBA_TYPE_FUNC:\n"
+                 "        #2 = voba_value_to_func(#1);\n"
+                 "        #3 = #1;\n"
+                 "        break;\n"
+                 "    case VOBA_TYPE_CLOSURE:\n"
+                 "        #2 = voba_closure_func(#1);\n" 
+                 "        #3 = voba_closure_tuple(#1);\n"
+                 "        break;\n"
+                 "    default:\n"
+                 "        #2 = voba__apply_find_func(#1,voba_make_tuple(#4));\n"
+                 "        if(#2 == NULL){\n"
+                 "            voba_throw_exception(\n"
+                 "                voba_make_string(voba_str_from_cstr(\"cannot apply\")));\n"
+                 "        }\n"
+                 "        #3 = #1;\n"
+                 "    }\n")
+             , for_each_expr  // #0                 
+             , for_each_iter  // #1
+             , for_each_iter_f  // #2
+             , for_each_iter_self  // #3
+             , for_each_iter_args // #4
+        );
     /* evaluate `for' input for each iteratation */
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    #0:{ /*prelude of `for' statement */\n"
-                 "    voba_value_t #1 [] = {0}; /* args for iterator*/\n"
-                 "    #3 = voba_apply(#2,voba_make_tuple(#1)); /*invoke the iterator*/\n"
-                 "    if(voba_eq(#3,VOBA_DONE)){\n"
-                 "        goto #4;/* exit for loop */\n"
+                 "    #4 = #1(#2,voba_make_tuple(#3)); /*invoke the iterator to get the input value*/\n"
+                 "    if(voba_eq(#4,VOBA_DONE)){\n"
+                 "        goto #5;/* exit for loop */\n"
                  "    }\n"
                  )
-             ,for_each_begin
-             ,for_each_args
-             ,for_each_iter
-             ,for_each_value
-             ,for_end
-             ,for_each_expr
-        );
+             ,for_each_begin // #0
+             ,for_each_iter_f // #1
+             ,for_each_iter_self // #2
+             ,for_each_iter_args // #3
+             ,for_each_input // #4
+             ,for_end // #5
+        ); 
     if(for_if){
+        /// @todo speed it up.
         voba_str_t* if_args  = new_uniq_id(voba_str_from_cstr("if_args"));
         voba_str_t* if_value = new_uniq_id(voba_str_from_cstr("if_value"));
         TEMPLATE(s,
@@ -893,7 +946,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                      "    }\n"
                      )
                  ,if_args
-                 ,for_each_value
+                 ,for_each_input
                  ,if_value
                  ,for_if
                  ,for_each_begin
@@ -910,6 +963,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
              , for_each_end
         );
     if(for_accumulate){
+        /// @todo speed it up
         voba_str_t* acc_args  = new_uniq_id(voba_str_from_cstr("acc_args"));
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
@@ -933,10 +987,10 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  )
              ,for_each_begin
              ,for_end
-             ,for_final
+             ,for_ret_value
              ,for_each_last_output
         );
-    return for_final;
+    return for_ret_value;
 }
 
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s)
