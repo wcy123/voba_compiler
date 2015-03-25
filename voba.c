@@ -4,7 +4,7 @@
 #define EXEC_ONCE_TU_NAME "voba"
 #define EXEC_ONCE_DEPENDS {"voba.module"}
 #include <voba/value.h>
-#include <voba/core/sys.h>
+#include "../voba_builtin/sys/sys.h"
 static voba_value_t get_argv(int argc, char * argv[])
 {
     voba_value_t * p = (voba_value_t*)GC_MALLOC(sizeof(voba_value_t)*(argc+1));
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     void *handle;
     exec_once_init();
     voba_symbol_set_value(s_argv,get_argv(argc,argv));
-    handle = dlopen("../build/lib/voba/core/./libprelude.so", RTLD_LAZY|RTLD_GLOBAL);
+    handle = dlopen("./build/lib/voba/core/./libprelude.so", RTLD_LAZY|RTLD_GLOBAL);
     if (!handle) {
         fprintf(stderr, "%s\n", dlerror());
         exit(EXIT_FAILURE);

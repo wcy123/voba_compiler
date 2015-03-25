@@ -1,9 +1,7 @@
 #include <string.h>
 #include <errno.h>
 #include <voba/value.h>
-#define EXEC_ONCE_TU_NAME "voba.compiler.syn2ast"
 #include <exec_once.h>
-#include <voba/core/builtin.h>
 #include "ast.h"
 #include "syn.h"
 #include "syn2ast_report.h"

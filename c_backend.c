@@ -1,7 +1,6 @@
 #define EXEC_ONCE_TU_NAME "voba.compiler.c_backend"
 #include <exec_once.h>
 #include <voba/value.h>
-#include <voba/core/builtin.h>
 #include "c_backend.h"
 
 static
@@ -22,7 +21,7 @@ voba_value_t make_c_backend()
 }
 VOBA_FUNC static voba_value_t str_c_backend(voba_value_t self, voba_value_t args);
 EXEC_ONCE_PROGN{
-    voba_gf_add_class(voba_symbol_value(s_str),
+    voba_gf_add_class(voba_gf_to_string,
                       voba_cls_c_backend,
                       voba_make_func(str_c_backend));
 }

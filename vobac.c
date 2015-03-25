@@ -5,7 +5,6 @@
 #include <exec_once.h>
 #include <voba/value.h>
 #include <voba/module.h>
-#include <voba/core/builtin.h>
 #include "compiler.h"
 
 
@@ -37,6 +36,6 @@ int main(int argc, char *argv[])
     voba_value_t c = voba_apply(voba_symbol_value(s_compile), voba_make_tuple(args));
     args[0]=1;
     args[1] = c;
-    voba_apply(voba_symbol_value(s_print),voba_make_tuple(args));
+    voba_print(voba_make_func(voba_print),voba_make_tuple(args));
     return 0;
 }

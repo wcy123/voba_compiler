@@ -73,6 +73,7 @@ install_files += $(libdir)/voba/core/compiler.h
 $(libdir)/voba/core/compiler.h : compiler.h
 	$(INSTALL) $< $@
 
+dirs += $(libdir)/voba/core
 test:
 	echo no test
 

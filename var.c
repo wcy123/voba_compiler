@@ -1,7 +1,6 @@
 #define EXEC_ONCE_TU_NAME "voba.compiler.var"
 #include <exec_once.h>
 #include <voba/value.h>
-#include <voba/core/builtin.h>
 #include "var.h"
 #include "syn.h"
 VOBA_DEF_CLS(sizeof(var_t),var);
@@ -48,7 +47,7 @@ static inline voba_str_t* str_flag(var_t * var)
     return ret;
 }
 VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs);
-EXEC_ONCE_PROGN{voba_gf_add_class(voba_symbol_value(s_str),voba_cls_var,voba_make_func(str_var));}
+EXEC_ONCE_PROGN{voba_gf_add_class(voba_gf_to_string,voba_cls_var,voba_make_func(str_var));}
 VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs)
 {
     voba_value_t v = voba_tuple_at(vs,0);
