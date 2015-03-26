@@ -11,8 +11,8 @@ typedef struct env_s {
 #define ENV(s)  VOBA_USER_DATA_AS(env_t *,s)
 extern voba_value_t voba_cls_env;
 typedef struct compiler_fun_s {
-    voba_value_t a_var_A; // arguments
-    voba_value_t a_var_C; // closure
+    voba_value_t a_var_A; // arguments: array of var object
+    voba_value_t a_var_C; // closure: array of var object
     // parent:
     //   env for the enclosing lexical scope
     //   compiler_fun for the enclosing compiler_fun
