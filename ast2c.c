@@ -72,7 +72,6 @@ static inline void ast2c_decl_prelude(c_backend_t* bk, voba_value_t tu_id)
                              "##include <exec_once.h>\n"
                              "##include <voba/module.h>\n"
                              "##define voba_match_eq voba_eql\n"
-                             "static voba_value_t gf_match __attribute__((unused)) = VOBA_UNDEF;\n"
                  )
              ,voba_value_to_str(random_module_id(tu_id)));
 }
@@ -766,61 +765,47 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
     pattern_apply_t* p_pat = &p_pattern->u.apply;
     voba_value_t ast_cls = p_pat->ast_cls;
     voba_value_t a_patterns = p_pat->a_patterns;
-    voba_str_t * s1 = voba_str_empty();
-    voba_str_t * s_cls = ast2c_ast(AST(ast_cls),bk,&s1);
+    voba_str_t * s_first_elt_body = voba_str_empty();
+    voba_str_t * s_first_elt = ast2c_ast(AST(ast_cls),bk,&s_first_elt_body);
     int64_t len = voba_array_len(a_patterns);
     voba_str_t * s_len = voba_str_fmt_int64_t(len,10);
-
-    voba_str_t * s_cls_id = new_uniq_id(voba_str_from_cstr("var_cls"));
-    voba_str_t * tmpf = new_uniq_id(voba_str_from_cstr("pattern_fun"));
-    voba_str_t * tmpv1 = new_uniq_id(voba_str_from_cstr("pattern_ret"));
-    voba_str_t * tmpv2 = new_uniq_id(voba_str_from_cstr("pattern_args"));
+    voba_str_t * pat_ret = new_uniq_id(voba_str_from_cstr("pattern_ret"));
+    voba_str_t * pat_args = new_uniq_id(voba_str_from_cstr("pattern_args"));
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    /* evaluate cls */\n"
+             VOBA_CONST_CHAR("    /* evaluate first element of pattern */\n"
                              "    #0\n"
-                             "    voba_value_t #1 = #2; /* assign cls to a variable */\n"
-                             "    if(!voba_is_a(#1,voba_cls_cls)){\n"
-                             "          goto #3; /* does not match, not a cls object*/\n"
-                             "    }\n"
-                             "    voba_func_t #5 = voba_gf_lookup(voba_symbol_value(gf_match),#1);\n"
-                             "    if(#5 == NULL){\n"
-                             "        goto #3; /* no function registered*/\n"                             
-                             "    }\n"
-                             "    voba_value_t #7 [] = {4, #1, #4, voba_make_i32(-1), voba_make_i32(#8)};\n"
-                             "    voba_value_t #6 = #5( voba_make_func(#5), voba_make_tuple(#7));\n"
-                             "    if(!voba_eq(VOBA_TRUE,#6)){\n"
-                             "        goto #3; /* number of var does not match*/\n"
+                             "    voba_value_t #1 [] = {3, #2, voba_make_i32(-1), voba_make_i32(#3)};\n"
+                             "    voba_value_t #4 = voba_apply(#5, voba_make_tuple(#1));\n"
+                             "    if(!voba_eq(VOBA_TRUE,#4)){\n"
+                             "        goto #6; /* number of var does not match*/\n"
                              "    }\n"
                  )
-             ,indent(s1) // 0
-             ,s_cls_id   //1
-             ,s_cls //2
-             ,label_fail //3
-             ,v //4
-             ,tmpf //5
-             ,tmpv1 // 6
-             ,tmpv2 // 7
-             ,s_len // 8
+             ,indent(s_first_elt_body) // 0
+             ,pat_args // 1
+             ,v // 2
+             ,s_len // 3
+             ,pat_ret //4
+             ,s_first_elt //5
+             ,label_fail //6
         );
     for(int64_t i = 0; i < len; ++i){
         voba_value_t sp = voba_array_at(a_patterns,i);
-        voba_str_t * tmp_args = new_uniq_id(voba_str_from_cstr("pattern_args"));
-        voba_str_t * tmp_apply_ret =  new_uniq_id(voba_str_from_cstr("pattern_ret"));
+        voba_str_t * pat_args = new_uniq_id(voba_str_from_cstr("pattern_args"));
+        voba_str_t * pat_ret =  new_uniq_id(voba_str_from_cstr("pattern_ret"));
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
-                     "    /* extract #3 sub-value from the main value*/\n"
-                     "    voba_value_t #0 [] = {4, #1, #2, voba_make_i32(#3), voba_make_i32(#4)};\n"
-                     "    voba_value_t #5 = #6(VOBA_NIL/*self is not used*/, voba_make_tuple(#0));/* the sub-value #3*/\n"
+                     "    /* extract #2 of #3 sub-value from the main value*/\n"
+                     "    voba_value_t #0 [] = {3, #1,voba_make_i32(#2), voba_make_i32(#3)};\n"
+                     "    voba_value_t #4 = voba_apply(#5,voba_make_tuple(#0));/* the sub-value #2 of #3*/\n"
                      )
-                 ,tmp_args //0
-                 ,s_cls_id //1
-                 ,v        //2
-                 ,voba_str_fmt_int64_t(i,10) // 3
-                 ,s_len // 4
-                 ,tmp_apply_ret // 5
-                 ,tmpf //6
+                 , pat_args // 0
+                 , v // 1
+                 , voba_str_fmt_int64_t(i,10) // 2
+                 , s_len // 3
+                 , pat_ret // 4
+                 , s_first_elt // 5
             );
-        ast2c_match_pattern(tmp_apply_ret,label_fail,sp,bk,s);
+        ast2c_match_pattern(pat_ret,label_fail,sp,bk,s);
     }
     return;
 }
