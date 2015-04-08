@@ -614,75 +614,194 @@ static inline void ast2c_decl_env(env_t * p_env, c_backend_t * bk, voba_str_t **
     }
     return;
 }
-static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+/** @brief generate c code for `match` form
+    @param ast the AST object
+    @param bk  the backend object
+    @param s   the current output stream
+
+a match form is as below
+
+@verbatim
+(match <match-value> 
+  <match-rule> ...)
+
+<match-rule> :: (<pattern> <exprs> ...)
+<exprs>... is also called <action>
+<pattern> :: <constant> | <var> | <apply> | <value>
+
+<constant>:: <integer> | <float> | <string> | <quote-form>
+<value> :: (value expr...)
+<var>   :: <a symbol>
+<apply> :: (<first> <sub-pattern> ....)
+
+<first> is evaluated and return value is expected to be callable. 
+1. it is called to test whether the number of <sub-pattern>s are matched,
+(first <match-value> -1 <number of sub-patterns>)
+2. it is called subsequencely to extract sub-match value as below
+(first <match-value> n <number of sub-pattern>) where n is 0 to <number of subpattern> -1
+3. match each sub-match value agaist sub-pattern.
+@endverbatim
+
+
+*/
+static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+/** @brief generate c code `match` form
+
+    @param match_ret the name of return value of `match` form
+    @param match_value the value of `match` form, which is matched agaist.
+    @param label_success if match is OK, goto this label, for the whole `match` form
+    @param label_fail   if match is fail, goto this label, for the whole `match` form
+    @param match the `match` object
+    @param bk same as usual
+    @param s  same as usual
+
+    house keep around the whole `match` form.
+
+ */
+static inline void ast2c_match(voba_str_t * match_ret,
+                               voba_str_t * match_value,
+                               voba_str_t * label_success,
+                               voba_str_t * label_fail,
+                               voba_value_t match,
+                               c_backend_t* bk,
+                               voba_str_t** s);
+/** @brief generate c code for one of rule in a `match` form 
+
+    @param match_value the vale of `match` form, which is matched agaist.
+    @param match_ret the name of return value of `match` form.
+    @param rule the `rule` object.
+ */
+static inline voba_str_t* ast2c_match_rule(voba_str_t* match_value,
+                                           voba_str_t * match_ret,
+                                           voba_value_t rule,
+                                           voba_str_t* label_success,
+                                           voba_str_t* label_fail,
+                                           c_backend_t* bk,
+                                           voba_str_t** s);
+
+static inline void ast2c_match_pattern(voba_str_t* v,
+				       voba_str_t* label_fail,
+				       voba_value_t pattern,
+				       c_backend_t* bk,
+				       voba_str_t** s);
+static inline void ast2c_match_action(voba_str_t * match_ret, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match_pattern_value(voba_str_t* v,
+                                             voba_str_t* label_fail,
+                                             pattern_t* p_pattern,
+                                             c_backend_t* bk,
+                                             voba_str_t** s);
+static inline void ast2c_match_pattern_else(voba_str_t* v,
+                                            voba_str_t* label_fail,
+                                            pattern_t* p_pattern,
+                                            c_backend_t* bk,
+                                            voba_str_t** s);
+static inline void ast2c_match_pattern_var(voba_str_t* v,
+                                           voba_str_t* label_fail,
+                                           pattern_t* p_pattern,
+                                           c_backend_t* bk,
+                                           voba_str_t** s);
+static inline void ast2c_match_pattern_apply(voba_str_t* v,
+                                             voba_str_t* label_fail,
+                                             pattern_t* p_pattern,
+                                             c_backend_t* bk,
+                                             voba_str_t** s);
+static inline void ast2c_match_pattern_if(voba_value_t ast_if,
+                                          voba_str_t* label_fail,
+                                          c_backend_t* bk,
+                                          voba_str_t** s);
+/// -------------------------------------------------------------------
+static inline voba_str_t* ast2c_ast_match(ast_t* ast,
+                                          c_backend_t* bk,
+                                          voba_str_t** s)
 {
-    ast_match_t* ast_match  = &ast->u.match;
-    voba_value_t ast_value = ast_match->ast_value;
-    ast_t * p_ast_value = AST(ast_value);
-    voba_str_t* s_ast_value = ast2c_ast(p_ast_value,bk,s);
-    voba_str_t * s_match_ret = new_uniq_id(voba_str_from_cstr("match_ret"));
+    voba_str_t * match_value = ast2c_ast(AST(ast->u.match.ast_value),bk,s);
+    voba_str_t * match_ret = new_uniq_id(voba_str_from_cstr("match_ret"));
     voba_str_t * label_success = new_uniq_id(voba_str_from_cstr("match_label_success"));
-    voba_value_t match = ast_match->match;
+    voba_str_t * label_failure = new_uniq_id(voba_str_from_cstr("match_label_failure"));
+    voba_value_t match = ast->u.match.match;
     TEMPLATE(s, VOBA_CONST_CHAR(
                  "    /* start of a match statement */\n"
                  "    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF; /* return value for match statement */\n")
-             ,s_match_ret);
-    ast2c_match(s_match_ret, s_ast_value, label_success,match,bk,s);
+             ,match_ret);
+    ast2c_match(match_ret,
+		match_value,
+                label_success,
+		label_failure,
+                match, bk,s);
     TEMPLATE(s,
-             VOBA_CONST_CHAR("    #0:;\n"
-                             "    /* end of a match statement */\n")
-             ,label_success);
-    return s_match_ret;
+             VOBA_CONST_CHAR( "    #0:; /* the whole match statement failed. */\n"
+                              "    voba_throw_exception(voba_make_string(voba_str_from_cstr(\"no match\")));\n"
+                              "    #1:; /* the whole match statement success */\n"
+                              "    /* end of a match statement */\n")
+             ,label_failure
+             ,label_success
+        );
+    return match_ret;
 }
-static inline voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match(voba_str_t * s_match_ret, voba_str_t * s_ast_value, voba_str_t * label_success, voba_value_t match, c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match(voba_str_t * match_ret,
+                               voba_str_t * match_value,
+                               voba_str_t * label_success,
+                               voba_str_t * label_fail,
+                               voba_value_t match,
+                               c_backend_t* bk,
+                               voba_str_t** s)
 {
     match_t * p_match = MATCH(match);
     voba_value_t a_rules = p_match->a_rules;
     int64_t len = voba_array_len(a_rules);
-    voba_str_t * label_this = new_uniq_id(voba_str_from_cstr("match_label_this"));
+    voba_str_t * rule_label =
+      new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
+			      ,voba_str_fmt_int32_t(0,10)));
     voba_str_t * old_it = bk->it;
-    bk->it = s_ast_value;
+    bk->it = match_value;
     for(int64_t i = 0; i < len; ++i){
         voba_value_t rule = voba_array_at(a_rules,i);
-        voba_str_t * label_next = ((i == (len - 1))?label_success:new_uniq_id(voba_str_from_cstr("match_label_next")));
-        voba_str_t * s_rule = voba_str_empty();
-        ast2c_match_rule(s_ast_value, s_match_ret, rule,label_success, label_next,bk,&s_rule);
-        TEMPLATE(s, VOBA_CONST_CHAR("    /* match pattern #2 start*/\n"
+	// if it is the last rule, the fail label is the label for the
+	// whole `match` form, otherwise, it is the start label of the
+	// next rule.
+        voba_str_t * label_next = ((i == (len - 1))?
+				   label_fail:
+				   new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
+							   ,voba_str_fmt_int32_t(0,i))));
+	voba_str_t * s_rule = voba_str_empty();
+	ast2c_match_rule(match_value, match_ret, rule, label_success, label_next,bk,&s_rule);
+        TEMPLATE(s, VOBA_CONST_CHAR("    /* match rule #2 start*/\n"
                                     "    #0 {\n"
                                     "    #1\n"
                                     "    }\n"
-                                    "    /* match pattern #2 end*/ \n")
-                 , (i == 0?VOBA_CONST_CHAR("/*empty label*/") : voba_strcat_char(label_this,':'))
+                                    "    /* match rule #2 end*/ \n")
+                 , (i == 0?VOBA_CONST_CHAR("/*empty label*/") : voba_strcat_char(rule_label,':'))
                  ,indent(s_rule)
                  ,voba_str_fmt_int64_t(i + 1,10)
             );
-        label_this = label_next;
+        rule_label = label_next;
     }
     bk->it = old_it;
     return;
 }
-static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_match_rule(voba_str_t* v, voba_str_t * ret_id, voba_value_t rule, voba_str_t* label_success, voba_str_t* label_fail, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_match_rule(voba_str_t* v,
+                                           voba_str_t * match_ret,
+                                           voba_value_t rule,
+                                           voba_str_t* label_success,
+                                           voba_str_t* label_fail,
+                                           c_backend_t* bk,
+                                           voba_str_t** s)
 {
     voba_str_t * ret = voba_str_empty();
     rule_t* p_rule = RULE(rule);
     ast2c_decl_env(ENV(p_rule->env),bk,s);
     ast2c_match_pattern(v,label_fail,p_rule->pattern,bk,s);
-    ast2c_match_action(ret_id,p_rule->a_ast_action,bk,s);
+    ast2c_match_action(match_ret,p_rule->a_ast_action,bk,s);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    goto #0; // match goto end\n")
              ,label_success);
     return ret;
 }
-static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_pattern_if(voba_value_t ast_if, voba_str_t* label_fail,c_backend_t* bk, voba_str_t** s);
-static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, voba_value_t pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern(voba_str_t* v,
+                                       voba_str_t* label_fail,
+                                       voba_value_t pattern,
+                                       c_backend_t* bk,
+                                       voba_str_t** s)
 {
     pattern_t * p_pattern = PATTERN(pattern);
     switch(p_pattern->type){
@@ -710,7 +829,10 @@ static inline void ast2c_match_pattern(voba_str_t* v, voba_str_t* label_fail, vo
     }
     return;
 }
-static inline void ast2c_match_pattern_if(voba_value_t ast_if, voba_str_t* label_fail,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_if(voba_value_t ast_if,
+                                          voba_str_t* label_fail,
+                                          c_backend_t* bk,
+                                          voba_str_t** s)
 {
     ast_t* p_ast = AST(ast_if);
     voba_str_t * s_if = ast2c_ast(p_ast,bk,s);
@@ -724,7 +846,11 @@ static inline void ast2c_match_pattern_if(voba_value_t ast_if, voba_str_t* label
              ,label_fail);
     return;
 }
-static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_value(voba_str_t* v,
+                                             voba_str_t* label_fail,
+                                             pattern_t* p_pattern,
+                                             c_backend_t* bk,
+                                             voba_str_t** s)
 {
     voba_value_t a_ast_exprs = p_pattern->u.value.a_ast_value;
     voba_str_t * expr = ast2c_ast_exprs(a_ast_exprs,bk,s);
@@ -736,12 +862,20 @@ static inline void ast2c_match_pattern_value(voba_str_t* v, voba_str_t* label_fa
              ,v,expr,label_fail);
     return;
 }
-static inline void ast2c_match_pattern_else(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_else(voba_str_t* v,
+                                            voba_str_t* label_fail,
+                                            pattern_t* p_pattern,
+                                            c_backend_t* bk,
+                                            voba_str_t** s)
 {
     TEMPLATE(s, VOBA_CONST_CHAR("     /* match else */\n"));
     return;
 }
-static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_var(voba_str_t* v,
+                                           voba_str_t* label_fail,
+                                           pattern_t* p_pattern,
+                                           c_backend_t* bk,
+                                           voba_str_t** s)
 {
     var_t* var = VAR(p_pattern->u.var.var);
     voba_str_t * c_id = var_c_id(var);
@@ -760,7 +894,11 @@ static inline void ast2c_match_pattern_var(voba_str_t* v, voba_str_t* label_fail
              ,c_id, v, label_fail);
     return;
 }
-static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fail, pattern_t* p_pattern,c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_pattern_apply(voba_str_t* v,
+                                             voba_str_t* label_fail,
+                                             pattern_t* p_pattern,
+                                             c_backend_t* bk,
+                                             voba_str_t** s)
 {
     pattern_apply_t* p_pat = &p_pattern->u.apply;
     voba_value_t ast_cls = p_pat->ast_cls;
@@ -809,14 +947,17 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v, voba_str_t* label_fa
     }
     return;
 }
-static inline void ast2c_match_action(voba_str_t * ret_id, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s)
+static inline void ast2c_match_action(voba_str_t * match_ret,
+                                      voba_value_t a_ast_action,
+                                      c_backend_t* bk,
+                                      voba_str_t** s)
 {
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * expr = ast2c_ast_exprs(a_ast_action,bk,&s1);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    #0\n"
                              "    #1 = #2; /* match statement return value*/\n")
-             ,indent(s1),ret_id, expr);
+             ,indent(s1),match_ret, expr);
     return;
 }
 static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
@@ -830,7 +971,8 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * for_init             = voba_is_nil(p_ast_for->init)?NULL:ast2c_ast(AST(p_ast_for->init),bk,s);
     voba_str_t * for_accumulate       = voba_is_nil(p_ast_for->accumulate)?NULL:ast2c_ast(AST(p_ast_for->accumulate),bk,s);
     voba_str_t * for_each_begin       = new_uniq_id(voba_str_from_cstr("for_each_begin"));
-    voba_str_t * for_each_end         = new_uniq_id(voba_str_from_cstr("for_each_end"));
+    voba_str_t * for_each_end_success = new_uniq_id(voba_str_from_cstr("for_each_end_match_success"));
+    voba_str_t * for_each_end_failure = new_uniq_id(voba_str_from_cstr("for_each_end_match_failure"));
     voba_str_t * for_end              = new_uniq_id(voba_str_from_cstr("for_end"));
     voba_str_t * for_ret_value            = new_uniq_id(voba_str_from_cstr("for_ret_value"));
     //voba_str_t * for_each_args        = new_uniq_id(voba_str_from_cstr("for_each_args"));
@@ -851,7 +993,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     bk->it = for_each_input;
     bk->latest_for_end_label = for_end;
     bk->latest_for_final = for_ret_value;
-    ast2c_match(for_each_output, for_each_input, for_each_end, match, bk,&s_body);
+    ast2c_match(for_each_output, for_each_input,for_each_end_success,for_each_end_failure,match, bk,&s_body);
     bk->latest_for_final = old_for_ret_value;
     bk->latest_for_end_label = old_for_end;
     bk->it = old_it;
@@ -981,10 +1123,12 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  "    /*for body begin*/\n"
                  "#0\n"
                  "    /*for body end*/\n"
-                 "    #1: /* end label for each iteration */\n"
+		 "    #0: /* end label for each iteration if match failure*/\n"
+		 "    voba_throw_exception(voba_make_string(voba_str_from_cstr(\"no match\")));\n"		 
+                 "    #1: /* end label for each iteration if match success*/\n"
                  )
              , indent(s_body)
-             , for_each_end
+             , for_each_end_success
         );
     if(for_accumulate){
         /// @todo speed it up
