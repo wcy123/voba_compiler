@@ -762,7 +762,7 @@ static inline void ast2c_match(voba_str_t * match_ret,
         voba_str_t * label_next = ((i == (len - 1))?
 				   label_fail:
 				   new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
-							   ,voba_str_fmt_int32_t(0,i))));
+							   ,voba_str_fmt_int32_t(i,10))));
 	voba_str_t * s_rule = voba_str_empty();
 	ast2c_match_rule(match_value, match_ret, rule, label_success, label_next,bk,&s_rule);
         TEMPLATE(s, VOBA_CONST_CHAR("    /* match rule #2 start*/\n"
