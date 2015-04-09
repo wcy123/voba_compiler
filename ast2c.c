@@ -728,6 +728,7 @@ static inline voba_str_t* ast2c_ast_match(ast_t* ast,
                 label_success,
 		label_failure,
                 match, bk,s);
+    /// @todo better debug information when no match happen.
     TEMPLATE(s,
              VOBA_CONST_CHAR( "    #0:; /* the whole match statement failed. */\n"
                               "    voba_throw_exception(voba_make_string(voba_str_from_cstr(\"no match\")));\n"
@@ -1123,12 +1124,13 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  "    /*for body begin*/\n"
                  "#0\n"
                  "    /*for body end*/\n"
-		 "    #0: /* end label for each iteration if match failure*/\n"
+		 "    #1: /* end label for each iteration if match failure*/\n"
 		 "    voba_throw_exception(voba_make_string(voba_str_from_cstr(\"no match\")));\n"		 
-                 "    #1: /* end label for each iteration if match success*/\n"
+                 "    #2: /* end label for each iteration if match success*/\n"
                  )
              , indent(s_body)
-             , for_each_end_success
+             , for_each_end_failure
+	     , for_each_end_success
         );
     if(for_accumulate){
         /// @todo speed it up
