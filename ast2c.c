@@ -1056,48 +1056,20 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
                  , for_init     // #1
             );
     }
-    TEMPLATE(s,
-             VOBA_CONST_CHAR(
-                 "    /* try to find the iterator function, to speed up.*/\n"
-                 "    #4[1] = #0;\n"
-                 "    switch(voba_get_type1(#1)){ /* type of iterator */\n"
-                 "    case VOBA_TYPE_FUNC:\n"
-                 "        #2 = voba_value_to_func(#1);\n"
-                 "        #3 = #1;\n"
-                 "        break;\n"
-                 "    case VOBA_TYPE_CLOSURE:\n"
-                 "        #2 = voba_closure_func(#1);\n" 
-                 "        #3 = voba_closure_tuple(#1);\n"
-                 "        break;\n"
-                 "    default:\n"
-                 "        #2 = voba__apply_find_func(#1,voba_make_tuple(#4));\n"
-                 "        if(#2 == NULL){\n"
-                 "            voba_throw_exception(\n"
-                 "                voba_make_string(voba_str_from_cstr(\"cannot apply\")));\n"
-                 "        }\n"
-                 "        #3 = #1;\n"
-                 "    }\n")
-             , for_each_expr  // #0                 
-             , for_each_iter  // #1
-             , for_each_iter_f  // #2
-             , for_each_iter_self  // #3
-             , for_each_iter_args // #4
-        );
     /* evaluate `for' input for each iteratation */
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    #0:{ /*prelude of `for' statement */\n"
-                 "    #4 = #1(#2,voba_make_tuple(#3)); /*invoke the iterator to get the input value*/\n"
-                 "    if(voba_eq(#4,VOBA_DONE)){\n"
-                 "        goto #5;/* exit for loop */\n"
+                 "    #3 = voba_apply(#1, voba_make_tuple(#2)); /*invoke the iterator to get the input value*/\n"
+                 "    if(voba_eq(#3,VOBA_DONE)){\n"
+                 "        goto #4;/* exit for loop */\n"
                  "    }\n"
                  )
              ,for_each_begin // #0
-             ,for_each_iter_f // #1
-             ,for_each_iter_self // #2
-             ,for_each_iter_args // #3
-             ,for_each_input // #4
-             ,for_end // #5
+             ,for_each_iter  // #1
+             ,for_each_iter_args // #2
+             ,for_each_input // #3
+             ,for_end // #4
         ); 
     if(for_if){
         /// @todo speed it up.
