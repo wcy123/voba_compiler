@@ -45,11 +45,9 @@ voba_value_t compile_expr(voba_value_t syn_expr,voba_value_t env,voba_value_t to
     if(cls == voba_cls_nil){
         ret = make_ast_constant(make_syn_const(VOBA_NIL));
     }
-#define COMPILE_EXPR_SMALL_TYPES(tag,name,type)                         \
-    else if(cls == voba_cls_##name){                                    \
-        ret = make_ast_constant(syn_expr);                              \
+    else if(cls == voba_cls_i32){
+        ret = make_ast_constant(syn_expr);
     }
-    VOBA_SMALL_TYPES(COMPILE_EXPR_SMALL_TYPES)
     else if(cls == voba_cls_bool){
         ret = make_ast_constant(syn_expr);
     }
