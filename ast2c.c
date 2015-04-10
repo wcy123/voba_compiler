@@ -267,14 +267,16 @@ static inline voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, 
     bk->it = old_it;
     return ret;
 }
-static inline voba_str_t* ast2c_ast_exprs_for_fun_body(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast_exprs_for_fun_body(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s,int is_generator)
 {
     voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
     int64_t len = voba_array_len(exprs);
     voba_str_t * old_it = bk->it;
     const int is_last_expr = 1;
     for(int64_t i = 0; i < len; ++i){
-        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s,i==len-1,is_last_expr);
+	int last_compound_expr = i==len-1;
+	if(is_generator) last_compound_expr = 0; /* generator does not support TCO*/
+        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s,last_compound_expr,is_last_expr);
         bk->it = ret;
     }
     bk->it = old_it;
@@ -474,7 +476,7 @@ static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_s
     voba_str_t * s1 = voba_str_empty();
     voba_str_t * stream_fun_body = voba_str_empty();
     voba_value_t exprs = ast_fn->a_ast_exprs;
-    voba_str_t* expr = ast2c_ast_exprs_for_fun_body(exprs,bk,&stream_fun_body);
+    voba_str_t* expr = ast2c_ast_exprs_for_fun_body(exprs,bk,&stream_fun_body,is_generator);
     if(!is_generator){
 	TEMPLATE(&bk->decl,
 		 VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[]);\n")
