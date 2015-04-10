@@ -313,7 +313,7 @@ static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_s
         break;
     case VAR_CLOSURE:
         TEMPLATE(s,
-                 VOBA_CONST_CHAR("    voba_tuple_set_at(self,#0,#1); /* set #2 */\n"),
+                 VOBA_CONST_CHAR("    voba_tuple_set_at(fun,#0,#1); /* set #2 */\n"),
                  voba_str_fmt_uint32_t(var->u.index,10),ret,var_c_symbol_name(var));
         break;
     default:
@@ -534,7 +534,7 @@ static inline voba_str_t* ast2c_ast_closure(int32_t index, c_backend_t* bk, voba
 {
     voba_str_t * ret = voba_str_empty();
     TEMPLATE(&ret,
-             VOBA_CONST_CHAR("voba_tuple_at(self,#0)")
+             VOBA_CONST_CHAR("voba_tuple_at(fun,#0)")
              ,voba_str_fmt_int32_t(index,10));
     return ret;
 }
