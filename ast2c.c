@@ -395,7 +395,7 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
     bk->start = voba_strcat(bk->start,s0);
     return s_const;
 }
-static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_str_t** s, int is_generator);
 static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname);
 static inline voba_str_t* ast2c_ast_fun_closure(c_backend_t *bk
                                                 ,voba_str_t**s
@@ -408,7 +408,7 @@ static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t*
     ast_fun_t* ast_fn = &ast->u.fun;
     int64_t len = voba_array_len(ast_fn->f->a_var_C);
     int is_a_closure = (len != 0);
-    str_fun_name = ast2c_ast_fun_body(ast,bk,s);
+    str_fun_name = ast2c_ast_fun_body(ast,bk,s,ast_fn->f->is_generator);
     if(!ast_fn->f->is_generator){
         if(!is_a_closure){
             TEMPLATE(&ret, VOBA_CONST_CHAR("voba_make_func(#0)"),str_fun_name);
@@ -463,7 +463,7 @@ static inline voba_str_t* ast2c_ast_fun_closure(c_backend_t *bk
     return ret;
 }
 
-static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_str_t** s, int is_generator)
 {
     ast_fun_t* ast_fn = &(ast->u.fun);
     voba_value_t syn_s_name = ast_fn->syn_s_name;
@@ -475,17 +475,32 @@ static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_s
     voba_str_t * stream_fun_body = voba_str_empty();
     voba_value_t exprs = ast_fn->a_ast_exprs;
     voba_str_t* expr = ast2c_ast_exprs_for_fun_body(exprs,bk,&stream_fun_body);
-    TEMPLATE(&bk->decl,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[]);\n")
-             ,fun_name);
-    TEMPLATE(&s1,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
-                             "{\n"
-                             "#1"
-                             "    return #2; /* return #0 */\n"
-                             "}\n")
-             ,fun_name,indent(stream_fun_body),expr);
-    bk->impl = voba_strcat(bk->impl, s1);
+    if(!is_generator){
+	TEMPLATE(&bk->decl,
+		 VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[]);\n")
+		 ,fun_name);
+	TEMPLATE(&s1,
+		 VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
+				 "{\n"
+				 "#1"
+				 "    return #2; /* return #0 */\n"
+				 "}\n")
+		 ,fun_name,indent(stream_fun_body),expr);
+	bk->impl = voba_strcat(bk->impl, s1);
+    }else{
+	/* generator does not support TCO, so that there is no next_fun and next_args */
+	TEMPLATE(&bk->decl,
+		 VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args);\n")
+		 ,fun_name);
+	TEMPLATE(&s1,
+		 VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args)\n"
+				 "{\n"
+				 "#1"
+				 "    return #2; /* return #0 */\n"
+				 "}\n")
+		 ,fun_name,indent(stream_fun_body),expr);
+	bk->impl = voba_strcat(bk->impl, s1);
+    }
     return fun_name;
 }
 static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname)
@@ -498,7 +513,7 @@ static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname
              VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
                              "{\n"
                              " /* a bridge to create a generator */\n"
-                             "    return voba_make_generator(#1, self, fun_args);\n"
+                             "    return voba_make_generator(#1, fun, fun_args);\n"
                              "}\n")
              ,fname,gname);
     voba_str_t * s = voba_str_empty();
