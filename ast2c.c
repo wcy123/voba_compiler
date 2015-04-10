@@ -515,7 +515,7 @@ static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname
              VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
                              "{\n"
                              " /* a bridge to create a generator */\n"
-                             "    return voba_make_generator(#1, fun, fun_args);\n"
+                             "    return voba_make_generator(#1, fun, voba_tuple_copy(fun_args));\n"
                              "}\n")
              ,fname,gname);
     voba_str_t * s = voba_str_empty();
