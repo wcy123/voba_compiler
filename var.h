@@ -1,10 +1,10 @@
 #pragma once
 enum var_flag {
-    VAR_LOCAL,
-    VAR_ARGUMENT,
-    VAR_CLOSURE,
-    VAR_PUBLIC_TOP, // local variable
-    VAR_PRIVATE_TOP, // public, module variable, defined in this module
+    VAR_LOCAL,       // created by `let` form or `match` form
+    VAR_ARGUMENT,    // function arguments
+    VAR_CLOSURE,     // closure variable
+    VAR_PUBLIC_TOP,  // public top level variable, module variable, defined in this module
+    VAR_PRIVATE_TOP, // private top level variable, 
     VAR_FOREIGN_TOP, // imported variable from other module, not defined in this module
 };
 typedef struct var_s {
@@ -12,10 +12,12 @@ typedef struct var_s {
     enum var_flag flag;
     union {
         struct {
-            voba_value_t syn_module_id; // module id for top var
+	    // module id for top var,
+	    // for VAR_PUBLIC_TOP, VAR_PRIVATE_TOP and VAR_FOREIGN_TOP
+            voba_value_t syn_module_id; 
             voba_value_t syn_module_name;
         }m;
-        int32_t index; // for closure and argument 
+        int32_t index; // for closure and argument , VAR_LOCAL and VAR_ARGUMENT
     }u;
 }var_t;
 #define VAR(s)  VOBA_USER_DATA_AS(var_t *,s)
