@@ -46,9 +46,9 @@ static inline voba_str_t* str_flag(var_t * var)
     }
     return ret;
 }
-VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs);
+VOBA_FUNC static voba_value_t str_var(voba_value_t fun,voba_value_t vs, voba_value_t* next_fun, voba_value_t next_args[]);
 EXEC_ONCE_PROGN{voba_gf_add_class(voba_gf_to_string,voba_cls_var,voba_make_func(str_var));}
-VOBA_FUNC static voba_value_t str_var(voba_value_t self,voba_value_t vs)
+VOBA_FUNC static voba_value_t str_var(voba_value_t fun,voba_value_t vs, voba_value_t* next_fun, voba_value_t next_args[])
 {
     voba_value_t v = voba_tuple_at(vs,0);
     voba_str_t* ret = voba_str_empty();

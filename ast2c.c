@@ -164,7 +164,7 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "}\n"));
 }
 
-static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s);
+static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s,int last_compound_expr,int last_expr);
 static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
 {
     int64_t len = voba_array_len(a_asts);
@@ -173,7 +173,7 @@ static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
         voba_value_t ast  = voba_array_at(a_asts,i);
         assert(voba_is_a(ast,voba_cls_ast));
         ast_t * p_ast = AST(ast);
-        bk->it = ast2c_ast(p_ast,bk,&s);
+        bk->it = ast2c_ast(p_ast,bk,&s,0/*not last compound expr*/,0/*not last expr*/);
         bk->start = voba_strcat(bk->start,s);
     }
     TEMPLATE(&bk->impl,
@@ -189,26 +189,30 @@ static inline void ast2c_all_asts(voba_value_t a_asts, c_backend_t* bk)
             "}\n"
             ));
 }
-static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr,int last_expr);
 static inline voba_str_t* ast2c_ast_constant(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_fun(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_var(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast_arg(int32_t index, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr,int last_expr);
+static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr);
+static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr);
+static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr);
 static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr);
+static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr);
+static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr);
 static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_t** s);
-static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s, int last_compound_expr, int last_expr)
 {
     voba_str_t* ret = voba_str_empty();
     switch(ast->type){
     case SET_VAR:
-        ret = ast2c_ast_set_var(ast,bk,s);
+	/* bug?  for tail call, the variable is set VOBA_TAIL_CALL,
+	   but because the function returns immediately, the
+	   variable's value does not make any sense, fix me if I am wrong.
+	 */
+        ret = ast2c_ast_set_var(ast,bk,s,last_compound_expr,last_expr);
         break;
     case CONSTANT:
         ret = ast2c_ast_constant(ast,bk,s);
@@ -220,28 +224,28 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
         ret = ast2c_ast_var(ast,bk,s);
         break;
     case APPLY:
-        ret = ast2c_ast_apply(ast,bk,s);
+        ret = ast2c_ast_apply(ast,bk,s,last_compound_expr,last_expr);
         break;
     case LET:
-        ret = ast2c_ast_let(ast,bk,s);
+        ret = ast2c_ast_let(ast,bk,s,last_compound_expr);
         break;
     case MATCH:
-        ret = ast2c_ast_match(ast,bk,s);
+        ret = ast2c_ast_match(ast,bk,s,last_compound_expr);
         break;
     case FOR:
-        ret = ast2c_ast_for(ast,bk,s);
+        ret = ast2c_ast_for(ast,bk,s,last_compound_expr);
         break;
     case IT:
         ret = ast2c_ast_it(ast,bk,s);
         break;
     case BREAK:
-        ret = ast2c_ast_break(ast,bk,s);
+        ret = ast2c_ast_break(ast,bk,s,last_compound_expr);
         break;
     case AND:
-        ret = ast2c_ast_and(ast,bk,s);
+        ret = ast2c_ast_and(ast,bk,s,last_compound_expr);
         break;
     case OR:
-        ret = ast2c_ast_or(ast,bk,s);
+        ret = ast2c_ast_or(ast,bk,s,last_compound_expr);
         break;
     case YIELD:
         ret = ast2c_ast_yield(ast,bk,s);
@@ -251,23 +255,36 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
     }
     return ret;
 }
-static inline voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast_exprs(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s, int last_compound_expr)
 {
     voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
     int64_t len = voba_array_len(exprs);
     voba_str_t * old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
-        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s);
+        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s, last_compound_expr, i == len -1);
         bk->it = ret;
     }
     bk->it = old_it;
     return ret;
 }
-static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s)
+static inline voba_str_t* ast2c_ast_exprs_for_fun_body(voba_value_t exprs, c_backend_t * bk, voba_str_t ** s)
+{
+    voba_str_t* ret = VOBA_CONST_CHAR("VOBA_NIL");
+    int64_t len = voba_array_len(exprs);
+    voba_str_t * old_it = bk->it;
+    const int is_last_expr = 1;
+    for(int64_t i = 0; i < len; ++i){
+        ret = ast2c_ast(AST(voba_array_at(exprs,i)),bk,s,i==len-1,is_last_expr);
+        bk->it = ret;
+    }
+    bk->it = old_it;
+    return ret;
+}
+static inline voba_str_t* ast2c_ast_set_var(ast_t* ast, c_backend_t * bk, voba_str_t ** s, int last_compound_expr, int last_expr)
 {
     voba_value_t exprs = ast->u.set_var.a_ast_exprs;
     var_t * var = ast->u.set_var.var;
-    voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s);
+    voba_str_t* expr = ast2c_ast_exprs(exprs,bk,s,last_compound_expr);
     voba_str_t * ret = new_uniq_id(voba_value_to_str(voba_symbol_name(SYNTAX(var->syn_s_name)->v)));
     TEMPLATE(s,
              VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;\n"
@@ -455,19 +472,19 @@ static inline voba_str_t* ast2c_ast_fun_body(ast_t* ast, c_backend_t* bk, voba_s
                                     voba_value_to_str(voba_symbol_name(SYNTAX(syn_s_name)->v))
         );
     voba_str_t * s1 = voba_str_empty();
-    voba_str_t * s2 = voba_str_empty();
+    voba_str_t * stream_fun_body = voba_str_empty();
     voba_value_t exprs = ast_fn->a_ast_exprs;
-    voba_str_t* expr = ast2c_ast_exprs(exprs,bk,&s2);
+    voba_str_t* expr = ast2c_ast_exprs_for_fun_body(exprs,bk,&stream_fun_body);
     TEMPLATE(&bk->decl,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args);\n")
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[]);\n")
              ,fun_name);
     TEMPLATE(&s1,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args)\n"
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
                              "{\n"
                              "#1"
                              "    return #2; /* return #0 */\n"
                              "}\n")
-             ,fun_name,indent(s2),expr);
+             ,fun_name,indent(stream_fun_body),expr);
     bk->impl = voba_strcat(bk->impl, s1);
     return fun_name;
 }
@@ -475,10 +492,10 @@ static inline voba_str_t* ast2c_ast_generator(c_backend_t* bk, voba_str_t* gname
 {
     voba_str_t * fname = new_uniq_id(gname);
     TEMPLATE(&bk->decl,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args);\n")
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[]);\n")
              ,fname);
     TEMPLATE(&bk->impl,
-             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t self, voba_value_t fun_args)\n"
+             VOBA_CONST_CHAR("VOBA_FUNC voba_value_t #0 (voba_value_t fun, voba_value_t fun_args, voba_value_t* next_fun, voba_value_t next_args[])\n"
                              "{\n"
                              " /* a bridge to create a generator */\n"
                              "    return voba_make_generator(#1, self, fun_args);\n"
@@ -540,7 +557,7 @@ static inline voba_str_t* ast2c_ast_var_var(var_t* var, c_backend_t* bk, voba_st
     }
     return ret;
 }
-static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr, int last_expr)
 {
     voba_str_t * ret = new_uniq_id(voba_str_from_cstr("apply_ret"));
     voba_value_t exprs = ast->u.apply.a_ast_exprs;
@@ -551,7 +568,7 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
     voba_str_t * old_it = bk->it;
     for(int64_t i = 0; i < len; ++i){
         voba_value_t expr = voba_array_at(exprs,i);
-        voba_str_t * sexpr = ast2c_ast(AST(expr), bk, s);
+        voba_str_t * sexpr = ast2c_ast(AST(expr), bk, s, last_compound_expr, 0); // not the last expr
         if(i > 0){
             bk->it = sexpr;
         }
@@ -559,26 +576,58 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
     }
     bk->it = old_it;
     voba_str_t * fun = voba_value_to_str(voba_array_at(args,0));
-    TEMPLATE(s,
-             VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* return value for apply */\n"
-                             "    voba_value_t #1 [] = { #2 /* prepare arguments for apply */\n")
-             ,ret
-             ,args_name
-             ,voba_str_fmt_int64_t(len-1,10));
-    for(int64_t i = 1; i < len; ++i){
-        TEMPLATE(s,
-                 VOBA_CONST_CHAR("         ,#0 /* argument #1 */\n")
-                 ,voba_value_to_str(voba_array_at(args,i))
-                 ,voba_str_fmt_int64_t(i,10));
+    if(last_compound_expr == 1 && last_expr == 1 && (len <= VOBA_MAX_NUM_OF_TAIL_CALL_ARGS)){
+    // When VOBA_MAX_NUM_OF_TAIL_CALL_ARGS == 20, `voba_apply`
+	// reserves a memory space for tuple with 20 elements at most,
+	// we can only apply tail call when the number of argument is
+	// less than 20, otherwise, `voba_apply` don't know arguments,
+	// because `voba_apply` assumes `next_args` is filled in
+	// properly here.
+	TEMPLATE(s,
+		 VOBA_CONST_CHAR(
+		     "    voba_value_t #0 = VOBA_TAIL_CALL;/* tail call for `apply` */\n"
+		     "    next_args[0] = #1;/* set the number of argument for tail call.*/\n"
+		     "    *next_fun = #2;/*set the next function to call*/\n"
+		     )
+		 ,ret
+		 ,voba_str_fmt_int64_t(len-1,10)
+		 ,fun
+	    );
+	TEMPLATE(s,
+		 VOBA_CONST_CHAR(
+		     "    /* start to fill in argument for tail call */\n"
+		     ));
+	for(int64_t i = 1; i < len; ++i){
+	    TEMPLATE(s,
+		     VOBA_CONST_CHAR(
+			 "    next_args[#0] = #1; /* argument #0 */\n")
+		     , voba_str_fmt_int64_t(i,10)
+		     , voba_value_to_str(voba_array_at(args,i))
+		);
+	}
+    }else{
+	// non tail call
+	TEMPLATE(s,
+		 VOBA_CONST_CHAR("    voba_value_t #0 __attribute__((unused)) = VOBA_UNDEF;/* return value for apply */\n"
+				 "    voba_value_t #1 [] = { #2 /* prepare arguments for apply */\n")
+		 ,ret
+		 ,args_name
+		 ,voba_str_fmt_int64_t(len-1,10));
+	for(int64_t i = 1; i < len; ++i){
+	    TEMPLATE(s,
+		     VOBA_CONST_CHAR("         ,#0 /* argument #1 */\n")
+		     ,voba_value_to_str(voba_array_at(args,i))
+		     ,voba_str_fmt_int64_t(i,10));
+	}
+	TEMPLATE(s,
+		 VOBA_CONST_CHAR("    };\n"
+				 "    #0 = voba_apply(#1,voba_make_tuple(#2));/* return value for apply */\n"
+		     )
+		 ,ret, fun, args_name);
     }
-    TEMPLATE(s,
-             VOBA_CONST_CHAR("    };\n"
-                             "    #0 = voba_apply(#1,voba_make_tuple(#2));/* return value for apply */\n"
-                 )
-             ,ret, fun, args_name);
     return ret;
 }
-static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr)
 {
     ast_let_t * ast_let  = &ast->u.let;
     voba_str_t * id = new_uniq_id(voba_str_from_cstr("let_ret"));
@@ -586,7 +635,7 @@ static inline voba_str_t* ast2c_ast_let(ast_t* ast, c_backend_t* bk, voba_str_t*
     voba_str_t * s2 = voba_str_empty();
     ast2c_decl_env(ast_let->env,bk,&s1);
     voba_value_t a_ast_exprs = ast_let->a_ast_exprs;
-    voba_str_t * body = ast2c_ast_exprs(a_ast_exprs,bk,&s2);
+    voba_str_t * body = ast2c_ast_exprs(a_ast_exprs,bk,&s2,last_compound_expr);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    /*let env*/\n"
                              "#2\n"
@@ -644,7 +693,7 @@ a match form is as below
 
 
 */
-static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_match(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr);
 /** @brief generate c code `match` form
 
     @param match_ret the name of return value of `match` form
@@ -664,7 +713,8 @@ static inline void ast2c_match(voba_str_t * match_ret,
                                voba_str_t * label_fail,
                                voba_value_t match,
                                c_backend_t* bk,
-                               voba_str_t** s);
+                               voba_str_t** s,
+			       int last_compound_expr);
 /** @brief generate c code for one of rule in a `match` form 
 
     @param match_value the vale of `match` form, which is matched agaist.
@@ -677,14 +727,19 @@ static inline voba_str_t* ast2c_match_rule(voba_str_t* match_value,
                                            voba_str_t* label_success,
                                            voba_str_t* label_fail,
                                            c_backend_t* bk,
-                                           voba_str_t** s);
+                                           voba_str_t** s,
+					   int last_compound_expr);
 
 static inline void ast2c_match_pattern(voba_str_t* v,
 				       voba_str_t* label_fail,
 				       voba_value_t pattern,
 				       c_backend_t* bk,
 				       voba_str_t** s);
-static inline void ast2c_match_action(voba_str_t * match_ret, voba_value_t a_ast_action, c_backend_t* bk, voba_str_t** s);
+static inline void ast2c_match_action(voba_str_t * match_ret,
+				      voba_value_t a_ast_action,
+				      c_backend_t* bk,
+				      voba_str_t** s,
+				      int last_compound_expr);
 static inline void ast2c_match_pattern_value(voba_str_t* v,
                                              voba_str_t* label_fail,
                                              pattern_t* p_pattern,
@@ -712,9 +767,10 @@ static inline void ast2c_match_pattern_if(voba_value_t ast_if,
 /// -------------------------------------------------------------------
 static inline voba_str_t* ast2c_ast_match(ast_t* ast,
                                           c_backend_t* bk,
-                                          voba_str_t** s)
+                                          voba_str_t** s,
+					  int last_compound_expr)
 {
-    voba_str_t * match_value = ast2c_ast(AST(ast->u.match.ast_value),bk,s);
+    voba_str_t * match_value = ast2c_ast(AST(ast->u.match.ast_value),bk,s,last_compound_expr,0 /* not the last expr*/);
     voba_str_t * match_ret = new_uniq_id(voba_str_from_cstr("match_ret"));
     voba_str_t * label_success = new_uniq_id(voba_str_from_cstr("match_label_success"));
     voba_str_t * label_failure = new_uniq_id(voba_str_from_cstr("match_label_failure"));
@@ -727,10 +783,10 @@ static inline voba_str_t* ast2c_ast_match(ast_t* ast,
 		match_value,
                 label_success,
 		label_failure,
-                match, bk,s);
+                match, bk,s,last_compound_expr);
     /// @todo better debug information when no match happen.
     TEMPLATE(s,
-             VOBA_CONST_CHAR( "    #0:; /* the whole match statement failed. */\n"
+             VOBA_CONST_CHAR( "    #0:if(0) goto #0;/*suppress warning*/; /* the whole match statement failed. */\n"
                               "    voba_throw_exception(voba_make_string(voba_str_from_cstr(\"no match\")));\n"
                               "    #1:; /* the whole match statement success */\n"
                               "    /* end of a match statement */\n")
@@ -745,14 +801,15 @@ static inline void ast2c_match(voba_str_t * match_ret,
                                voba_str_t * label_fail,
                                voba_value_t match,
                                c_backend_t* bk,
-                               voba_str_t** s)
+                               voba_str_t** s,
+			       int last_compound_expr)
 {
     match_t * p_match = MATCH(match);
     voba_value_t a_rules = p_match->a_rules;
     int64_t len = voba_array_len(a_rules);
     voba_str_t * rule_label =
-      new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
-			      ,voba_str_fmt_int32_t(0,10)));
+	new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
+				,voba_str_fmt_int32_t(0,10)));
     voba_str_t * old_it = bk->it;
     bk->it = match_value;
     for(int64_t i = 0; i < len; ++i){
@@ -765,7 +822,7 @@ static inline void ast2c_match(voba_str_t * match_ret,
 				   new_uniq_id(voba_strcat(voba_str_from_cstr("rule_label_")
 							   ,voba_str_fmt_int32_t(i,10))));
 	voba_str_t * s_rule = voba_str_empty();
-	ast2c_match_rule(match_value, match_ret, rule, label_success, label_next,bk,&s_rule);
+	ast2c_match_rule(match_value, match_ret, rule, label_success, label_next,bk,&s_rule,last_compound_expr);
         TEMPLATE(s, VOBA_CONST_CHAR("    /* match rule #2 start*/\n"
                                     "    #0 {\n"
                                     "    #1\n"
@@ -786,13 +843,14 @@ static inline voba_str_t* ast2c_match_rule(voba_str_t* v,
                                            voba_str_t* label_success,
                                            voba_str_t* label_fail,
                                            c_backend_t* bk,
-                                           voba_str_t** s)
+                                           voba_str_t** s,
+					   int last_compound_expr)
 {
     voba_str_t * ret = voba_str_empty();
     rule_t* p_rule = RULE(rule);
     ast2c_decl_env(ENV(p_rule->env),bk,s);
     ast2c_match_pattern(v,label_fail,p_rule->pattern,bk,s);
-    ast2c_match_action(match_ret,p_rule->a_ast_action,bk,s);
+    ast2c_match_action(match_ret,p_rule->a_ast_action,bk,s,last_compound_expr);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    goto #0; // match goto end\n")
              ,label_success);
@@ -804,6 +862,7 @@ static inline void ast2c_match_pattern(voba_str_t* v,
                                        c_backend_t* bk,
                                        voba_str_t** s)
 {
+    /* no tail call check, because it will never be the last compound expression */
     pattern_t * p_pattern = PATTERN(pattern);
     switch(p_pattern->type){
     case PATTERN_VALUE:
@@ -836,7 +895,7 @@ static inline void ast2c_match_pattern_if(voba_value_t ast_if,
                                           voba_str_t** s)
 {
     ast_t* p_ast = AST(ast_if);
-    voba_str_t * s_if = ast2c_ast(p_ast,bk,s);
+    voba_str_t * s_if = ast2c_ast(p_ast,bk,s,0/*not last compound*/,0/*not last expr*/);
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    if(voba_eq(#0,VOBA_FALSE)){/* if pattern guard failed */\n"
@@ -854,7 +913,7 @@ static inline void ast2c_match_pattern_value(voba_str_t* v,
                                              voba_str_t** s)
 {
     voba_value_t a_ast_exprs = p_pattern->u.value.a_ast_value;
-    voba_str_t * expr = ast2c_ast_exprs(a_ast_exprs,bk,s);
+    voba_str_t * expr = ast2c_ast_exprs(a_ast_exprs,bk,s,0/*not last compound*/);
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "     if(!voba_match_eq(#0,#1)){\n"
@@ -905,7 +964,7 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v,
     voba_value_t ast_cls = p_pat->ast_cls;
     voba_value_t a_patterns = p_pat->a_patterns;
     voba_str_t * s_first_elt_body = voba_str_empty();
-    voba_str_t * s_first_elt = ast2c_ast(AST(ast_cls),bk,&s_first_elt_body);
+    voba_str_t * s_first_elt = ast2c_ast(AST(ast_cls),bk,&s_first_elt_body,0/* not last compound expr*/,0/* last expr*/);
     int64_t len = voba_array_len(a_patterns);
     voba_str_t * s_len = voba_str_fmt_int64_t(len,10);
     voba_str_t * pat_ret = new_uniq_id(voba_str_from_cstr("pattern_ret"));
@@ -951,26 +1010,28 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v,
 static inline void ast2c_match_action(voba_str_t * match_ret,
                                       voba_value_t a_ast_action,
                                       c_backend_t* bk,
-                                      voba_str_t** s)
+                                      voba_str_t** s,
+				      int last_compound_expr)
 {
     voba_str_t * s1 = voba_str_empty();
-    voba_str_t * expr = ast2c_ast_exprs(a_ast_action,bk,&s1);
+    voba_str_t * expr = ast2c_ast_exprs(a_ast_action,bk,&s1,last_compound_expr);
     TEMPLATE(s,
              VOBA_CONST_CHAR("    #0\n"
                              "    #1 = #2; /* match statement return value*/\n")
              ,indent(s1),match_ret, expr);
     return;
 }
-static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr)
 {
+    // @TODO tail call checking is ignored for `for` form
     ast_for_t *  p_ast_for            = &ast->u._for;
     voba_value_t each             = p_ast_for->each;
     ast_t *      p_each           = AST(each);
     voba_value_t match                = p_ast_for->match;
-    voba_str_t * for_each_expr        = ast2c_ast(p_each,bk,s);
-    voba_str_t * for_if               = voba_is_nil(p_ast_for->_if)?NULL:ast2c_ast(AST(p_ast_for->_if),bk,s);
-    voba_str_t * for_init             = voba_is_nil(p_ast_for->init)?NULL:ast2c_ast(AST(p_ast_for->init),bk,s);
-    voba_str_t * for_accumulate       = voba_is_nil(p_ast_for->accumulate)?NULL:ast2c_ast(AST(p_ast_for->accumulate),bk,s);
+    voba_str_t * for_each_expr        = ast2c_ast(p_each,bk,s,0/*not the last compound expr*/,0 /*not the last*/ );
+    voba_str_t * for_if               = voba_is_nil(p_ast_for->_if)?NULL:ast2c_ast(AST(p_ast_for->_if),bk,s,0/*not the last compound expr*/,0 /*not the last*/);
+    voba_str_t * for_init             = voba_is_nil(p_ast_for->init)?NULL:ast2c_ast(AST(p_ast_for->init),bk,s,0/*not the last compound expr*/,0 /*not the last*/);
+    voba_str_t * for_accumulate       = voba_is_nil(p_ast_for->accumulate)?NULL:ast2c_ast(AST(p_ast_for->accumulate),bk,s,0/*not the last compound expr*/,0 /*not the last*/);
     voba_str_t * for_each_begin       = new_uniq_id(voba_str_from_cstr("for_each_begin"));
     voba_str_t * for_each_end_success = new_uniq_id(voba_str_from_cstr("for_each_end_match_success"));
     voba_str_t * for_each_end_failure = new_uniq_id(voba_str_from_cstr("for_each_end_match_failure"));
@@ -994,7 +1055,8 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     bk->it = for_each_input;
     bk->latest_for_end_label = for_end;
     bk->latest_for_final = for_ret_value;
-    ast2c_match(for_each_output, for_each_input,for_each_end_success,for_each_end_failure,match, bk,&s_body);
+    ast2c_match(for_each_output, for_each_input,for_each_end_success,for_each_end_failure,match, bk,&s_body
+		, 0 /* not the last compound expr*/);
     bk->latest_for_final = old_for_ret_value;
     bk->latest_for_end_label = old_for_end;
     bk->it = old_it;
@@ -1146,10 +1208,10 @@ static inline voba_str_t* ast2c_ast_it(ast_t* ast, c_backend_t* bk, voba_str_t**
     }
     return ret;
 }
-static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr)
 {
     voba_str_t *  ret  = voba_str_empty();
-    voba_str_t * v = ast2c_ast(AST(ast->u._break.ast_value),bk,s);
+    voba_str_t * v = ast2c_ast(AST(ast->u._break.ast_value),bk,s,last_compound_expr, 1 /* last expr */);
     voba_str_t * label = bk->latest_for_end_label;
     voba_str_t * bv = bk->latest_for_final;
     if(label){
@@ -1169,7 +1231,7 @@ static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_
     }
     return ret;
 }
-static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s,int last_compound_expr)
 {
     voba_value_t a_ast_exprs = ast->u.and.a_ast_exprs;
     int64_t len = voba_array_len(a_ast_exprs);
@@ -1185,7 +1247,7 @@ static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t*
     for(int64_t i = 0; i < len; ++i){
         voba_value_t ast_expr = voba_array_at(a_ast_exprs,i);
         assert(voba_is_a(ast_expr,voba_cls_ast));
-        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s,last_compound_expr, i == len - 1);
         bk->it = s_ast_expr;
         TEMPLATE
             (s,
@@ -1208,7 +1270,7 @@ static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t*
          , and_end);
     return and_return_value;
 }
-static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr)
 {
     voba_value_t a_ast_exprs = ast->u.or.a_ast_exprs;
     int64_t len = voba_array_len(a_ast_exprs);
@@ -1223,7 +1285,7 @@ static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t**
     for(int64_t i = 0; i < len; ++i){
         voba_value_t ast_expr = voba_array_at(a_ast_exprs,i);
         assert(voba_is_a(ast_expr,voba_cls_ast));
-        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+        voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s,last_compound_expr, i == len - 1);
         TEMPLATE
             (s,
              VOBA_CONST_CHAR(
@@ -1247,7 +1309,7 @@ static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t**
 static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_t** s)
 {
     voba_value_t ast_expr = ast->u.yield.ast_expr;
-    voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s);
+    voba_str_t * s_ast_expr = ast2c_ast(AST(ast_expr),bk,s,0/*not last compound expr*/,0/*last expr*/);
     voba_str_t * yield_return_value = new_uniq_id(voba_str_from_cstr("yield_ret_val"));
     TEMPLATE(s,
              VOBA_CONST_CHAR(

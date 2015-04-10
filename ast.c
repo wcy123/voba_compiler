@@ -22,7 +22,7 @@
 // voba_cls_ast is defined here.
 VOBA_DEF_CLS(sizeof(ast_t),ast);
 
-/* VOBA_FUNC static voba_value_t str_ast(voba_value_t self, voba_value_t args); */
+/* VOBA_FUNC static voba_value_t str_ast(voba_value_t fun, voba_value_t args, voba_value_t* next_fun, voba_value_t next_args[]); */
 /* EXEC_ONCE_PROGN{ */
 /*     voba_gf_add_class(voba_symbol_value(s_str), */
 /*                       voba_cls_ast, */
@@ -204,7 +204,7 @@ int is_ast(voba_value_t x)
 /*     assert(0 && "never goes here"); */
 /*     return NULL; */
 /* } */
-/* VOBA_FUNC static voba_value_t str_ast(voba_value_t self, voba_value_t args) */
+/* VOBA_FUNC static voba_value_t str_ast(voba_value_t fun, voba_value_t args, voba_value_t* next_fun, voba_value_t next_args[]) */
 /* { */
 /*     VOBA_DEF_ARG(ast, args, 0, is_ast); */
 /*     voba_str_t * x = voba_str_empty(); */
