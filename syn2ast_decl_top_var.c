@@ -63,9 +63,9 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
 // 
 // for def, try to find the var
 //     no var existed, it is a local var.
-//     if a local var, warning, redefined a local var.
-//     if a module var, warning, redefined a module var.
-//     if a foreign var, var becomes a module var
+//     if a local var, warning, redefined a local var. PRIVATE_TOP
+//     if a module var, warning, redefined a module var. PUBLIC_TOP
+//     if a foreign var, var becomes a module var. FOREIGN_TOP -> PUBLIC_TOP
 static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
@@ -140,7 +140,7 @@ static voba_value_t compile_top_expr_def_fun_next(voba_value_t fun, voba_value_t
     voba_value_t env = voba_tuple_at(fun,2);
     VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_tuple_at( args, 0);
 ;
-    return compile_def(top_var,syn_form,env,toplevel_env);
+    return compile_defun(top_var,syn_form,env,toplevel_env);
 }
 static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_value_t toplevel_env)
 {

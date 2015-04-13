@@ -203,6 +203,7 @@ static inline voba_str_t* ast2c_ast_break(ast_t* ast, c_backend_t* bk, voba_str_
 static inline voba_str_t* ast2c_ast_and(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr);
 static inline voba_str_t* ast2c_ast_or(ast_t* ast, c_backend_t* bk, voba_str_t** s, int last_compound_expr);
 static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_t** s);
+static inline voba_str_t* ast2c_ast_args(ast_t* ast, c_backend_t* bk, voba_str_t** s);
 static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** s, int last_compound_expr, int last_expr)
 {
     voba_str_t* ret = voba_str_empty();
@@ -249,6 +250,9 @@ static inline voba_str_t* ast2c_ast(ast_t* ast, c_backend_t * bk, voba_str_t ** 
         break;
     case YIELD:
         ret = ast2c_ast_yield(ast,bk,s);
+        break;
+    case ARGS:
+        ret = ast2c_ast_args(ast,bk,s);
         break;
     default:
         assert(0 && "never goes here");
@@ -1337,4 +1341,8 @@ static inline voba_str_t* ast2c_ast_yield(ast_t* ast, c_backend_t* bk, voba_str_
              , s_ast_expr
         );
     return yield_return_value;
+}
+static inline voba_str_t* ast2c_ast_args(ast_t* ast, c_backend_t* bk, voba_str_t** s)
+{
+    return voba_str_from_cstr("fun_args");
 }

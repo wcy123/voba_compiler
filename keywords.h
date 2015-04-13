@@ -17,6 +17,7 @@
     XX(and)                                            \
     XX(or)                                             \
     XX(yield)                                          \
+    XX(args)					       \
     
 #define VOBA_COLON_KEYWORDS(XX)                 \
     XX(if)                                      \

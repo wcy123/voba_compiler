@@ -341,3 +341,10 @@ voba_value_t make_ast_yield(voba_value_t ast_expr)
     AST(r)->u.yield.ast_expr = ast_expr;
     return r;
 }
+voba_value_t make_ast_args(voba_value_t syn_args)
+{
+    voba_value_t r = voba_make_user_data(voba_cls_ast);
+    AST(r)->type = ARGS;
+    AST(r)->u.args.syn_args = syn_args;
+    return r;
+}
