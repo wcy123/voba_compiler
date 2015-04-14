@@ -17,7 +17,10 @@
 //     if a local var, var becomes a module var
 //     if a module var, throw an error, name conflicts
 //     if a foreign var, throw an error, name conficts again.
-static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_value_t syn_module_id, voba_value_t syn_module_name, voba_value_t toplevel_env)
+static inline void create_topleve_var_for_import(voba_value_t syn_symbol,
+						 voba_value_t syn_module_id,
+						 voba_value_t syn_module_name,
+						 voba_value_t toplevel_env)
 {
     voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
     voba_value_t symbol = SYNTAX(syn_symbol)->v;
@@ -66,7 +69,9 @@ static inline void create_topleve_var_for_import(voba_value_t syn_symbol, voba_v
 //     if a local var, warning, redefined a local var. PRIVATE_TOP
 //     if a module var, warning, redefined a module var. PUBLIC_TOP
 //     if a foreign var, var becomes a module var. FOREIGN_TOP -> PUBLIC_TOP
-static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, voba_value_t toplevel_env)
+static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol,
+						      int is_fun,
+						      voba_value_t toplevel_env)
 {
     voba_value_t ret = VOBA_NIL;
     voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
@@ -84,17 +89,23 @@ static inline voba_value_t create_topleve_var_for_def(voba_value_t syn_symbol, v
         switch(VAR(top_var)->flag){
         case VAR_PRIVATE_TOP:
         case VAR_PUBLIC_TOP:
-            report_error(
-                VOBA_STRCAT(VOBA_CONST_CHAR("redefine a symbol. symbol = "),
-                            voba_value_to_str(voba_symbol_name(symbol))),
-                syn_symbol,
-                toplevel_env
-                );
-            report_error(
-                VOBA_CONST_CHAR("previous definition is here"),
-                VAR(top_var)->syn_s_name,
-                toplevel_env
-                );
+	    if(!is_fun){
+		report_error(
+		    VOBA_STRCAT(VOBA_CONST_CHAR("redefine a symbol. symbol = "),
+				voba_value_to_str(voba_symbol_name(symbol))),
+		    syn_symbol,
+		    toplevel_env
+		    );
+		report_error(
+		    VOBA_CONST_CHAR("previous definition is here"),
+		    VAR(top_var)->syn_s_name,
+		    toplevel_env
+		    );
+	    }else{
+		// a function definition can be splitted into multiple
+		// parts, so that this is not a duplicate symbol
+		// definition.
+	    }
             break;
         case VAR_FOREIGN_TOP:
             VAR(top_var)->flag = VAR_PUBLIC_TOP;
@@ -126,7 +137,8 @@ VOBA_FUNC static voba_value_t compile_top_expr_def_name_next(voba_value_t fun, v
 }
 static inline void compile_top_expr_def_name(voba_value_t syn_name, voba_value_t la_syn_exprs,voba_value_t toplevel_env)
 {
-    voba_value_t var = create_topleve_var_for_def(syn_name,toplevel_env);
+    const int is_fun = 1;
+    voba_value_t var = create_topleve_var_for_def(syn_name,is_fun,toplevel_env);
     voba_value_t closure = voba_make_closure_2
         (compile_top_expr_def_name_next,var,la_syn_exprs);
     voba_array_push(TOPLEVEL_ENV(toplevel_env)->next, closure);
@@ -136,14 +148,15 @@ VOBA_FUNC
 static voba_value_t compile_top_expr_def_fun_next(voba_value_t fun, voba_value_t args, voba_value_t* next_fun, voba_value_t next_args[]) 
 {
     voba_value_t top_var = voba_tuple_at(fun,0);
-    voba_value_t syn_form = voba_tuple_at(fun,1);
+    voba_value_t a_syn_form = voba_tuple_at(fun,1);
     voba_value_t env = voba_tuple_at(fun,2);
     VOBA_ASSERT_N_ARG( args, 0); voba_value_t toplevel_env = voba_tuple_at( args, 0);
 ;
-    return compile_defun(top_var,syn_form,env,toplevel_env);
+    return compile_defun(top_var,a_syn_form,env,toplevel_env);
 }
 static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_value_t toplevel_env)
 {
+    const int is_fun = 1;
     voba_value_t top_expr = SYNTAX(syn_top_expr)->v;
     assert(voba_array_len(top_expr) > 0);
     voba_value_t syn_x_form = voba_array_at(top_expr,1);
@@ -153,11 +166,29 @@ static inline void compile_top_expr_def_fun(voba_value_t syn_top_expr, voba_valu
         voba_value_t syn_s_name = voba_array_at(x_form,0);
         if(voba_is_a(syn_s_name,voba_cls_syn)&&
            voba_is_a(SYNTAX(syn_s_name)->v,voba_cls_symbol)){
-            voba_value_t top_var = create_topleve_var_for_def(syn_s_name,toplevel_env);
-            voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
-            voba_value_t next = voba_make_closure_3(
-                compile_top_expr_def_fun_next, top_var, syn_top_expr, env);
-            voba_array_push(TOPLEVEL_ENV(toplevel_env)->next,next);
+            voba_value_t top_var = create_topleve_var_for_def(syn_s_name,is_fun,toplevel_env);
+	    /* to support function code segment */
+	    voba_value_t nexts = TOPLEVEL_ENV(toplevel_env)->next;
+	    int64_t len = voba_array_len(nexts);
+	    int64_t i;
+	    for( i = len -1 ; i >= 0; --i){
+		// search backward, might be faster
+		voba_value_t next = voba_array_at(nexts,i);
+		if(voba_closure_func(next) == compile_top_expr_def_fun_next
+		   && voba_closure_at(next,0) == top_var){
+		    voba_value_t a_syn_top_exprs = voba_closure_at(next,1);
+		    a_syn_top_exprs = voba_array_push(a_syn_top_exprs,syn_top_expr);
+		    voba_closure_set_at(next,1,a_syn_top_exprs);
+		    break;
+		}
+	    }
+	    if(!(i >= 0)){
+		voba_value_t env = TOPLEVEL_ENV(toplevel_env)->env;
+		voba_value_t a_syn_top_exprs = voba_make_array_1(syn_top_expr);
+		voba_value_t next = voba_make_closure_3(
+		    compile_top_expr_def_fun_next, top_var, a_syn_top_exprs, env);
+		voba_array_push(TOPLEVEL_ENV(toplevel_env)->next,next);
+	    }
         }else{
             report_error(VOBA_CONST_CHAR("illegal form. function name must be a symbol."),
                          syn_s_name,toplevel_env);

@@ -27,7 +27,7 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
     uint32_t end_col;
     syn_get_line_column(1,syn,&start_line,&start_col);
     syn_get_line_column(0,syn,&end_line,&end_col);    
-    ret = voba_vstrcat(ret,
+    if(0)ret = voba_vstrcat(ret,
                        VOBA_CONST_CHAR("(L"),
                        voba_str_fmt_uint32_t(start_line,10),
                        VOBA_CONST_CHAR(",C"),
@@ -68,41 +68,46 @@ void attach_src(voba_value_t syn, voba_value_t src)
         }
     }
 }
-voba_value_t make_syn_const(voba_value_t value)
+voba_value_t make_syn_const(const char * filename,
+			    int line,
+			    const char * src,
+			    int src_length,
+			    voba_value_t value)
 {
-    static YYLTYPE s = { 0,0};
     voba_value_t si = VOBA_NIL;
     voba_value_t ret = VOBA_NIL;
     si = make_src(
-        VOBA_CONST_CHAR(__FILE__),
-        VOBA_CONST_CHAR("nil"));
-    ret = make_syntax(value,s.start_pos,s.end_pos);
+        voba_str_from_cstr(filename),
+        voba_str_from_cstr(src));
+    ret = make_syntax(value,0,(uint32_t)src_length-1);
     attach_src(ret,si);
     return ret;
 }
-/* voba_value_t syn_new1(voba_value_t v, voba_value_t syn) */
-/* { */
-/*     assert(voba_is_a(syn,voba_cls_syn)); */
-/*     voba_value_t ret = make_syntax(VOBA_NIL,NULL); */
-/*     syn_t * p_dst = SYNTAX(ret); */
-/*     syn_t * p_src = SYNTAX(syn); */
-/*     p_dst->start_pos = p_src->start_pos; */
-/*     p_dst->end_pos = p_src->end_pos; */
-/*     p_dst->src = p_src->src; */
-/*     p_dst->v = v; */
-/* } */
-/* voba_value_t syn_new2(voba_value_t v, voba_value_t syn1,voba_value_t syn2) */
-/* { */
-/*     assert(voba_is_a(syn,voba_cls_syn)); */
-/*     voba_value_t ret = make_syntax(VOBA_NIL,NULL); */
-/*     syn_t * p_dst = SYNTAX(ret); */
-/*     syn_t * p_src1 = SYNTAX(syn1); */
-/*     syn_t * p_src2 = SYNTAX(syn2); */
-/*     p_dst->start_pos = p_src1->start_pos; */
-/*     p_dst->end_pos = p_src2->end_pos; */
-/*     p_dst->src = p_src1->src; */
-/*     p_dst->v = v; */
-/* } */
+voba_value_t syn_new1(voba_value_t v, voba_value_t syn)
+{
+    assert(voba_is_a(syn,voba_cls_syn));
+    voba_value_t ret = make_syntax(VOBA_NIL,0,0);
+    syntax_t * p_dst = SYNTAX(ret);
+    syntax_t * p_src = SYNTAX(syn);
+    p_dst->start_pos = p_src->start_pos;
+    p_dst->end_pos = p_src->end_pos;
+    p_dst->src = p_src->src;
+    p_dst->v = v;
+    return ret;
+}
+voba_value_t syn_new2(voba_value_t v, voba_value_t syn1,voba_value_t syn2)
+{
+    assert(voba_is_a(syn1,voba_cls_syn));
+    voba_value_t ret = make_syntax(VOBA_NIL,0,0);
+    syntax_t * p_dst = SYNTAX(ret);
+    syntax_t * p_src1 = SYNTAX(syn1);
+    syntax_t * p_src2 = SYNTAX(syn2);
+    p_dst->start_pos = p_src1->start_pos;
+    p_dst->end_pos = p_src2->end_pos;
+    p_dst->src = p_src1->src;
+    p_dst->v = v;
+    return ret;
+}
 
 voba_value_t make_syntax(voba_value_t v, uint32_t start_pos, uint32_t end_pos)
 {
@@ -124,3 +129,32 @@ EXEC_ONCE_PROGN{
     voba_gf_add_class(voba_gf_to_string, voba_cls_syn, voba_make_func(str_syn));
 }
 
+voba_value_t syn_backquote(voba_value_t n, ...)
+{
+    voba_value_t ret = voba_make_array_0();
+    voba_value_t syn_start = SYN_NIL;
+    voba_value_t syn_end = SYN_NIL;
+    va_list ap;
+    va_start(ap,n);
+    for(voba_value_t i = 0; i < n ; ++i){
+	voba_value_t v = va_arg(ap,voba_value_t);
+	if(voba_is_a(v,voba_cls_syn)){
+	    if(i==0) syn_start = v;
+	    syn_end = v;
+	    ret = voba_array_push(ret,v);
+	}else if(voba_is_a(v,voba_cls_array)){
+	    int64_t len = voba_array_len(v);
+	    if(i==0 && len > 0 ) syn_start = voba_array_at(v,0);
+	    if(len > 0) syn_end = voba_array_at(v,len-1);
+	    ret = voba_array_concat(ret,v);
+	}else{
+	    assert(0&&"never goes here");
+	}
+    }
+    va_end(ap);
+    return syn_new2(ret,syn_start,syn_end);
+}
+voba_value_t syn_unlist(voba_value_t v)
+{
+    return SYNTAX(v)->v;
+}

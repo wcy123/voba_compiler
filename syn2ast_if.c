@@ -29,7 +29,7 @@ voba_value_t compile_if(voba_value_t syn_form, voba_value_t env,voba_value_t top
                     voba_value_t pat_then = make_pattern_else(); // match everything except FALSE
                     voba_value_t rule_then = make_rule(pat_then, a_ast_then, new_env);
 
-                    voba_value_t syn_false = make_syn_const(VOBA_FALSE);
+                    voba_value_t syn_false = MAKE_SYN_CONST(VOBA_FALSE);
                     voba_value_t ast_false = compile_expr(syn_false,new_env,toplevel_env);
                     voba_value_t a_ast_false = voba_make_array_1(ast_false);
                     voba_value_t pat_false = make_pattern_value(a_ast_false); // match everything except FALSE

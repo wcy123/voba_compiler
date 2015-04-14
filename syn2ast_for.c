@@ -123,7 +123,7 @@ voba_value_t compile_break(voba_value_t syn_form, voba_value_t env,voba_value_t 
     voba_value_t ast_value = VOBA_NIL;
     if(len == 1){
         voba_value_t syn_break = voba_array_at(form,0);
-        ast_value = make_ast_constant(make_syn_const(VOBA_NIL));
+        ast_value = make_ast_constant(MAKE_SYN_CONST(VOBA_NIL));
         ret = make_ast_break(ast_value,syn_break);
     }else if(len == 2){
         voba_value_t syn_expr = voba_array_at(form,1);
