@@ -445,7 +445,7 @@ static inline voba_str_t* ast2c_ast_fun_closure(c_backend_t *bk
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    /* memory block for the closure */\n"
-                 "    voba_value_t* #0  = voba_alloc(#1);\n"
+                 "    voba_value_t* #0  = voba_alloc(#1+1);\n"
                  "    #0[0] = voba_make_func(#2);\n"
                  "    #0[1] = #1 - 2;\n"
                  )
@@ -463,6 +463,12 @@ static inline voba_str_t* ast2c_ast_fun_closure(c_backend_t *bk
                  ,voba_str_fmt_int32_t((int32_t)i,10)
                  ,var);
     }
+    TEMPLATE(s,
+                 VOBA_CONST_CHAR(
+                     "    #0[#1+2] = VOBA_BOX_END;\n")
+                 ,p_for_closure
+                 ,voba_str_fmt_int32_t((int32_t)len,10)
+	);
     TEMPLATE(&ret,
              VOBA_CONST_CHAR(
                  "   voba_from_pointer((void*)#0,VOBA_TYPE_CLOSURE);\n"
