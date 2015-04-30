@@ -628,6 +628,11 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
 		     , voba_value_to_str(voba_array_at(args,i))
 		);
 	}
+	TEMPLATE(s,
+		 VOBA_CONST_CHAR(
+		     "    next_args[#0] = VOBA_BOX_END; /* argument #0 */\n")
+		 , voba_str_fmt_int64_t(len,10));
+	
     }else{
 	// non tail call
 	TEMPLATE(s,
