@@ -20,7 +20,7 @@ voba_value_t syn2ast(voba_value_t syn,voba_value_t module, voba_value_t toplevel
     voba_value_t next = TOPLEVEL_ENV(toplevel_env)->next;
     int64_t len =  voba_array_len(next);
     asts = voba_make_array_0();
-    voba_value_t args [] = {1, toplevel_env};
+    voba_value_t args [] = {1, toplevel_env, VOBA_BOX_END};
     for(int64_t i = 0 ; i < len ; ++i) {
         voba_value_t ast = voba_apply(voba_array_at(next,i),voba_make_tuple(args));
         if(!voba_is_nil(ast)){

@@ -8,12 +8,13 @@
 #include "../voba_builtin/sys/sys.h"
 static voba_value_t get_argv(int argc, char * argv[])
 {
-    voba_value_t * p = (voba_value_t*)GC_MALLOC(sizeof(voba_value_t)*(argc+1));
+    voba_value_t * p = (voba_value_t*)GC_MALLOC(sizeof(voba_value_t)*(argc+2));
     assert(p);
     p[0] = argc;
     for(int i = 0; i < argc; i ++){
         p[i+1] = voba_make_string(voba_str_from_cstr(argv[i]));
     }
+    p[argc+1] = VOBA_BOX_END;
     return voba_make_tuple(p);
 }
 int main(int argc, char *argv[])

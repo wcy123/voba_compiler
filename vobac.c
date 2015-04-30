@@ -32,10 +32,12 @@ int main(int argc, char *argv[])
         2,
         voba_make_string(ss),
         voba_make_string(voba_str_from_cstr(argv[1]))
+	, VOBA_BOX_END
     };
     voba_value_t c = voba_apply(voba_symbol_value(s_compile), voba_make_tuple(args));
     args[0]=1;
     args[1] = c;
+    args[2] = VOBA_BOX_END;
     voba_print(voba_make_func(voba_print),voba_make_tuple(args),NULL,args);
     return 0;
 }

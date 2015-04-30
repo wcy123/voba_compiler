@@ -170,7 +170,7 @@ VOBA_FUNC static voba_value_t str_env(voba_value_t fun,voba_value_t vs, voba_val
     voba_value_t v = voba_tuple_at(vs,0);
     voba_str_t* ret = voba_str_empty();
     env_t* env = ENV(v);
-    voba_value_t args[] = {1, env->a_var};
+    voba_value_t args[] = {1, env->a_var, VOBA_BOX_END};
     voba_value_t a = voba_apply(voba_gf_to_string, voba_make_tuple(args));
     args[1] = env->parent;
     voba_value_t parent = voba_apply(voba_gf_to_string, voba_make_tuple(args));
@@ -190,7 +190,7 @@ VOBA_FUNC static voba_value_t str_compiler_fun(voba_value_t fun,voba_value_t vs,
     voba_value_t v = voba_tuple_at(vs,0);
     voba_str_t* ret = voba_str_empty();
     compiler_fun_t* compiler_fun = COMPILER_FUN(v);
-    voba_value_t args[] = {1, compiler_fun->a_var_A};
+    voba_value_t args[] = {1, compiler_fun->a_var_A, VOBA_BOX_END};
     voba_value_t a = voba_apply(voba_gf_to_string, voba_make_tuple(args));
     args[1] = compiler_fun->a_var_C;
     voba_value_t c = voba_apply(voba_gf_to_string, voba_make_tuple(args));

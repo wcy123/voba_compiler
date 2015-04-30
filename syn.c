@@ -45,7 +45,7 @@ static voba_str_t* dump_location(voba_value_t syn, int level)
         ret = indent(ret,level);
         ret = voba_strcat(ret,VOBA_CONST_CHAR("]"));
     }else{
-        voba_value_t args[] = {1, SYNTAX(syn)->v};
+        voba_value_t args[] = {1, SYNTAX(syn)->v, VOBA_BOX_END};
         ret = voba_strcat(ret, voba_value_to_str(voba_apply(voba_gf_to_string,
                                                             voba_make_tuple(args))));
         ret = voba_strcat_cstr(ret,"");

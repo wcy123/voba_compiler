@@ -152,14 +152,16 @@ static void import_module(voba_value_t module_info, c_backend_t * bk)
                  "    };\n"
                  "    //fprintf(stderr,\"loading %s(%s)\\n\",name,id);\n"
                  "    static voba_value_t                                    \n"
-                 "        symbols2[sizeof(symbols)/sizeof(const char*)] = {           \n"
+                 "        symbols2[sizeof(symbols)/sizeof(const char*) + 1] = {       \n"
                  "        sizeof(symbols)/sizeof(const char*) - 1, VOBA_NIL,          \n"
                  "    };                                                              \n"
-                 "    for(size_t i = 0 ; symbols[i]!=NULL; ++i){                      \n"
+		 "    size_t i;"
+                 "    for(i = 0 ; symbols[i]!=NULL; ++i){                      \n"
                  "        symbols2[i+1] =                                             \n"
                  "            voba_make_string(                                       \n"
                  "                    voba_str_from_cstr(symbols[i]));                \n"
                  "    }                                                               \n"
+		 "    symbols2[i+1] = VOBA_BOX_END;"
                  "    voba_import_module(name,id,voba_make_tuple(symbols2));          \n"
                  "}\n"));
 }
@@ -393,7 +395,7 @@ static inline voba_str_t* ast2c_constant_array(voba_value_t syn_a, c_backend_t* 
     TEMPLATE(
         &s0,
         VOBA_CONST_CHAR(
-            "};\n"
+            ",VOBA_BOX_END};\n"
             "    #0 = voba_array_from_tuple(voba_make_tuple(#1)); /* constant */\n"
             ),
         s_const,
@@ -641,7 +643,7 @@ static inline voba_str_t* ast2c_ast_apply(ast_t* ast, c_backend_t* bk, voba_str_
 		     ,voba_str_fmt_int64_t(i,10));
 	}
 	TEMPLATE(s,
-		 VOBA_CONST_CHAR("    };\n"
+		 VOBA_CONST_CHAR("    , VOBA_BOX_END };\n"
 				 "    #0 = voba_apply(#1,voba_make_tuple(#2));/* return value for apply */\n"
 		     )
 		 ,ret, fun, args_name);
@@ -993,7 +995,7 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v,
     TEMPLATE(s,
              VOBA_CONST_CHAR("    /* evaluate first element of pattern */\n"
                              "    #0\n"
-                             "    voba_value_t #1 [] = {3, #2, voba_make_i32(-1), voba_make_i32(#3)};\n"
+                             "    voba_value_t #1 [] = {3, #2, voba_make_i32(-1), voba_make_i32(#3), VOBA_BOX_END};\n"
                              "    voba_value_t #4 = voba_apply(#5, voba_make_tuple(#1));\n"
                              "    if(!voba_eq(VOBA_TRUE,#4)){\n"
                              "        goto #6; /* number of var does not match*/\n"
@@ -1014,7 +1016,7 @@ static inline void ast2c_match_pattern_apply(voba_str_t* v,
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* extract #2 of #3 sub-value from the main value*/\n"
-                     "    voba_value_t #0 [] = {3, #1,voba_make_i32(#2), voba_make_i32(#3)};\n"
+                     "    voba_value_t #0 [] = {3, #1,voba_make_i32(#2), voba_make_i32(#3), VOBA_BOX_END};\n"
                      "    voba_value_t #4 = voba_apply(#5,voba_make_tuple(#0));/* the sub-value #2 of #3*/\n"
                      )
                  , pat_args // 0
@@ -1107,7 +1109,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
     TEMPLATE(s,
              VOBA_CONST_CHAR(
                  "    /* arguments for for-each-iterator to get for-each-input*/\n"
-                 "    voba_value_t #0 [] __attribute__((unused)) = {1,VOBA_NIL};\n")
+                 "    voba_value_t #0 [] __attribute__((unused)) = {1,VOBA_NIL,VOBA_BOX_END};\n")
              ,for_each_iter_args);
     TEMPLATE(s,
              VOBA_CONST_CHAR(
@@ -1161,7 +1163,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* try to apply for-if */\n"
-                     "    voba_value_t #0 [] = {1, #1}; /* args for `if', the filter*/\n"
+                     "    voba_value_t #0 [] = {1, #1, VOBA_BOX_END}; /* args for `if', the filter*/\n"
                      "    voba_value_t #2 = voba_apply(#3, voba_make_tuple(#0)); /* for-if */\n"
                      "    if(voba_is_false(#2)){ /* skip this iteration, continue  */\n"
                      "        goto #4;/* for-if failed */\n"
@@ -1193,7 +1195,7 @@ static inline voba_str_t* ast2c_ast_for(ast_t* ast, c_backend_t* bk, voba_str_t*
         TEMPLATE(s,
                  VOBA_CONST_CHAR(
                      "    /* collect return value for `for' statement  */\n"
-                     "    {voba_value_t #0 [] = {2, #1, #2}; /*arguments for accumulator*/\n"
+                     "    {voba_value_t #0 [] = {2, #1, #2, VOBA_BOX_END}; /*arguments for accumulator*/\n"
                      "    #1 = voba_apply(#3, voba_make_tuple(#0));}/* apply the accumulator */\n"
                      )
                  ,acc_args
